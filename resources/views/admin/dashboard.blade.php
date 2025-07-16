@@ -1,14 +1,25 @@
-<!-- resources/views/admin/dashboard.blade.php -->
+{{-- resources/views/admin/dashboard.blade.php --}}
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Admin Dashboard</title>
 </head>
 <body>
-    <h1>Welcome, Franchisor!</h1>
-    <p>You are logged in.</p>
+    <h1>Welcome, Admin!</h1>
 
-    <form method="POST" action="{{ route('admin.logout') }}">
+    {{-- Success message if redirected from account creation --}}
+    @if(session('success'))
+        <p style="color: green;">{{ session('success') }}</p>
+    @endif
+
+    {{-- Add Account Creation Button --}}
+    <a href="{{ route('accounts.create') }}">
+        <button>Create New Account</button>
+    </a>
+
+    {{-- Add Logout Button --}}
+    <form action="{{ route('admin.logout') }}" method="POST" style="margin-top: 20px;">
         @csrf
         <button type="submit">Logout</button>
     </form>
