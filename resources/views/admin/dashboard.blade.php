@@ -13,9 +13,13 @@
         <p style="color: green;">{{ session('success') }}</p>
     @endif
 
+    <a href="{{ route('settings.index') }}">
+    <button>Settings</button>
+</a>
+
     {{-- Add Account Creation Button --}}
     <a href="{{ route('accounts.create') }}">
-        <button>Create New Account</button>
+        <button>Create Account</button>
     </a>
 
     {{-- Add Logout Button --}}

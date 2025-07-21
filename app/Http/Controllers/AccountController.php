@@ -18,39 +18,42 @@ class AccountController extends Controller
 
     public function store(Request $request)
     {
+        // Common validation rules
         $request->validate([
             'role' => 'required|in:franchisee,franchisor_staff,franchisee_staff',
             'fname' => 'required|string',
             'lname' => 'required|string',
             'contact' => 'required|string',
-            'username' => 'required|string|unique:franchisees,franchisee_username|unique:admin_staff,astaff_username|unique:franchisee_staff,fstaff_username',
             'password' => 'required|string|min:6',
-            'email' => 'nullable|email',
-            'address' => 'nullable|string',
-            'franchisee_id' => 'nullable|exists:franchisees,franchisee_id',
         ]);
 
-        if (!session()->has('admin_id')) {
-            return redirect()->route('admin.login')->withErrors(['Session expired. Please log in again.']);
-        }
-
-        $adminId = session('admin_id');
         $role = $request->role;
 
+        // Role-specific validation for username and additional fields
         if ($role === 'franchisee') {
+            $request->validate([
+                'username' => 'required|string|unique:franchisees,franchisee_username',
+                'email' => 'required|email|unique:franchisees,franchisee_email',
+                'address' => 'required|string',
+            ]);
+
             Franchisee::create([
-                'admin_id' => $adminId,
+                'admin_id' => session('admin_id'),
                 'franchisee_name' => $request->fname . ' ' . $request->lname,
                 'franchisee_contactNo' => $request->contact,
                 'franchisee_username' => $request->username,
                 'franchisee_pass' => Hash::make($request->password),
                 'franchisee_status' => 'Active',
-                'franchisee_email' => $request->email ?? 'n/a',
-                'franchisee_address' => $request->address ?? 'n/a',
+                'franchisee_email' => $request->email,
+                'franchisee_address' => $request->address,
             ]);
         } elseif ($role === 'franchisor_staff') {
+            $request->validate([
+                'username' => 'required|string|unique:admin_staff,astaff_username',
+            ]);
+
             AdminStaff::create([
-                'staffAdmin_id' => $adminId,
+                'staffAdmin_id' => session('admin_id'),
                 'astaff_fname' => $request->fname,
                 'astaff_lname' => $request->lname,
                 'astaff_contactNo' => $request->contact,
@@ -59,12 +62,12 @@ class AccountController extends Controller
                 'astaff_status' => 'Active',
             ]);
         } elseif ($role === 'franchisee_staff') {
-            if (!$request->franchisee_id) {
-                return redirect()->back()->withErrors(['Please select a franchisee for the Franchisee Staff.']);
-            }
+            $request->validate([
+                'username' => 'required|string|unique:franchisee_staff,fstaff_username',
+            ]);
 
             FranchiseeStaff::create([
-                'franchisee_id' => $request->franchisee_id,
+                'franchisee_id' => session('admin_id'),
                 'fstaff_fname' => $request->fname,
                 'fstaff_lname' => $request->lname,
                 'fstaff_contactNo' => $request->contact,
