@@ -5,22 +5,47 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth;
 
 class Authenticate
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('login.admin'); // fallback login
+        if (session()->has('franchisor_id')) {
+            return $next($request);
         }
 
-        return $next($request);
+        if (session()->has('franchisee_id')) {
+            return $next($request);
+        }
+
+        if (session()->has('franchisor_staff_id')) {
+            return $next($request);
+        }
+
+        if (session()->has('franchisee_staff_id')) {
+            return $next($request);
+        }
+
+        // Route-specific redirection based on URL prefix
+        if ($request->is('franchisor/*')) {
+            return redirect()->route('admin.login'); // adjust if you want a separate franchisor login
+        }
+
+        if ($request->is('franchisee/*')) {
+            return redirect()->route('login.franchisee');
+        }
+
+        if ($request->is('franchisor-staff/*')) {
+            return redirect()->route('login.franchisorStaff');
+        }
+
+        if ($request->is('franchisee-staff/*')) {
+            return redirect()->route('login.franchiseeStaff');
+        }
+
+        return redirect()->route('login'); // default to admin login
     }
 }

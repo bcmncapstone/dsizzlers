@@ -1,18 +1,21 @@
 <?php
 
+// app/Models/FranchisorStaff.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
 class FranchisorStaff extends Model
 {
-    protected $table = 'franchisor_staff'; 
-    protected $primaryKey = 'id';
-    public $timestamps = false;
+    protected $table = 'admin_staff'; 
+    protected $primaryKey = 'astaff_id'; //  table's primary key
 
-  protected $fillable = [
-    'franchisor_staff_name',
-    'franchisor_staff_username',
-    'franchisor_staff_pass',
-];
+    public $timestamps = false; // If your table does not use created_at / updated_at
+
+    protected $fillable = [
+        'astaff_fname', 'astaff_lname', 'astaff_contactNo',
+        'astaff_username', 'astaff_pass', 'astaff_status'
+    ];
 }
+

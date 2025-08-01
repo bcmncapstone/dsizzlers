@@ -5,11 +5,8 @@ use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AccountSettingsController;
-
-// Redirect root to admin login
-Route::get('/', function () {
-    return redirect()->route('admin.login');
-});
+use App\Http\Controllers\Settings\PasswordController;
+use App\Http\Controllers\BranchController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -20,12 +17,12 @@ Route::get('/admin/dashboard', function () {
     return view('admin.dashboard');
 })->name('admin.dashboard');
 
-// ACCOUNT CREATION (Admin)
+// ACCOUNT CREATION (Admin only)
 Route::get('/admin/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
 Route::post('/admin/accounts/store', [AccountController::class, 'store'])->name('accounts.store');
 
 
-// LOGIN FOR EACH ROLE
+// LOGIN ROUTES FOR EACH ROLE
 
 // Franchisee Login
 Route::get('/login/franchisee', [LoginController::class, 'showFranchiseeLogin'])->name('login.franchisee');
@@ -39,29 +36,36 @@ Route::post('/login/franchisor-staff', [LoginController::class, 'loginFranchisor
 Route::get('/login/franchisee-staff', [LoginController::class, 'showFranchiseeStaffLogin'])->name('login.franchiseeStaff');
 Route::post('/login/franchisee-staff', [LoginController::class, 'loginFranchiseeStaff']);
 
+// Dashboards
+Route::get('/dashboard/franchisee', fn () => view('franchisee.dashboard'))->name('franchisee.dashboard');
+Route::get('/dashboard/franchisee-staff', fn () => view('franchisee-staff.dashboard'))->name('franchisee-staff.dashboard');
+Route::get('/dashboard/franchisor-staff', fn () => view('franchisor-staff.dashboard'))->name('franchisor-staff.dashboard');
 
-// DASHBOARD PLACEHOLDERS
-
-// Franchisee Dashboard (after login)
-Route::get('/franchisee/dashboard', function () {
-    return "Welcome, Franchisee!";
-})->name('franchisee.dashboard');
-
-Route::post('/logout/franchisee', function () {
-    session()->forget('franchisee_id');
-    return redirect()->route('login.franchisee');
-})->name('logout.franchisee');
-
-// This is for the landing page
-Route::get('/', function () {
-    return view('welcome');
-});
-// Update Password /Settings
+// SETTINGS / PASSWORD UPDATE — For all logged-in users
 Route::middleware([\App\Http\Middleware\Authenticate::class])->group(function () {
-    // Settings Page (with option to update password)
     Route::get('/settings', [AccountSettingsController::class, 'index'])->name('settings.index');
-    
-    // Password Update Page
     Route::get('/settings/password', [AccountSettingsController::class, 'editPassword'])->name('settings.password');
     Route::post('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('settings.password.update');
+});
+
+// LANDING PAGE
+Route::get('/', fn () => view('welcome'));
+
+// PASSWORD SETTINGS FOR FRANCHISOR
+Route::middleware(['auth'])->group(function () {
+    Route::get('/franchisor/settings/password', [PasswordController::class, 'edit'])->name('franchisor.settings.password');
+    Route::put('/franchisor/settings/password', [PasswordController::class, 'update'])->name('franchisor.settings.password.update');
+});
+
+// Fallback login route required by auth middleware
+Route::get('/login', fn () => redirect('/admin/login'))->name('login');
+
+//Branch
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/branches', [BranchController::class, 'index'])->name('branches.index');
+    Route::get('/branches/archived', [BranchController::class, 'archived'])->name('branches.archived');
+    Route::get('/branches/create', [BranchController::class, 'create'])->name('branches.create');
+    Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+    Route::get('/branches/{id}/archive', [BranchController::class, 'archive'])->name('branches.archive');
+    Route::get('/branches/{id}/download-contract', [BranchController::class, 'downloadContract'])->name('branches.downloadContract');
 });

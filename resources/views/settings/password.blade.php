@@ -1,37 +1,28 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Update Password</title>
-</head>
-<body>
-    <h2>Update Password</h2>
+@extends('layouts.app')
 
-    @if(session('success'))
-        <p style="color:green;">{{ session('success') }}</p>
+@section('content')
+<div class="container">
+    <h1>Update Password</h1>
+
+    @if (session('status'))
+        <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
-    @if($errors->any())
-        <div style="color:red;">
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    <form method="POST" action="{{ route('settings.password.update') }}">
+    <form method="POST" action="{{ route('franchisor.settings.password.update') }}">
         @csrf
-        <label>New Password:</label><br>
-        <input type="password" name="password" required><br><br>
+        @method('PUT')
 
-        <label>Confirm Password:</label><br>
-        <input type="password" name="password_confirmation" required><br><br>
+        <div class="form-group">
+            <label>New Password</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
 
-        <button type="submit">Update Password</button>
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="password_confirmation" class="form-control" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary mt-2">Update Password</button>
     </form>
-
-    <br>
-    <a href="{{ route('settings.index') }}">Back to Settings</a>
-</body>
-</html>
+</div>
+@endsection
