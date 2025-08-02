@@ -41,20 +41,22 @@ class BranchController extends Controller
     ]);
 
     // Save uploaded contract file
+  
     if ($request->hasFile('contract_file')) {
         $file = $request->file('contract_file');
         $filename = time() . '_' . $file->getClientOriginalName();
+
+        // Save to local storage: storage/app/public/contracts
         $file->storeAs('public/contracts', $filename);
+
         $validated['contract_file'] = $filename;
     }
 
-    $validated['branch_status'] = true; // Active by default
+    $validated['branch_status'] = true;
     Branch::create($validated);
 
-    return redirect()->route('admin.branches.index')->with('success', 'Branch added successfully.');
+    return redirect()->route('admin.branches.index')->with('success', 'Branch and file saved.');
 }
-
-
     // Archive branch (set branch_status to false)
     public function archive($id)
     {

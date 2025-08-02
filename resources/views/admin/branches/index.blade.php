@@ -1,4 +1,3 @@
-{{-- resources/views/branches/index.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
@@ -15,7 +14,11 @@
 <table>
     <thead>
         <tr>
-            <th>Location</th><th>Email</th><th>Contract Expiration</th><th>Action</th>
+            <th>Location</th>
+            <th>Email</th>
+            <th>Contract File</th>
+            <th>Contract Expiration</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
@@ -23,9 +26,18 @@
         <tr>
             <td>{{ $branch->location }}</td>
             <td>{{ $branch->email }}</td>
+            <td>
+    @if($branch->contract_file)
+        <a href="{{ asset('storage/contracts/' . $branch->contract_file) }}" target="_blank">Preview</a>
+        &nbsp;|&nbsp;
+        <a href="{{ asset('storage/contracts/' . $branch->contract_file) }}" download>Download</a>
+    @else
+        No file
+    @endif
+</td>
             <td>{{ $branch->contract_expiration }}</td>
             <td>
-                <form method="POST" action="{{ route('admin.branches.archive', $branch->id) }}">
+                <form method="POST" action="{{ route('admin.branches.archive', $branch->branch_id) }}">
                     @csrf
                     <button type="submit">Archive</button>
                 </form>
