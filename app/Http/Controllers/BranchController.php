@@ -18,7 +18,7 @@ class BranchController extends Controller
     public function archived()
     {
         $branches = Branch::where('branch_status', false)->get();
-        return view('admin.branches.archived', compact('branches'));
+        return view('admin.branches.archive', compact('branches'));
     }
 
     // Show form to add a new branch
@@ -68,15 +68,21 @@ class BranchController extends Controller
     }
 
     // Download/view contract file
-    public function downloadContract($id)
-    {
-        $branch = Branch::findOrFail($id);
-        $path = storage_path('app/public/contracts/' . $branch->contract_file);
+ public function downloadContract(Request $request, $id)
+{
+    $branch = Branch::findOrFail($id);
+    $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
 
-        if (file_exists($path)) {
-            return response()->download($path);
-        } else {
-            return redirect()->back()->with('error', 'Contract file not found.');
-        }
+    if (!file_exists($filePath)) {
+        return back()->with('error', 'File not found.');
     }
+
+    // This forces download for ALL file types (PDF, DOCX, etc.)
+    if ($request->query('mode') === 'download') {
+        return response()->download($filePath);
+    }
+
+    // This tries to preview if supported (PDF, image, etc.)
+    return response()->file($filePath);
+}
 }

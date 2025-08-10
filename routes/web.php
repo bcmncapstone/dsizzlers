@@ -7,6 +7,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\ItemController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -66,6 +67,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/branches/archived', [BranchController::class, 'archived'])->name('branches.archived');
     Route::get('/branches/create', [BranchController::class, 'create'])->name('branches.create');
     Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
-    Route::get('/branches/{id}/archive', [BranchController::class, 'archive'])->name('branches.archive');
+    Route::post('/branches/{id}/archive', [BranchController::class, 'archive'])->name('branches.archive');
     Route::get('/branches/{id}/download-contract', [BranchController::class, 'downloadContract'])->name('branches.downloadContract');
+});
+
+//Item
+    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/items', action: [ItemController::class, 'index'])->name('items.index');
+    Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
+    Route::post('/items', [ItemController::class, 'store'])->name('items.store');
+    Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
+    Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');
+    Route::post('/items/{id}/archive', [ItemController::class, 'archive'])->name('items.archive');
 });

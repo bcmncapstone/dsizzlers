@@ -11,7 +11,7 @@
                 </div>
 
                 <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
                     <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
                         Dashboard
                     </x-nav-link>
@@ -29,6 +29,7 @@
             <!-- Logout Button -->
             <div class="hidden sm:flex sm:items-center sm:ml-6">
                 <form method="POST" action="{{ route('admin.logout') }}">
+                    @csrf
                     <x-nav-link href="#" onclick="event.preventDefault(); this.closest('form').submit();">
                         Log Out
                     </x-nav-link>

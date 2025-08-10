@@ -28,12 +28,12 @@
             <td>{{ $branch->email }}</td>
             <td>
     @if($branch->contract_file)
-        <a href="{{ asset('storage/contracts/' . $branch->contract_file) }}" target="_blank">Preview</a>
-        &nbsp;|&nbsp;
-        <a href="{{ asset('storage/contracts/' . $branch->contract_file) }}" download>Download</a>
-    @else
-        No file
-    @endif
+    <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank">Preview</a>
+    &nbsp;|&nbsp;
+   <a href="{{ route('admin.branches.downloadContract', ['id' => $branch->branch_id, 'mode' => 'download']) }}">Download</a>
+@else
+    No file
+@endif
 </td>
             <td>{{ $branch->contract_expiration }}</td>
             <td>

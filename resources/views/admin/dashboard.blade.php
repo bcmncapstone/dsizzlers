@@ -25,6 +25,11 @@
     <button>Manage Branches</button>
 </a>
 
+ <!-- Manage Item Button -->
+    <a href="{{ route('admin.items.create') }}">
+    <button>Item</button>
+    </a>
+
     <!-- Add Logout Button -->
     <form action="{{ route('admin.logout') }}" method="POST" style="margin-top: 20px;">
         @csrf
