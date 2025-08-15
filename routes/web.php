@@ -8,6 +8,7 @@ use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\Franchisee\FranchiseeItemController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -72,11 +73,30 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 //Item
-    Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/items', action: [ItemController::class, 'index'])->name('items.index');
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/items', [ItemController::class, 'index'])->name('items.index');
     Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
     Route::post('/items', [ItemController::class, 'store'])->name('items.store');
     Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
     Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');
     Route::post('/items/{id}/archive', [ItemController::class, 'archive'])->name('items.archive');
+
+    // Archived view (manual archive)
+    Route::get('/items/archived', [ItemController::class, 'archived'])->name('items.archived');
 });
+
+// Manage Items for Franchisee and Franchisee Staff
+foreach (['franchisee', 'franchisee_staff'] as $prefix) {
+    Route::prefix($prefix)->name($prefix . '.')->group(function () {
+
+        // Item list
+        Route::get('/item', [FranchiseeItemController::class, 'index'])
+            ->name('item.index');
+
+        // Single item view (with numeric ID constraint)
+        Route::get('/item/{id}', [FranchiseeItemController::class, 'show'])
+            ->whereNumber('id')
+            ->name('item.show');
+    });
+}
+

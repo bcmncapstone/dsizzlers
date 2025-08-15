@@ -4,6 +4,7 @@
 <h2>Manage Items</h2>
 
 <a href="{{ route('admin.items.create') }}">Add Item</a>
+<a href="{{ route('admin.items.archived') }}">View Archived Items</a>
 
 <form method="GET" action="{{ route('admin.items.index') }}">
     <input type="text" name="search" placeholder="Search items..." value="{{ $search ?? '' }}">
@@ -13,7 +14,12 @@
 <table>
     <thead>
         <tr>
-            <th>Name</th><th>Description</th><th>Price</th><th>Quantity</th><th>Item Category</th><th>Action</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Item Category</th>
+            <th>Action</th>
         </tr>
     </thead>
     <tbody>
