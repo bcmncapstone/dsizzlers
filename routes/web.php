@@ -9,6 +9,9 @@ use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\Franchisee\FranchiseeItemController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController;
+
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -72,7 +75,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/branches/{id}/download-contract', [BranchController::class, 'downloadContract'])->name('branches.downloadContract');
 });
 
-//Item
+//Item Franchisor and Franchisor Staff
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items', [ItemController::class, 'index'])->name('items.index');
     Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
@@ -100,3 +103,20 @@ foreach (['franchisee', 'franchisee_staff'] as $prefix) {
     });
 }
 
+// Franchisee & Franchisee Staff Cart
+foreach (['franchisee', 'franchisee_staff'] as $prefix) {
+    Route::prefix($prefix)->name($prefix . '.')->group(function () {
+        // Cart routes
+        Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+        Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+        Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
+        Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+        Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+
+        // Orders
+Route::get('/orders', [OrderController::class, 'index'])->name('orders.index'); // <-- Add this
+Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+Route::post('/checkout', [OrderController::class, 'checkout'])->name('orders.checkout');
+
+    });
+}

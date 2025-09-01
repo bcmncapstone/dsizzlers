@@ -4,8 +4,9 @@ namespace App\Enums;
 
 class UserRole
 {
-    const FRANCHISOR = 'franchisor';
-    const FRANCHISEE = 'franchisee';
-    const ASTAFF = 'astaff';
-    const FSTAFF = 'fstaff';
+    const FRANCHISOR   = 'admins';
+    const FRANCHISEE   = 'franchisees';
+    const ASTAFF       = 'admin_staff';
+    const FSTAFF       = 'franchisee_staff';
 }
+

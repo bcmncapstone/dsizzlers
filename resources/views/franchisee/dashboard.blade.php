@@ -7,6 +7,8 @@
         <a href="{{ route('settings.password') }}" class="btn btn-primary">Update Password</a>
 
         <!-- Item -->
-        <a href="{{ route('franchisee.item.index') }}" class="btn btn-secondary">Manage Branches</a>
+        <a href="{{ route(name: 'franchisee.item.index') }}" class="btn btn-secondary">Item</a>
+        <a href="{{ route(name: 'franchisee.cart.index') }}" class="btn btn-secondary">Cart</a>
+
     </div>
 @endsection

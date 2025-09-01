@@ -18,4 +18,3 @@ class FranchisorStaff extends Model
         'astaff_username', 'astaff_pass', 'astaff_status'
     ];
 }
-

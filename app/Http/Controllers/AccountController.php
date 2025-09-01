@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Franchisee;
-use App\Models\AdminStaff;
+use App\Models\FranchisorStaff;
 use App\Models\FranchiseeStaff;
 
 class AccountController extends Controller
@@ -52,7 +52,7 @@ class AccountController extends Controller
                 'username' => 'required|string|unique:admin_staff,astaff_username',
             ]);
 
-            AdminStaff::create([
+            FranchisorStaff::create([
                 'staffAdmin_id' => session('admin_id'),
                 'astaff_fname' => $request->fname,
                 'astaff_lname' => $request->lname,
