@@ -53,7 +53,7 @@ class AccountController extends Controller
             ]);
 
             FranchisorStaff::create([
-                'staffAdmin_id' => session('admin_id'),
+                'admin_id' => session('admin_id'),
                 'astaff_fname' => $request->fname,
                 'astaff_lname' => $request->lname,
                 'astaff_contactNo' => $request->contact,
@@ -67,7 +67,7 @@ class AccountController extends Controller
             ]);
 
             FranchiseeStaff::create([
-                'franchisee_id' => session('admin_id'),
+                'franchisee_id' => $request->franchisee_id,
                 'fstaff_fname' => $request->fname,
                 'fstaff_lname' => $request->lname,
                 'fstaff_contactNo' => $request->contact,

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class FranchiseeStaff extends Model
+class FranchiseeStaff extends Authenticatable
 {
-    protected $table = 'franchisee_staff'; // table name
-    protected $primaryKey = 'franchisee_id';   // PK column
-    public $timestamps = false;
+    protected $table = 'franchisee_staff';
+    protected $primaryKey = 'fstaff_id';
+    public $timestamps = true;
 
     protected $fillable = [
         'franchisee_id',
@@ -19,4 +19,17 @@ class FranchiseeStaff extends Model
         'fstaff_pass',
         'fstaff_status',
     ];
+
+    protected $hidden = [
+        'fstaff_pass',
+    ];
+
+    public function getRoleAttribute() {
+        return 'franchisee-staff';
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->fstaff_pass;
+    }
 }

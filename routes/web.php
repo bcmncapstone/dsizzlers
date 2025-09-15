@@ -41,12 +41,23 @@ Route::post('/login/franchisor-staff', [LoginController::class, 'loginFranchisor
 Route::get('/login/franchisee-staff', [LoginController::class, 'showFranchiseeStaffLogin'])->name('login.franchiseeStaff');
 Route::post('/login/franchisee-staff', [LoginController::class, 'loginFranchiseeStaff']);
 
-// Dashboards
-Route::get('/dashboard/franchisee', fn () => view('franchisee.dashboard'))->name('franchisee.dashboard');
-Route::get('/dashboard/franchisee-staff', fn () => view('franchisee-staff.dashboard'))->name('franchisee-staff.dashboard');
-Route::get('/dashboard/franchisor-staff', fn () => view('franchisor-staff.dashboard'))->name('franchisor-staff.dashboard');
+// Franchisee Dashboard
+Route::middleware(['auth:franchisee'])->get('/franchisee/dashboard', function () {
+    return view('franchisee.dashboard');
+})->name('franchisee.dashboard');
 
-// SETTINGS / PASSWORD UPDATE — For all logged-in users
+// Franchisee Staff Dashboard
+Route::middleware(['auth:franchisee_staff'])->get('/franchisee-staff/dashboard', function () {
+    return view('franchisee_staff.dashboard');
+})->name('franchisee-staff.dashboard');
+
+// Franchisor Staff Dashboard
+Route::middleware(['auth:franchisor_staff'])->get('/franchisor-staff/dashboard', function () {
+    return view('franchisor_staff.dashboard');
+})->name('franchisor-staff.dashboard');
+
+
+// SETTINGS / PASSWORD UPDATE — For all users
 Route::middleware([\App\Http\Middleware\Authenticate::class])->group(function () {
     Route::get('/settings', [AccountSettingsController::class, 'index'])->name('settings.index');
     Route::get('/settings/password', [AccountSettingsController::class, 'editPassword'])->name('settings.password');

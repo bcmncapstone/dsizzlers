@@ -25,4 +25,12 @@ class Admin extends Model
         'admin_pass',
         'admin_status',
     ];
+     protected $hidden = [
+        'admin_pass',
+    ];
+
+    public function getAuthPassword()
+    {
+        return $this->admin_pass; 
+    }
 }

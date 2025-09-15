@@ -1,20 +1,31 @@
 <?php
 
-// app/Models/FranchisorStaff.php
-
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class FranchisorStaff extends Model
+class FranchisorStaff extends Authenticatable
 {
     protected $table = 'admin_staff'; 
-    protected $primaryKey = 'astaff_id'; //  table's primary key
+    protected $primaryKey = 'astaff_id'; 
 
-    public $timestamps = false; // If your table does not use created_at / updated_at
+    public $timestamps = true;
 
     protected $fillable = [
-        'astaff_fname', 'astaff_lname', 'astaff_contactNo',
+        'admin_id', 'astaff_fname', 'astaff_lname', 'astaff_contactNo',
         'astaff_username', 'astaff_pass', 'astaff_status'
     ];
+
+    protected $hidden = [
+        'astaff_pass',
+    ];
+
+    public function getRoleAttribute() {
+        return 'franchisor-staff';
+    }
+
+    public function getAuthPassword()
+    {
+        return $this->astaff_pass;
+    }
 }
