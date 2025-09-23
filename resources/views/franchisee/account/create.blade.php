@@ -2,7 +2,7 @@
 
 @section('content')
 <div style="max-width: 600px; margin: 40px auto;">
-    <h2>Create Account</h2>
+    <h2>Franchisee Staff Create Account</h2>
 
     @if(session('success'))
         <div style="color: green; margin-bottom: 15px;">{{ session('success') }}</div>
@@ -18,17 +18,8 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('accounts.store') }}">
+    <form method="POST" action="{{ route('account.store') }}">
         @csrf
-
-        <div>
-            <label>Role:</label><br>
-            <select name="role" required onchange="toggleFields(this.value)">
-                <option value="">Select</option>
-                <option value="franchisee">Franchisee</option>
-                <option value="franchisor_staff">Franchisor Staff</option>
-            </select>
-        </div><br>
 
         <div>
             <label>First Name:</label><br>
@@ -41,7 +32,9 @@
         </div><br>
 
         <div>
-            <label>Contact:</label><br>
+
+        <div>
+            <label>Contact Number:</label><br>
             <input type="text" name="contact" required>
         </div><br>
 
@@ -55,30 +48,8 @@
             <input type="password" name="password" required>
         </div><br>
 
-        {{-- Franchisee Only --}}
-        <div id="franchisee_fields" style="display:none;">
-            <div>
-                <label>Email:</label><br>
-                <input type="email" name="email">
-            </div><br>
-
-            <div>
-                <label>Address:</label><br>
-                <input type="text" name="address">
-            </div><br>
-        </div>
-
         <button type="submit">Create Account</button>
     </form>
 </div>
-<script>
-function toggleFields(role) {
-    const franchiseeFields = document.getElementById('franchisee_fields');
-    if (role === 'franchisee') {
-        franchiseeFields.style.display = 'block';
-    } else {
-        franchiseeFields.style.display = 'none';
-    }
-}
 </script>
 @endsection

@@ -13,21 +13,18 @@
         <p style="color: green;">{{ session('success') }}</p>
     @endif
 
-  <a href="{{ route('franchisor.settings.password') }}">Update Password</a>
-
-
     <!-- Add Account Creation Button -->
     <a href="{{ route('accounts.create') }}">
-        <button>Create Account</button>
+        <button>Add Account</button>
     </a>
     <!-- Manage Branch Button -->
     <a href="{{ route('admin.branches.index') }}">
-    <button>Manage Branches</button>
+    <button>Branch Account</button>
 </a>
 
  <!-- Manage Item Button -->
     <a href="{{ route('admin.items.create') }}">
-    <button>Item</button>
+    <button>Add Item</button>
     </a>
 
     <!-- Add Logout Button -->

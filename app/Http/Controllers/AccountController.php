@@ -20,7 +20,7 @@ class AccountController extends Controller
     {
         // Common validation rules
         $request->validate([
-            'role' => 'required|in:franchisee,franchisor_staff,franchisee_staff',
+            'role' => 'required|in:franchisee,franchisor_staff',
             'fname' => 'required|string',
             'lname' => 'required|string',
             'contact' => 'required|string',
@@ -61,22 +61,41 @@ class AccountController extends Controller
                 'astaff_pass' => Hash::make($request->password),
                 'astaff_status' => 'Active',
             ]);
-        } elseif ($role === 'franchisee_staff') {
-            $request->validate([
-                'username' => 'required|string|unique:franchisee_staff,fstaff_username',
-            ]);
-
-            FranchiseeStaff::create([
-                'franchisee_id' => $request->franchisee_id,
-                'fstaff_fname' => $request->fname,
-                'fstaff_lname' => $request->lname,
-                'fstaff_contactNo' => $request->contact,
-                'fstaff_username' => $request->username,
-                'fstaff_pass' => Hash::make($request->password),
-                'fstaff_status' => 'Active',
-            ]);
         }
 
         return redirect()->back()->with('success', 'Account created successfully.');
+    }
+
+    //Show Franchisee Account Creation Form
+ public function createFranchiseeStaff()
+    {
+        return view('franchisee.account.create', [
+            'roles' => ['franchisee_staff'],
+        ]);
+    }
+
+    //Handle Franchisee Staff Account Creation
+    public function storeFranchiseeStaff(Request $request)
+    {
+        // Validation based on Blade input names
+        $request->validate([
+            'fname'   => 'required|string|max:255',
+            'lname'   => 'required|string|max:255',
+            'contact' => 'required|string|max:20',
+            'username'=> 'required|string|unique:franchisee_staff,fstaff_username',
+        ]);
+
+        FranchiseeStaff::create([
+            'franchisee_id'    => auth('franchisee')->id(),
+            'fstaff_fname'     => $request->fname,
+            'fstaff_lname'     => $request->lname,
+            'fstaff_contactNo' => $request->contact,
+            'fstaff_username'  => $request->username,
+            'fstaff_pass'      => Hash::make($request->password),
+            'fstaff_status'    => 'Active',
+        ]);
+
+        return redirect()->route('account.create')
+            ->with('success', 'Franchisee Staff account created successfully!');
     }
 }

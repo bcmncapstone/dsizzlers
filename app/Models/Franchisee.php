@@ -32,4 +32,8 @@ class Franchisee extends Authenticatable
     {
         return $this->franchisee_pass;
     }
+     public function branch()
+    {
+        return $this->hasOne(Branch::class, 'email', 'franchisee_email');
+    }
 }

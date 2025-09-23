@@ -11,7 +11,8 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\Franchisee\FranchiseeItemController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
-
+use App\Http\Controllers\StaffAccountController;
+use App\Http\Controllers\Franchisee\FranchiseeController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -26,6 +27,11 @@ Route::get('/admin/dashboard', function () {
 Route::get('/admin/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
 Route::post('/admin/accounts/store', [AccountController::class, 'store'])->name('accounts.store');
 
+//Account Creation for Franchisee Staff (Franchisee)
+Route::middleware(['auth:franchisee'])->group(function () {
+    Route::get('/franchisee/account/create', [AccountController::class, 'createFranchiseeStaff'])->name('account.create');
+    Route::post('/franchisee/account/store', [AccountController::class, 'storeFranchiseeStaff'])->name('account.store');
+});
 
 // LOGIN ROUTES FOR EACH ROLE
 
@@ -48,30 +54,49 @@ Route::middleware(['auth:franchisee'])->get('/franchisee/dashboard', function ()
 
 // Franchisee Staff Dashboard
 Route::middleware(['auth:franchisee_staff'])->get('/franchisee-staff/dashboard', function () {
-    return view('franchisee_staff.dashboard');
+    return view('franchisee-staff.dashboard');
 })->name('franchisee-staff.dashboard');
 
 // Franchisor Staff Dashboard
 Route::middleware(['auth:franchisor_staff'])->get('/franchisor-staff/dashboard', function () {
-    return view('franchisor_staff.dashboard');
+    return view('franchisor-staff.dashboard');
 })->name('franchisor-staff.dashboard');
 
-
-// SETTINGS / PASSWORD UPDATE — For all users
-Route::middleware([\App\Http\Middleware\Authenticate::class])->group(function () {
-    Route::get('/settings', [AccountSettingsController::class, 'index'])->name('settings.index');
-    Route::get('/settings/password', [AccountSettingsController::class, 'editPassword'])->name('settings.password');
-    Route::post('/settings/password', [AccountSettingsController::class, 'updatePassword'])->name('settings.password.update');
-});
 
 // LANDING PAGE
 Route::get('/', fn () => view('welcome'));
 
-// PASSWORD SETTINGS FOR FRANCHISOR
-Route::middleware(['auth'])->group(function () {
-    Route::get('/franchisor/settings/password', [PasswordController::class, 'edit'])->name('franchisor.settings.password');
-    Route::put('/franchisor/settings/password', [PasswordController::class, 'update'])->name('franchisor.settings.password.update');
+// Franchisor Staff Password Routes
+Route::middleware('auth:franchisor_staff')->group(function () {
+    Route::get('franchisor-staff/password', [AccountSettingsController::class, 'editFranchisorStaffPassword'])
+        ->name('franchisor-staff.password');
+    Route::post('franchisor-staff/password', [AccountSettingsController::class, 'updateFranchisorStaffPassword'])
+        ->name('franchisor-staff.password.update');
 });
+
+// Franchisee Staff Password Routes
+Route::middleware('auth:franchisee_staff')->group(function () {
+    Route::get('franchisee-staff/password', [AccountSettingsController::class, 'editFranchiseeStaffPassword'])
+        ->name('franchisee-staff.password');
+    Route::post('franchisee-staff/password', [AccountSettingsController::class, 'updateFranchiseeStaffPassword'])
+        ->name('franchisee-staff.password.update');
+});
+
+// Franchisee Password Routes
+Route::middleware('auth:franchisee')->group(function () {
+    Route::get('franchisee/password', [AccountSettingsController::class, 'editFranchiseePassword'])
+        ->name('franchisee.password');
+    Route::post('franchisee/password', [AccountSettingsController::class, 'updateFranchiseePassword'])
+        ->name('franchisee.password.update');
+});
+
+//Franchisee to View the User Account 
+Route::middleware(['auth:franchisee'])->prefix('franchisee')->name('franchisee.')->group(function () {
+    Route::get('/account', [FranchiseeController::class, 'account'])->name('account.index');
+    Route::get('/account/contract/{id}', [FranchiseeController::class, 'downloadContract'])->name('branches.contract');
+});
+
+
 
 // Fallback login route required by auth middleware
 Route::get('/login', fn () => redirect('/admin/login'))->name('login');
@@ -82,8 +107,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/branches/archived', [BranchController::class, 'archived'])->name('branches.archived');
     Route::get('/branches/create', [BranchController::class, 'create'])->name('branches.create');
     Route::post('/branches', [BranchController::class, 'store'])->name('branches.store');
+    Route::get('/branches/{id}/edit', [BranchController::class, 'edit'])->name('branches.edit');
+    Route::put('/branches/{id}', [BranchController::class, 'update'])->name('branches.update'); 
+    Route::post('/branches/{id}/restore', [BranchController::class, 'restore'])->name('branches.restore');
     Route::post('/branches/{id}/archive', [BranchController::class, 'archive'])->name('branches.archive');
     Route::get('/branches/{id}/download-contract', [BranchController::class, 'downloadContract'])->name('branches.downloadContract');
+
 });
 
 //Item Franchisor and Franchisor Staff
@@ -130,4 +159,20 @@ Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
 Route::post('/checkout', [OrderController::class, 'checkout'])->name('orders.checkout');
 
     });
+
+    //Update Profile For Franchisee Staff and Franchisor Staff
+Route::middleware(['auth:franchisor_staff'])->group(function () {
+    Route::get('/franchisor-staff/account', [StaffAccountController::class, 'showFranchisorStaff'])
+        ->name('franchisor-staff.account.show');
+    Route::put('/franchisor-staff/account', [StaffAccountController::class, 'updateFranchisorStaff'])
+        ->name('franchisor-staff.account.update');
+});
+
+Route::middleware(['auth:franchisee_staff'])->group(function () {
+    Route::get('/franchisee-staff/account', [StaffAccountController::class, 'showFranchiseeStaff'])
+        ->name('franchisee-staff.account.show');
+    Route::put('/franchisee-staff/account', [StaffAccountController::class, 'updateFranchiseeStaff'])
+        ->name('franchisee-staff.account.update');
+});
+
 }

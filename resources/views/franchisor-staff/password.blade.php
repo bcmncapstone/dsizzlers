@@ -2,27 +2,22 @@
 
 @section('content')
 <div class="container">
-    <h1>Update Password</h1>
-
-    @if (session('status'))
-        <div class="alert alert-success">{{ session('status') }}</div>
+    <h2>Update Franchisor Staff Password</h2>
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <form method="POST" action="{{ route('franchisor.settings.password.update') }}">
+    <form action="{{ route('franchisor-staff.password.update') }}" method="POST">
         @csrf
-        @method('PUT')
-
-        <div class="form-group">
+        <div class="mb-3">
             <label>New Password</label>
             <input type="password" name="password" class="form-control" required>
         </div>
-
-        <div class="form-group">
+        <div class="mb-3">
             <label>Confirm Password</label>
             <input type="password" name="password_confirmation" class="form-control" required>
         </div>
-
-        <button type="submit" class="btn btn-primary mt-2">Update Password</button>
+        <button type="submit" class="btn btn-primary">Update Password</button>
     </form>
 </div>
 @endsection

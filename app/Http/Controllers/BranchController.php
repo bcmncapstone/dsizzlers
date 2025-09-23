@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Branch;
+use App\Models\Franchisee;
 
 class BranchController extends Controller
 {
-        public function index()
+    // Show active branches
+    public function index()
     {
         $branches = Branch::where('branch_status', true)->get();
         return view('admin.branches.index', compact('branches'));
@@ -27,37 +28,87 @@ class BranchController extends Controller
         return view('admin.branches.create');
     }
 
-    // Store new branch in database
-   public function store(Request $request)
-{
-    $validated = $request->validate([
-        'location' => 'required|string|max:255',
-        'first_name' => 'required|string|max:100',
-        'last_name' => 'required|string|max:100',
-        'email' => 'required|email|unique:branches,email',
-        'contact_number' => 'required|string|max:20',
-        'contract_file' => 'required|file|mimes:pdf,docx,doc|max:2048',
-        'contract_expiration' => 'required|date', 
-    ]);
-
-    // Save uploaded contract file
-  
-    if ($request->hasFile('contract_file')) {
-        $file = $request->file('contract_file');
-        $filename = time() . '_' . $file->getClientOriginalName();
-
-        // Save to local storage: storage/app/public/contracts
-        $file->storeAs('public/contracts', $filename);
-
-        $validated['contract_file'] = $filename;
+    //  Show edit form
+    public function edit($id)
+    {
+        $branch = Branch::findOrFail($id);
+        return view('admin.branches.edit', compact('branch'));
     }
 
-    $validated['branch_status'] = true;
-    Branch::create($validated);
+    // Store new branch
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'location' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => [
+                'required',
+                'email',
+                'unique:branches,email',
+                function ($attribute, $value, $fail) {
+                    $exists = Franchisee::where('franchisee_email', $value)->exists();
+                    if (!$exists) {
+                        $fail('The email must belong to an existing Franchisee account.');
+                    }
+                }
+            ],
+            'contact_number' => 'required|string|max:20',
+            'contract_file' => 'required|file|mimes:pdf,docx,doc|max:2048',
+            'contract_expiration' => 'required|date',
+        ]);
 
-    return redirect()->route('admin.branches.index')->with('success', 'Branch and file saved.');
-}
-    // Archive branch (set branch_status to false)
+        if ($request->hasFile('contract_file')) {
+            $file = $request->file('contract_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('public/contracts', $filename);
+            $validated['contract_file'] = $filename;
+        }
+
+        $validated['branch_status'] = true;
+        Branch::create($validated);
+
+        return redirect()->route('admin.branches.index')->with('success', 'Branch added successfully.');
+    }
+
+    // Update existing branch
+    public function update(Request $request, $id)
+    {
+        $branch = Branch::findOrFail($id);
+
+        $validated = $request->validate([
+            'location' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'email' => [
+                'required',
+                'email',
+                'unique:branches,email,' . $branch->branch_id . ',branch_id',
+                function ($attribute, $value, $fail) {
+                    $exists = Franchisee::where('franchisee_email', $value)->exists();
+                    if (!$exists) {
+                        $fail('The email must belong to an existing Franchisee account.');
+                    }
+                }
+            ],
+            'contact_number' => 'required|string|max:20',
+            'contract_file' => 'nullable|file|mimes:pdf,docx,doc|max:2048',
+            'contract_expiration' => 'required|date',
+        ]);
+
+        if ($request->hasFile('contract_file')) {
+            $file = $request->file('contract_file');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->storeAs('public/contracts', $filename);
+            $validated['contract_file'] = $filename;
+        }
+
+        $branch->update($validated);
+
+        return redirect()->route('admin.branches.index')->with('success', 'Branch updated successfully.');
+    }
+
+    // Archive branch
     public function archive($id)
     {
         $branch = Branch::findOrFail($id);
@@ -67,7 +118,18 @@ class BranchController extends Controller
         return redirect()->route('admin.branches.index')->with('success', 'Branch archived successfully.');
     }
 
-    // Download/view contract file
+    // Restore branch
+    public function restore($id)
+    {
+        $branch = Branch::findOrFail($id);
+        $branch->branch_status = true;
+        $branch->save();
+
+        return redirect()->route('admin.branches.archived')->with('success', 'Branch restored successfully.');
+    }
+
+    // Download/Preview contract file
+     // Download/view contract file
  public function downloadContract(Request $request, $id)
 {
     $branch = Branch::findOrFail($id);

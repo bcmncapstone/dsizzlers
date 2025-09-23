@@ -4,73 +4,64 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class AccountSettingsController extends Controller
 {
-    // Settings main page
-    public function index()
+    //Franchisor Staff Password
+    public function editFranchisorStaffPassword()
     {
-       if (!Auth::check()) {
-    return redirect()->route('admin.login');
-}
-        return view('settings.index');
+        return view('franchisor-staff.password');
     }
 
-    // Show password update form
-    public function editPassword()
+    public function updateFranchisorStaffPassword(Request $request)
     {
-        if (!$this->checkUserSession()) {
-            return redirect()->route('admin.login');
-        }
-
-        return view('settings.password');
-    }
-
-    // Handle password update
-    public function updatePassword(Request $request)
-    {
-        if (!$this->checkUserSession()) {
-            return redirect()->route('admin.login');
-        }
-
         $request->validate([
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        // Identify user based on role session and update password
-        if (session()->has('franchisor_id')) {
-            $userId = session('franchisor_id');
-            DB::table('users')->where('id', $userId)->update([
-                'password' => Hash::make($request->password),
-            ]);
-        } elseif (session()->has('franchisee_id')) {
-            $userId = session('franchisee_id');
-            DB::table('users')->where('id', $userId)->update([
-                'password' => Hash::make($request->password),
-            ]);
-        } elseif (session()->has('franchisor_staff_id')) {
-            $userId = session('franchisor_staff_id');
-            DB::table('users')->where('id', $userId)->update([
-                'password' => Hash::make($request->password),
-            ]);
-        } elseif (session()->has('franchisee_staff_id')) {
-            $userId = session('franchisee_staff_id');
-            DB::table('users')->where('id', $userId)->update([
-                'password' => Hash::make($request->password),
-            ]);
-        }
+        $user = auth('franchisor_staff')->user();
+        $user->astaff_pass = Hash::make($request->password);
+        $user->save();
 
         return back()->with('success', 'Password updated successfully.');
     }
 
-    // Check if any user session exists
-    private function checkUserSession()
+    //Franchisee Staff Password
+   
+    public function editFranchiseeStaffPassword()
     {
-        return session()->has('franchisor_id') ||
-               session()->has('franchisee_id') ||
-               session()->has('franchisor_staff_id') ||
-               session()->has('franchisee_staff_id');
+        return view('franchisee-staff.password');
+    }
+
+    public function updateFranchiseeStaffPassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = auth('franchisee_staff')->user();
+        $user->fstaff_pass = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
+    }
+
+    //Franchisee Password
+    public function editFranchiseePassword()
+    {
+        return view('franchisee.password');
+    }
+
+    public function updateFranchiseePassword(Request $request)
+    {
+        $request->validate([
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = auth('franchisee')->user();
+        $user->franchisee_pass = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
     }
 }
