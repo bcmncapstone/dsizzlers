@@ -3,7 +3,11 @@
 @section('content')
 <h2>Edit Item</h2>
 
-<form method="POST" action="{{ route('admin.items.update', $item->item_id) }}">
+@php
+    $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
+@endphp
+
+<form method="POST" action="{{ route($prefix . '.items.update', $item->item_id) }}">
     @csrf
     @method('PUT')
 
@@ -24,4 +28,6 @@
 
     <button type="submit">Update Item</button>
 </form>
+
+<a href="{{ route($prefix . '.items.index') }}">Back to Items</a>
 @endsection

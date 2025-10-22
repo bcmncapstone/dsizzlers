@@ -27,6 +27,10 @@
     <button>Add Item</button>
     </a>
 
+     <!-- Manage Order Button -->
+    <a href="{{ route('admin.manageOrder.index') }}">
+    <button>Order</button>
+
     <!-- Add Logout Button -->
     <form action="{{ route('admin.logout') }}" method="POST" style="margin-top: 20px;">
         @csrf

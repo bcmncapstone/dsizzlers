@@ -2,7 +2,12 @@
 
 @section('content')
 <h2>Archived Items</h2>
-<a href="{{ route('admin.items.index') }}">Back to Items</a>
+
+@php
+    $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
+@endphp
+
+<a href="{{ route($prefix . '.items.index') }}">Back to Items</a>
 
 <table>
     <thead>
@@ -14,14 +19,18 @@
         </tr>
     </thead>
     <tbody>
-        @foreach ($items as $item)
-        <tr>
-            <td>{{ $item->item_name }}</td>
-            <td>{{ $item->item_description }}</td>
-            <td>{{ $item->price }}</td>
-            <td>{{ $item->stock_quantity }}</td>
-        </tr>
-        @endforeach
+        @forelse ($items as $item)
+            <tr>
+                <td>{{ $item->item_name }}</td>
+                <td>{{ $item->item_description }}</td>
+                <td>{{ $item->price }}</td>
+                <td>{{ $item->stock_quantity }}</td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="4" style="text-align: center;">No archived items found.</td>
+            </tr>
+        @endforelse
     </tbody>
 </table>
 @endsection

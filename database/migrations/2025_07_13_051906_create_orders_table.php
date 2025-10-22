@@ -6,21 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-         Schema::create('orders', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table) {
             $table->id('order_id');
-            $table->foreignId('astaff_id')
+
+            $table->foreignId('franchisee_id')
                   ->nullable()
-                  ->constrained('admin_staff', 'astaff_id')
+                  ->references('franchisee_id')
+                  ->on('franchisees')
                   ->nullOnDelete();
+
             $table->foreignId('fstaff_id')
                   ->nullable()
-                  ->constrained('franchisee_staff', 'fstaff_id')
+                  ->references('fstaff_id')
+                  ->on('franchisee_staff')
                   ->nullOnDelete();
+
             $table->dateTime('order_date')->useCurrent();
             $table->enum('order_status', ['Pending', 'Confirmed', 'Preparing', 'Delivered', 'Cancelled'])
                   ->default('Pending');
@@ -29,9 +31,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('orders');

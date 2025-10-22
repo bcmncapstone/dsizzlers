@@ -13,6 +13,9 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\StaffAccountController;
 use App\Http\Controllers\Franchisee\FranchiseeController;
+use App\Http\Controllers\FranchiseeStaffItemController;
+use App\Http\Controllers\ManageOrderController;
+
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -115,7 +118,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 });
 
-//Item Franchisor and Franchisor Staff
+//Item for Franchisor
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items', [ItemController::class, 'index'])->name('items.index');
     Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
@@ -128,37 +131,144 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items/archived', [ItemController::class, 'archived'])->name('items.archived');
 });
 
-// Manage Items for Franchisee and Franchisee Staff
-foreach (['franchisee', 'franchisee_staff'] as $prefix) {
-    Route::prefix($prefix)->name($prefix . '.')->group(function () {
+// Item Management for Franchisor Staff
+Route::prefix('franchisor-staff')
+    ->name('franchisor-staff.')
+    ->middleware(['auth:franchisor_staff'])
+    ->group(function () {
+        Route::get('/items', [ItemController::class, 'index'])->name('items.index');
+        Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
+        Route::post('/items', [ItemController::class, 'store'])->name('items.store');
+        Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
+        Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');
+        Route::post('/items/{id}/archive', [ItemController::class, 'archive'])->name('items.archive');
+        Route::get('/items/archived', [ItemController::class, 'archived'])->name('items.archived');
+    });
 
-        // Item list
+
+
+// Manage Items for Franchisee
+Route::prefix('franchisee')
+    ->name('franchisee.') //
+    ->middleware(['auth:franchisee'])
+    ->group(function () {
         Route::get('/item', [FranchiseeItemController::class, 'index'])
             ->name('item.index');
 
-        // Single item view (with numeric ID constraint)
         Route::get('/item/{id}', [FranchiseeItemController::class, 'show'])
             ->whereNumber('id')
             ->name('item.show');
     });
-}
 
-// Franchisee & Franchisee Staff Cart
-foreach (['franchisee', 'franchisee_staff'] as $prefix) {
-    Route::prefix($prefix)->name($prefix . '.')->group(function () {
-        // Cart routes
+Route::prefix('franchisee-staff')
+    ->middleware(['auth:franchisee_staff'])
+    ->name('franchisee_staff.')
+    ->group(function () {
+        Route::get('/item', [FranchiseeStaffItemController::class, 'index'])->name('item.index');
+        Route::get('/item/{id}', [FranchiseeStaffItemController::class, 'show'])->whereNumber('id')->name('item.show');
+ });
+
+
+// Franchisee Cart & Orders 
+Route::prefix('franchisee')
+    ->name('franchisee.')
+    ->middleware(['auth:franchisee'])
+    ->group(function () {
+        // Cart
         Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
         Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
         Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
         Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
-        Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+
+        // Checkout process
+        Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+        Route::post('/cart/place-order', [CartController::class, 'placeOrder'])->name('cart.placeOrder');
 
         // Orders
-Route::get('/orders', [OrderController::class, 'index'])->name('orders.index'); // <-- Add this
-Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-Route::post('/checkout', [OrderController::class, 'checkout'])->name('orders.checkout');
-
+       Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
     });
+
+// Franchisee Staff Cart & Orders 
+Route::prefix('franchisee-staff')
+    ->name('franchisee_staff.')
+    ->middleware(['auth:franchisee_staff'])
+    ->group(function () {
+        // Cart
+        Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+        Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
+        Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
+        Route::post('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+
+        // Checkout process
+        Route::get('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+        Route::post('/cart/place-order', [CartController::class, 'placeOrder'])->name('cart.placeOrder');
+
+        // Orders
+        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+    });
+
+// ===============================
+//  Franchisor (Admin) Order Management
+// ===============================
+Route::prefix('admin')
+    ->name('admin.')
+    ->middleware(['auth:admin'])
+    ->group(function () {
+        // View all orders
+        Route::get('manageOrder', [ManageOrderController::class, 'index'])
+            ->name('manageOrder.index');
+
+        // View single order
+        Route::get('manageOrder/{id}', [ManageOrderController::class, 'show'])
+            ->name('manageOrder.show');
+
+        // Confirm payment
+        Route::post('manageOrder/{id}/confirm-payment', [ManageOrderController::class, 'confirmPayment'])
+            ->name('manageOrder.confirmPayment');
+
+        // Update delivery status
+        Route::post('manageOrder/{id}/update-delivery', [ManageOrderController::class, 'updateDelivery'])
+            ->name('manageOrder.updateDelivery');
+
+        // Cancel order
+        Route::post('manageOrder/{id}/cancel', [ManageOrderController::class, 'cancelOrder'])
+            ->name('manageOrder.cancel');
+    });
+
+
+// ===============================
+//  Franchisor Staff Order Management
+// ===============================
+Route::prefix('franchisor-staff')
+    ->name('franchisor-staff.')
+    ->middleware(['auth:franchisor_staff'])
+    ->group(function () {
+        // View all orders
+        Route::get('/manageOrder', [ManageOrderController::class, 'index'])
+            ->name('manageOrder.index');
+
+        // View single order
+        Route::get('/manageOrder/{id}', [ManageOrderController::class, 'show'])
+            ->name('manageOrder.show');
+
+        // Confirm payment
+        Route::post('/manageOrder/{id}/confirm-payment', [ManageOrderController::class, 'confirmPayment'])
+            ->name('manageOrder.confirmPayment');
+
+        // Update delivery status
+        Route::post('/manageOrder/{id}/update-delivery', [ManageOrderController::class, 'updateDelivery'])
+            ->name('manageOrder.updateDelivery');
+
+        // Cancel order
+        Route::post('/manageOrder/{id}/cancel', [ManageOrderController::class, 'cancelOrder'])
+            ->name('manageOrder.cancel');
+    });
+
+
 
     //Update Profile For Franchisee Staff and Franchisor Staff
 Route::middleware(['auth:franchisor_staff'])->group(function () {
@@ -175,4 +285,4 @@ Route::middleware(['auth:franchisee_staff'])->group(function () {
         ->name('franchisee-staff.account.update');
 });
 
-}
+

@@ -57,7 +57,7 @@
                     <td>{{ $item->stock_quantity }}</td>
                     <td>{{ ucfirst($item->item_category) }}</td>
                     <td>
-                        <a href="{{ route('franchisee.item.show', $item->item_id) }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('franchisee_staff.item.show', $item->item_id) }}" class="btn btn-primary btn-sm">
                             View
                         </a>
                     </td>

@@ -12,7 +12,7 @@ class Order extends Model
     protected $primaryKey = 'order_id'; // important since you used order_id in migration
 
     protected $fillable = [
-        'astaff_id',
+        'franchisee_id',
         'fstaff_id',
         'order_date',
         'order_status',
@@ -27,7 +27,7 @@ class Order extends Model
     // relationships if needed
     public function adminStaff()
     {
-        return $this->belongsTo(AdminStaff::class, 'astaff_id');
+        return $this->belongsTo(Franchisee::class, 'franchisee_id');
     }
 
     public function franchiseeStaff()
@@ -35,4 +35,3 @@ class Order extends Model
         return $this->belongsTo(FranchiseeStaff::class, 'fstaff_id');
     }
 }
-

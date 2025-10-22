@@ -3,7 +3,11 @@
 @section('content')
 <h2>Add New Item</h2>
 
-<form method="POST" action="{{ route('admin.items.store') }}">
+@php
+    $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
+@endphp
+
+<form method="POST" action="{{ route($prefix . '.items.store') }}">
     @csrf
 
     <label for="item_name">Item Name:</label>
@@ -23,4 +27,6 @@
 
     <button type="submit">Save Item</button>
 </form>
+
+<a href="{{ route($prefix . '.items.index') }}">Back to Items</a>
 @endsection
