@@ -10,24 +10,25 @@ use Illuminate\Http\Request;
 class OrderController extends Controller
 {
     // Display list of orders
-   public function index()
-{
-    $query = Order::with('orderDetails.item');
-    $viewPath = '';
+    public function index()
+    {
+        $query = Order::with('orderDetails.item');
+        $viewPath = '';
 
-    if (auth()->guard('franchisee')->check()) {
-        $query->where('franchisee_id', auth()->guard('franchisee')->id());
-        $viewPath = 'franchisee.orders.index';
-    } elseif (auth()->guard('franchisee_staff')->check()) {
-        $query->where('fstaff_id', auth()->guard('franchisee_staff')->id());
-        $viewPath = 'franchisee_staff.orders.index';
-    } else {
-        abort(403, 'Unauthorized');
+        if (auth()->guard('franchisee')->check()) {
+            $query->where('franchisee_id', auth()->guard('franchisee')->id());
+            $viewPath = 'franchisee.orders.index';
+        } elseif (auth()->guard('franchisee_staff')->check()) {
+            $query->where('fstaff_id', auth()->guard('franchisee_staff')->id());
+            // views for franchisee staff are stored under "franchisee-staff" directory
+            $viewPath = 'franchisee-staff.orders.index';
+        } else {
+            abort(403, 'Unauthorized');
+        }
+
+        $orders = $query->latest()->get();
+        return view($viewPath, compact('orders'));
     }
-
-    $orders = $query->latest()->get();
-    return view($viewPath, compact('orders'));
-}
 
     // Show available items (if needed)
     public function create()
@@ -35,7 +36,7 @@ class OrderController extends Controller
         $items = Item::where('is_archived', false)->get();
 
         if (auth()->guard('franchisee_staff')->check()) {
-            return view('franchisee_staff.orders.create', compact('items'));
+            return view('franchisee-staff.orders.create', compact('items'));
         } elseif (auth()->guard('franchisee')->check()) {
             return view('franchisee.orders.create', compact('items'));
         }
@@ -92,7 +93,13 @@ class OrderController extends Controller
     // Checkout
     public function checkout(Request $request)
     {
-        $cart = session()->get('cart', []);
+        // Use the same per-role cart session key as CartController
+        $current = \Route::currentRouteName() ?? '';
+        $cartKey = (strpos($current, 'franchisee_staff.') === 0 || strpos($current, 'franchisee-staff.') === 0)
+            ? 'franchisee_staff'
+            : 'franchisee';
+
+        $cart = session()->get($cartKey, []);
         if (empty($cart)) {
             return redirect()->back()->with('error', 'Your cart is empty.');
         }
@@ -130,7 +137,8 @@ class OrderController extends Controller
         }
 
         $order->update(['total_amount' => $total]);
-        session()->forget('cart');
+    // Clear the correct cart key
+    session()->forget($cartKey);
 
         return redirect()->route($redirectRoute)->with('success', 'Order placed successfully!');
     }
@@ -141,7 +149,7 @@ class OrderController extends Controller
         $order = Order::with('orderDetails.item')->findOrFail($id);
 
         if (auth()->guard('franchisee_staff')->check()) {
-            return view('franchisee_staff.orders.show', compact('order'));
+            return view('franchisee-staff.orders.show', compact('order'));
         } elseif (auth()->guard('franchisee')->check()) {
             return view('franchisee.orders.show', compact('order'));
         }

@@ -17,6 +17,10 @@ class Order extends Model
         'order_date',
         'order_status',
         'total_amount',
+        'name',
+        'contact',
+        'address',
+        'payment_receipt',
     ];
 
     public function orderDetails()
@@ -25,7 +29,7 @@ class Order extends Model
     }
 
     // relationships if needed
-    public function adminStaff()
+    public function franchisee()
     {
         return $this->belongsTo(Franchisee::class, 'franchisee_id');
     }

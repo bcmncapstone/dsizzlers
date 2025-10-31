@@ -14,9 +14,14 @@ class CartController extends Controller
      */
     private function getCartKey()
     {
-        return strpos(\Route::currentRouteName(), 'franchisee_staff.') === 0
-            ? 'franchisee_staff'
-            : 'franchisee';
+        $current = \Route::currentRouteName() ?? '';
+
+        // Accept both naming styles — some routes use 'franchisee_staff.' and some use 'franchisee-staff.'
+        if (strpos($current, 'franchisee_staff.') === 0 || strpos($current, 'franchisee-staff.') === 0) {
+            return 'franchisee_staff';
+        }
+
+        return 'franchisee';
     }
 
     /**
@@ -76,9 +81,8 @@ class CartController extends Controller
 
         session()->put($cartKey, $cart);
 
-        $prefix = strpos(\Route::currentRouteName(), 'franchisee_staff.') === 0
-            ? 'franchisee_staff'
-            : 'franchisee';
+        // Use the same cart key logic for route prefixes so naming inconsistencies won't break redirects
+        $prefix = $this->getCartKey();
 
         return redirect()->route($prefix . '.cart.index')
             ->with('success', 'Item added to cart successfully!');
@@ -108,9 +112,7 @@ class CartController extends Controller
 
         session()->put($cartKey, $cart);
 
-        $prefix = strpos(\Route::currentRouteName(), 'franchisee_staff.') === 0
-            ? 'franchisee_staff'
-            : 'franchisee';
+        $prefix = $this->getCartKey();
 
         return redirect()->route($prefix . '.cart.index')
             ->with('success', 'Cart updated successfully!');
