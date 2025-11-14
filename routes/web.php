@@ -146,7 +146,6 @@ Route::prefix('franchisor-staff')
     });
 
 
-
 // Manage Items for Franchisee
 Route::prefix('franchisee')
     ->name('franchisee.') //
@@ -284,5 +283,24 @@ Route::middleware(['auth:franchisee_staff'])->group(function () {
     Route::put('/franchisee-staff/account', [StaffAccountController::class, 'updateFranchiseeStaff'])
         ->name('franchisee-staff.account.update');
 });
+
+
+// Generic logout route that logs out whichever guard is active
+Route::post('/logout', function () {
+    if (auth()->guard('admin')->check()) {
+        auth()->guard('admin')->logout();
+    } elseif (auth()->guard('franchisor_staff')->check()) {
+        auth()->guard('franchisor_staff')->logout();
+    } elseif (auth()->guard('franchisee_staff')->check()) {
+        auth()->guard('franchisee_staff')->logout();
+    } elseif (auth()->guard('franchisee')->check()) {
+        auth()->guard('franchisee')->logout();
+    }
+
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect('/login');
+})->name('logout');
 
 

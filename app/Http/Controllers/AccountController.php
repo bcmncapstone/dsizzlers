@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Hash;
 use App\Models\Franchisee;
 use App\Models\FranchisorStaff;
 use App\Models\FranchiseeStaff;
+use Illuminate\Support\Facades\Auth;
+
 
 class AccountController extends Controller
 {
@@ -38,7 +40,7 @@ class AccountController extends Controller
             ]);
 
             Franchisee::create([
-                'admin_id' => session('admin_id'),
+                'admin_id' => Auth::guard('admin')->user()->admin_id,
                 'franchisee_name' => $request->fname . ' ' . $request->lname,
                 'franchisee_contactNo' => $request->contact,
                 'franchisee_username' => $request->username,
@@ -53,7 +55,7 @@ class AccountController extends Controller
             ]);
 
             FranchisorStaff::create([
-                'admin_id' => session('admin_id'),
+                'admin_id' => Auth::guard('admin')->user()->admin_id,
                 'astaff_fname' => $request->fname,
                 'astaff_lname' => $request->lname,
                 'astaff_contactNo' => $request->contact,

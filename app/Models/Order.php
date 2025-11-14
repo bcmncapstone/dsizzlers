@@ -21,6 +21,8 @@ class Order extends Model
         'contact',
         'address',
         'payment_receipt',
+        'payment_status',
+        'delivery_status',
     ];
 
     public function orderDetails()

@@ -93,11 +93,8 @@ class OrderController extends Controller
     // Checkout
     public function checkout(Request $request)
     {
-        // Use the same per-role cart session key as CartController
-        $current = \Route::currentRouteName() ?? '';
-        $cartKey = (strpos($current, 'franchisee_staff.') === 0 || strpos($current, 'franchisee-staff.') === 0)
-            ? 'franchisee_staff'
-            : 'franchisee';
+        // Resolve cart key: prefer explicit session owner (set by CartController) otherwise derive from route
+        $cartKey = session('cart_owner') ?? ((strpos(\Route::currentRouteName() ?? '', 'franchisee_staff.') === 0 || strpos(\Route::currentRouteName() ?? '', 'franchisee-staff.') === 0) ? 'franchisee_staff' : 'franchisee');
 
         $cart = session()->get($cartKey, []);
         if (empty($cart)) {

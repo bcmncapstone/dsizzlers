@@ -14,6 +14,11 @@ class CartController extends Controller
      */
     private function getCartKey()
     {
+        // Prefer an explicit session owner if set (keeps cart consistent across route-name variations)
+        if (session()->has('cart_owner')) {
+            return session('cart_owner');
+        }
+
         $current = \Route::currentRouteName() ?? '';
 
         // Accept both naming styles — some routes use 'franchisee_staff.' and some use 'franchisee-staff.'
@@ -41,9 +46,15 @@ class CartController extends Controller
 
         session()->put($cartKey, $cart);
 
+    // Persist which guard owns this cart so later routes (checkout/summary) can resolve the same key
+    session()->put('cart_owner', $cartKey);
+
+        $layout = $cartKey === 'franchisee_staff' ? 'layouts.franchisee-staff' : 'layouts.franchisee';
+
         return view('cart.index', [
             'cart' => $cart,
             'total' => collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']),
+            'layout' => $layout,
         ]);
     }
 
@@ -131,6 +142,11 @@ class CartController extends Controller
             session()->put($cartKey, $cart);
         }
 
+        // If the cart is now empty, remove the cart_owner marker
+        if (empty($cart)) {
+            session()->forget('cart_owner');
+        }
+
         return redirect()->back()->with('success', 'Item removed from cart!');
     }
 
@@ -142,74 +158,88 @@ class CartController extends Controller
     $cartKey = $this->getCartKey();
     $cart = session()->get($cartKey, []);
 
+    
+
     if (empty($cart)) {
         return redirect()->back()->with('error', 'Your cart is empty.');
     }
+
+    $layout = $cartKey === 'franchisee_staff' ? 'layouts.franchisee-staff' : 'layouts.franchisee';
 
     return view('cart.checkout', [
         'cart' => $cart,
         'total' => collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']),
         'cartKey' => $cartKey,
+        'layout' => $layout,
     ]);
 }
 
     /**
      * Place an order and clear the cart.
      */
-    public function placeOrder(Request $request)
-    {
-        $cartKey = $this->getCartKey();
-        $cart = session()->get($cartKey, []);
+   public function placeOrder(Request $request)
+{
+    $cartKey = $this->getCartKey();
+    $cart = session()->get($cartKey, []);
 
-        if (empty($cart)) {
-            return redirect()->route($this->getCartKey() . '.cart.index')
-                ->with('error', 'Your cart is empty.');
-        }
+    if (empty($cart)) {
+        return redirect()->route($this->getCartKey() . '.cart.index')
+            ->with('error', 'Your cart is empty.');
+    }
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'contact' => 'required|string|max:20',
-            'address' => 'required|string|max:255',
-            'payment_receipt' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+    // Validate order details and payment receipt
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'contact' => 'required|string|max:20',
+        'address' => 'required|string|max:255',
+        'payment_receipt' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+    ]);
+
+    // Store uploaded payment receipt
+    $receiptPath = $request->file('payment_receipt')->store('receipts', 'public');
+
+    // Identify who is logged in
+    $fstaff_id = auth()->guard('franchisee_staff')->check() ? auth()->guard('franchisee_staff')->id() : null;
+    $franchisee_id = auth()->guard('franchisee')->check() ? auth()->guard('franchisee')->id() : null;
+
+    // Create the order
+    $order = Order::create([
+        'fstaff_id'       => $fstaff_id,
+        'franchisee_id'   => $franchisee_id,
+        'total_amount'    => collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']),
+        'order_status'    => 'Pending',
+        'name'            => $request->name,
+        'contact'         => $request->contact,
+        'address'         => $request->address,
+        'payment_receipt' => $receiptPath,
+    ]);
+
+    // Create the order details
+    foreach ($cart as $itemId => $cartItem) {
+        OrderDetail::create([
+            'order_id' => $order->order_id,
+            'item_id'  => $itemId,
+            'quantity' => $cartItem['quantity'],
+            'price'    => $cartItem['price'],
+            'subtotal' => $cartItem['quantity'] * $cartItem['price'],
         ]);
+    }
 
-        $receiptPath = $request->file('payment_receipt')->store('receipts', 'public');
+    // Clear the cart session
+    session()->forget($cartKey);
+    session()->forget('cart_owner');
 
-        $fstaff_id = auth()->guard('franchisee_staff')->check() ? auth()->id() : null;
-        $franchisee_id = auth()->guard('franchisee')->check() ? auth()->id() : null;
+    // Redirect to proper order index based on user role
+    if (auth()->guard('franchisee_staff')->check()) {
+        $prefix = 'franchisee_staff';
+    } elseif (auth()->guard('franchisee')->check()) {
+        $prefix = 'franchisee';
+    } else {
+        $prefix = 'web';
+    }
 
-        $order = Order::create([
-            'fstaff_id'       => $fstaff_id,
-            'franchisee_id'   => $franchisee_id,
-            'total_amount'    => collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']),
-            'order_status'    => 'Pending',
-            'name'            => $request->name,
-            'contact'         => $request->contact,
-            'address'         => $request->address,
-            'payment_receipt' => $receiptPath,
-        ]);
-
-        foreach ($cart as $itemId => $cartItem) {
-            OrderDetail::create([
-                'order_id' => $order->order_id,
-                'item_id'  => $itemId,
-                'quantity' => $cartItem['quantity'],
-                'price'    => $cartItem['price'],
-                'subtotal' => $cartItem['quantity'] * $cartItem['price'],
-            ]);
-        }
-
-        session()->forget($cartKey);
-
-   if (auth()->guard('franchisee_staff')->check()) {
-    $prefix = 'franchisee_staff';
-} elseif (auth()->guard('franchisee')->check()) {
-    $prefix = 'franchisee';
-} else {
-    $prefix = 'web'; // fallback just in case
+    return redirect()->route($prefix . '.orders.index')
+        ->with('success', 'Order placed successfully! Pending verification.');
 }
 
-        return redirect()->route($prefix . '.orders.index')
-            ->with('success', 'Order placed successfully! Pending verification.');
-    }
 }

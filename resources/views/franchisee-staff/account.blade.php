@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.franchisee-staff')
 
 @section('content')
 <div class="container">
@@ -22,7 +22,7 @@
             @enderror
         </div>
 
-        <a href="{{ route('settings.password') }}" class="btn btn-primary">Update Password</a>
+    <a href="{{ route('franchisee-staff.password') }}" class="btn btn-primary">Update Password</a>
 
         <button type="submit" class="btn btn-primary">Save</button>
     </form>

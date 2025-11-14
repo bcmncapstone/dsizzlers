@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;   // already imported
+use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
 
 class AdminAuthController extends Controller
@@ -26,9 +27,9 @@ class AdminAuthController extends Controller
 
         // Use Hash::check to compare the plain‑text password with the hashed one
         if ($admin && Hash::check($request->admin_pass, $admin->admin_pass)) {
-            // login success ➜ store ID in session
-            session(['admin_id' => $admin->admin_id]);
-            return redirect('/admin/dashboard');
+            // login success ➜ sign in using the 'admin' guard so middleware recognizes the session
+            Auth::guard('admin')->login($admin);
+            return redirect()->intended('/admin/dashboard');
         }
 
         // Login failed
@@ -37,7 +38,7 @@ class AdminAuthController extends Controller
 
     public function logout()
     {
-        session()->forget('admin_id');
+        Auth::guard('admin')->logout();
         return redirect('/admin/login');
     }
 }

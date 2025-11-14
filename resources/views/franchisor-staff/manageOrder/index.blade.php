@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.franchisor-staff')
 
 @section('content')
 <div class="container">
@@ -22,13 +22,13 @@
         <tbody>
             @forelse ($orders as $order)
                 <tr>
-                    <td>{{ $order->id }}</td>
-                    <td>{{ $order->customer_name }}</td>
+                    <td>{{ $order->order_id }}</td>
+                    <td>{{ $order->name }}</td>
                     <td>{{ ucfirst($order->order_status) }}</td>
-                    <td>{{ ucfirst($order->payment_status) }}</td>
-                    <td>{{ ucfirst($order->delivery_status) }}</td>
+                    <td>{{ ucfirst($order->payment_status ?? 'pending') }}</td>
+                    <td>{{ ucfirst($order->delivery_status ?? 'pending') }}</td>
                     <td>
-                        <a href="{{ route('franchisor-staff.manageOrder.show', $order->id) }}" class="btn btn-primary btn-sm">View</a>
+                        <a href="{{ route('franchisor-staff.manageOrder.show', $order->order_id) }}" class="btn btn-primary btn-sm">View</a>
                     </td>
                 </tr>
             @empty
