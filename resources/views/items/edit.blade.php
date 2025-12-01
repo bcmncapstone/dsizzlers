@@ -7,9 +7,16 @@
     $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
 @endphp
 
-<form method="POST" action="{{ route($prefix . '.items.update', $item->item_id) }}">
+<form method="POST" action="{{ route($prefix . '.items.update', $item->item_id) }}" enctype="multipart/form-data">
     @csrf
     @method('PUT')
+
+    <label for="item_image">Item Image:</label>
+    <input type="file" name="item_image" id="item_image" accept="image/*"><br>
+
+    @if ($item->item_image)
+    <img src="{{ asset('storage/' . $item->item_image) }}" alt="Current image" width="120">
+@endif
 
     <label for="item_name">Item Name:</label>
     <input type="text" name="item_name" id="item_name" value="{{ $item->item_name }}" required><br>

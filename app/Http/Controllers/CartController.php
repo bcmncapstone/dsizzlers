@@ -9,9 +9,7 @@ use App\Models\OrderDetail;
 
 class CartController extends Controller
 {
-    /**
-     * Determine whether the current user is a franchisee or franchisee staff.
-     */
+    // Determine whether the current user is a franchisee or franchisee staff.
     private function getCartKey()
     {
         // Prefer an explicit session owner if set (keeps cart consistent across route-name variations)

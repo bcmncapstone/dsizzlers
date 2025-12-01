@@ -22,6 +22,7 @@
 <table>
     <thead>
         <tr>
+            <th>Image</th>
             <th>Name</th>
             <th>Description</th>
             <th>Price</th>
@@ -33,9 +34,16 @@
     <tbody>
         @forelse ($items as $item)
             <tr>
+                <td>
+                    @if ($item->item_image)
+                        <img src="{{ asset('storage/' . $item->item_image) }}" width="60" alt="Item Image">
+                    @else
+                        No image
+                    @endif
+                </td>
                 <td>{{ $item->item_name }}</td>
                 <td>{{ $item->item_description }}</td>
-                <td>{{ $item->price }}</td>
+                <td>{{ number_format($item->price, 2) }}</td>
                 <td>{{ $item->stock_quantity }}</td>
                 <td>{{ $item->item_category }}</td>
                 <td>
@@ -54,7 +62,7 @@
             </tr>
         @empty
             <tr>
-                <td colspan="6" style="text-align: center;">No items found.</td>
+                <td colspan="7" style="text-align: center;">No items found.</td>
             </tr>
         @endforelse
     </tbody>

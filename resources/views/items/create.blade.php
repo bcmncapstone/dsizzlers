@@ -7,8 +7,13 @@
     $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
 @endphp
 
-<form method="POST" action="{{ route($prefix . '.items.store') }}">
+
+<form method="POST" action="{{ route($prefix . '.items.store') }}" enctype="multipart/form-data">
+
     @csrf
+
+    <label for="item_image">Item Image:</label>
+    <input type="file" name="item_image" id="item_image" accept="image/*"><br>
 
     <label for="item_name">Item Name:</label>
     <input type="text" name="item_name" id="item_name" required><br>
