@@ -14,7 +14,9 @@
             <tr>
                 <th>ID</th>
                 <th>Customer</th>
-                <th>Status</th>
+                <th>Contact</th>
+                <th>Address</th>
+                <th></th>Status</th>
                 <th>Payment</th>
                 <th>Delivery</th>
                 <th>Action</th>
@@ -25,6 +27,8 @@
             <tr>
                 <td>{{ $order->order_id }}</td>
                 <td>{{ $order->name ?? 'N/A' }}</td>
+                <td>{{ $order->contact ?? 'N/A' }}</td>
+                <td>{{ $order->address ?? 'N/A' }}</td>
                 <td>{{ ucfirst($order->order_status ?? 'pending') }}</td>
                 <td>{{ ucfirst($order->payment_status ?? 'pending') }}</td>
                 <td>{{ ucfirst($order->delivery_status ?? 'pending') }}</td>

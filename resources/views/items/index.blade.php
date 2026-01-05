@@ -35,11 +35,11 @@
         @forelse ($items as $item)
             <tr>
                 <td>
-                    @if ($item->item_image)
-                        <img src="{{ asset('storage/' . $item->item_image) }}" width="60" alt="Item Image">
-                    @else
+                    @forelse ($item->item_images as $img)
+                        <img src="{{ asset('storage/' . $img) }}" width="60" class="me-1 mb-1 rounded" alt="Item Image">
+                    @empty
                         No image
-                    @endif
+                    @endforelse
                 </td>
                 <td>{{ $item->item_name }}</td>
                 <td>{{ $item->item_description }}</td>

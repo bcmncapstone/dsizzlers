@@ -5,7 +5,10 @@
     <h2 class="mb-4">Order Details (Franchisee Staff)</h2>
 
     <p><strong>Order ID:</strong> {{ $order->order_id }}</p>
-    <p><strong>Status:</strong> {{ $order->order_status }}</p>
+    <p><strong>Name:</strong> {{ $order->name }}</p>
+    <p><strong>Contact:</strong> {{ $order->contact }}</p>
+    <p><strong>Address:</strong> {{ $order->address }}</p>
+    <p><strong>Status:</strong> {{ ucfirst($order->delivery_status ?? 'pending') }}</p>
     <p><strong>Total Amount:</strong> ₱{{ number_format($order->total_amount, 2) }}</p>
 
     <hr>

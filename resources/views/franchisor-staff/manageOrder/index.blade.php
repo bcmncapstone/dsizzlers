@@ -13,6 +13,8 @@
             <tr>
                 <th>Order ID</th>
                 <th>Customer</th>
+                <th>Contact</th>
+                <th>Address</th>
                 <th>Status</th>
                 <th>Payment</th>
                 <th>Delivery</th>
@@ -24,6 +26,8 @@
                 <tr>
                     <td>{{ $order->order_id }}</td>
                     <td>{{ $order->name }}</td>
+                    <td>{{ $order->contact }}</td>
+                    <td>{{ $order->address }}</td>
                     <td>{{ ucfirst($order->order_status) }}</td>
                     <td>{{ ucfirst($order->payment_status ?? 'pending') }}</td>
                     <td>{{ ucfirst($order->delivery_status ?? 'pending') }}</td>
@@ -33,7 +37,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center">No orders found.</td>
+                    <td colspan="8" class="text-center">No orders found.</td>
                 </tr>
             @endforelse
         </tbody>

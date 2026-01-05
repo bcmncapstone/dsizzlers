@@ -26,6 +26,7 @@
                         <th width="40">
                             <input type="checkbox" id="selectAll">
                         </th>
+                        <th>Item Image</th>
                         <th>Item Name</th>
                         <th>Price</th>
                         <th width="150">Quantity</th>
@@ -39,7 +40,13 @@
                             <td>
                                 <input type="checkbox" name="selected_items[]" value="{{ $id }}" class="item-checkbox">
                             </td>
-
+                            <td>
+                        @forelse ($item['item_images'] as $img)
+                            <img src="{{ asset('storage/' . $img) }}" width="40" class="me-1 mb-1 rounded">
+                        @empty
+                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40">
+                        @endforelse
+                    </td>
                             <td>{{ $item['name'] }}</td>
 
                             <td>₱{{ number_format($item['price'], 2) }}</td>

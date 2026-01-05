@@ -17,6 +17,7 @@
             <table class="table table-sm">
                 <thead>
                     <tr>
+                        <th>Image</th>
                         <th>Item</th>
                         <th>Qty</th>
                         <th>Price</th>
@@ -26,6 +27,13 @@
                 <tbody>
                     @foreach($cart as $item)
                         <tr>
+                             <td>
+                        @forelse ($item['item_images'] as $img)
+                            <img src="{{ asset('storage/' . $img) }}" width="40" class="me-1 mb-1 rounded">
+                        @empty
+                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40">
+                        @endforelse
+                    </td>
                             <td>{{ $item['name'] }}</td>
                             <td>{{ $item['quantity'] }}</td>
                             <td>₱{{ number_format($item['price'], 2) }}</td>

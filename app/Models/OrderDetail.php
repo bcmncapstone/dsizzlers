@@ -10,7 +10,7 @@ class OrderDetail extends Model
     use HasFactory;
 
     protected $table = 'order_details';
-    protected $primaryKey = 'order_detail_id'; // 👈 tell Laravel your PK
+    protected $primaryKey = 'order_detail_id'; // tell Laravel your PK
     public $incrementing = true;
     protected $keyType = 'int';
 

@@ -12,8 +12,10 @@
 
     @csrf
 
-    <label for="item_image">Item Image:</label>
-    <input type="file" name="item_image" id="item_image" accept="image/*"><br>
+    <label>Item Images:</label><br>
+<input type="file" name="item_image[]" accept="image/*"><br>
+<input type="file" name="item_image[]" accept="image/*"><br>
+<input type="file" name="item_image[]" accept="image/*"><br>
 
     <label for="item_name">Item Name:</label>
     <input type="text" name="item_name" id="item_name" required><br>

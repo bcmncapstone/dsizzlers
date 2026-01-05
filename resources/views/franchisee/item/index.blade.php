@@ -40,6 +40,7 @@
     <table class="table table-bordered table-hover mb-5">
         <thead class="table-light">
             <tr>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Description</th>
                 <th>Price</th>
@@ -51,6 +52,13 @@
         <tbody>
             @forelse ($items as $item)
                 <tr>
+                    <td>
+                        @forelse ($item->item_images as $img)
+                            <img src="{{ asset('storage/' . $img) }}" width="40" class="me-1 mb-1 rounded">
+                        @empty
+                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40">
+                        @endforelse
+                    </td>
                     <td>{{ $item->item_name }}</td>
                     <td>{{ $item->item_description }}</td>
                     <td>{{ number_format($item->price, 2) }}</td>
@@ -64,7 +72,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center">No items found.</td>
+                    <td colspan="7" class="text-center">No items found.</td>
                 </tr>
             @endforelse
         </tbody>
@@ -76,6 +84,11 @@
         @foreach ($items as $item)
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
+                    @if ($item->item_images)
+                        <img src="{{ asset('storage/' . $item->item_images[0]) }}" class="card-img-top" alt="{{ $item->item_name }}">
+                    @else
+                        <img src="{{ asset('images/default-item.png') }}" class="card-img-top" alt="Default Image" width="40">
+                    @endif
                     <div class="card-body">
                         <h5 class="card-title">{{ $item->item_name }}</h5>
                         <p class="card-text">{{ $item->item_description }}</p>

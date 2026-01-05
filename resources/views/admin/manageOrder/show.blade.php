@@ -7,6 +7,12 @@
 
     <p><strong>Order ID:</strong> {{ $order->order_id }}</p>
     <p><strong>Customer:</strong> {{ $order->name }}</p>
+    <p><strong>Payment Receipt:</strong></p>
+@if($order->payment_receipt)
+    <img src="{{ asset('storage/' . $order->payment_receipt) }}" alt="Payment Receipt" style="max-width: 300px; max-height: 300px;">
+@else
+    <p>No payment receipt uploaded.</p>
+@endif
     <p><strong>Status:</strong> {{ ucfirst($order->order_status ?? 'pending') }}</p>
     <p><strong>Payment:</strong> {{ ucfirst($order->payment_status ?? 'pending') }}</p>
     <p><strong>Delivery:</strong> {{ ucfirst($order->delivery_status ?? 'pending') }}</p>

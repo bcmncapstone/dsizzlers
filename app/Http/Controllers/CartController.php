@@ -39,6 +39,10 @@ class CartController extends Controller
             $item = Item::find($id);
             if ($item) {
                 $details['stock_quantity'] = $item->stock_quantity;
+                $details['item_images'] = $item->item_images;
+            } else {
+                // Item no longer exists, remove from cart
+                unset($cart[$id]);
             }
         }
 
@@ -85,6 +89,7 @@ class CartController extends Controller
                 "price" => $item->price,
                 "quantity" => $quantity,
                 "stock_quantity" => $item->stock_quantity,
+                "item_images" => $item->item_images,
             ];
         }
 
@@ -118,6 +123,7 @@ class CartController extends Controller
 
         $cart[$id]['quantity'] = $quantity;
         $cart[$id]['stock_quantity'] = $item->stock_quantity;
+        $cart[$id]['item_image'] = $item->item_image;
 
         session()->put($cartKey, $cart);
 
@@ -161,6 +167,17 @@ class CartController extends Controller
     if (empty($cart)) {
         return redirect()->back()->with('error', 'Your cart is empty.');
     }
+
+    // Ensure item_images are up to date
+    foreach ($cart as $id => &$details) {
+        $item = Item::find($id);
+        if ($item) {
+            $details['item_images'] = $item->item_images;
+        } else {
+            unset($cart[$id]);
+        }
+    }
+    session()->put($cartKey, $cart);
 
     $layout = $cartKey === 'franchisee_staff' ? 'layouts.franchisee-staff' : 'layouts.franchisee';
 

@@ -11,12 +11,16 @@
     @csrf
     @method('PUT')
 
-    <label for="item_image">Item Image:</label>
-    <input type="file" name="item_image" id="item_image" accept="image/*"><br>
+    <label>Item Images:</label><br>
+<input type="file" name="item_image[]" accept="image/*"><br>
+<input type="file" name="item_image[]" accept="image/*"><br>
+<input type="file" name="item_image[]" accept="image/*"><br>
 
-    @if ($item->item_image)
-    <img src="{{ asset('storage/' . $item->item_image) }}" alt="Current image" width="120">
-@endif
+    @forelse ($item->item_images as $img)
+        <img src="{{ asset('storage/' . $img) }}" alt="Current image" width="120" class="me-1 mb-1">
+    @empty
+        No images
+    @endforelse
 
     <label for="item_name">Item Name:</label>
     <input type="text" name="item_name" id="item_name" value="{{ $item->item_name }}" required><br>

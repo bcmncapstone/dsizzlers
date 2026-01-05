@@ -33,14 +33,17 @@ class ItemController extends Controller
         'price' => 'required|numeric|min:0',
         'stock_quantity' => 'required|integer|min:0',
         'item_category' => 'nullable|string|max:30',
-        'item_image' => 'nullable|image|max:10240',
+        'item_image.*' => 'nullable|image|max:10240',
     ]);
 
-    $imagePath = null;
+    $imagePaths = [];
 
     if ($request->hasFile('item_image')) {
-        // store the image inside storage/app/public/item_images
-        $imagePath = $request->file('item_image')->store('item_images', 'public');
+        foreach ($request->file('item_image') as $file) {
+            if ($file) {
+                $imagePaths[] = $file->store('item_images', 'public');
+            }
+        }
     }
 
     // Now create the item properly
@@ -50,7 +53,7 @@ class ItemController extends Controller
         'price'            => $request->price,
         'stock_quantity'   => $request->stock_quantity,
         'item_category'    => $request->item_category,
-        'item_image'       => $imagePath,  // <-- CORRECT
+        'item_image'       => json_encode($imagePaths),
     ]);
 
     return redirect()->route('admin.items.index')->with('success', 'Item added successfully!');
@@ -70,14 +73,20 @@ class ItemController extends Controller
         'price' => 'required|numeric|min:0',
         'stock_quantity' => 'required|integer|min:0',
         'item_category' => 'nullable|string|max:30',
-        'item_image' => 'nullable|image|max:10240',
+        'item_image.*' => 'nullable|image|max:10240',
     ]);
 
     $item = Item::findOrFail($id);
 
+    $imagePaths = $item->item_images; // existing images
+
     if ($request->hasFile('item_image')) {
-        $imagePath = $request->file('item_image')->store('item_images', 'public');
-        $item->item_image = $imagePath;
+        $imagePaths = []; // replace all
+        foreach ($request->file('item_image') as $file) {
+            if ($file) {
+                $imagePaths[] = $file->store('item_images', 'public');
+            }
+        }
     }
 
     $item->item_name = $request->item_name;
@@ -85,6 +94,7 @@ class ItemController extends Controller
     $item->price = $request->price;
     $item->stock_quantity = $request->stock_quantity;
     $item->item_category = $request->item_category;
+    $item->item_image = json_encode($imagePaths);
 
     $item->save();
 
