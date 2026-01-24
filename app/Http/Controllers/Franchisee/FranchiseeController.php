@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Franchisee;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Branch;
+use Illuminate\Support\Facades\DB;
 
 class FranchiseeController extends Controller
 {
@@ -17,12 +18,8 @@ class FranchiseeController extends Controller
 
         // Find branch assigned to this franchisee (by email match)
         $branch = Branch::where('email', $franchisee->franchisee_email)
-                        ->where('branch_status', true)
+                        ->where('branch_status', '=', DB::raw('true'))
                         ->first();
-
-        if (!$branch) {
-            return view('franchisee.account.no-branch');
-        }
 
         return view('franchisee.account.index', compact('branch'));
     }

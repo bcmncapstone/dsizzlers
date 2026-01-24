@@ -19,7 +19,7 @@ return new class extends Migration {
     $table->string('contact_number');
     $table->string('contract_file')->nullable(); // Path to uploaded contract file
     $table->date('contract_expiration');
-    $table->string('branch_status');
+    $table->boolean('branch_status')->default(true); // Fixed: use boolean type directly
     $table->boolean('archived')->default(false); // Used instead of delete
     $table->timestamps();
 });

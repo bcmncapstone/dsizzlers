@@ -12,5 +12,7 @@
         <a href="{{ route(name: 'account.create') }}" class="btn btn-secondary">Add Staff</a>
         <a href="{{ route('franchisee.account.index') }}" class="btn btn-secondary">User Account</a>
 
+        <!-- Chat -->
+        <a href="{{ route('communication.index') }}"><button>Manage Communication</button></a>
     </div>
 @endsection

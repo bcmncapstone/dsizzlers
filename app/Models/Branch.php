@@ -23,4 +23,10 @@ class Branch extends Model
         'contract_expiration',
         'archived'
     ];
+
+    protected $casts = [
+        'branch_status' => 'boolean',
+        'archived' => 'boolean',
+        'contract_expiration' => 'date',
+    ];
 }

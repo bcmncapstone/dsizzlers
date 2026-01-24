@@ -30,6 +30,11 @@
      <!-- Manage Order Button -->
     <a href="{{ route('admin.manageOrder.index') }}">
     <button>Order</button>
+    
+    <!-- Chat Button -->
+     <a href="{{ route('communication.index') }}">
+    <button>Manage Communication</button>
+</a>
 
     <!-- Add Logout Button -->
     <form action="{{ route('admin.logout') }}" method="POST" style="margin-top: 20px;">

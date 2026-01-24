@@ -5,20 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Branch;
 use App\Models\Franchisee;
+use Illuminate\Support\Facades\DB;
 
 class BranchController extends Controller
 {
     // Show active branches
     public function index()
     {
-        $branches = Branch::where('branch_status', true)->get();
+        $branches = Branch::where('branch_status', '=', DB::raw('true'))->get();
         return view('admin.branches.index', compact('branches'));
     }
 
     // Show archived branches
     public function archived()
     {
-        $branches = Branch::where('branch_status', false)->get();
+        $branches = Branch::where('branch_status', '=', DB::raw('false'))->get();
         return view('admin.branches.archive', compact('branches'));
     }
 
@@ -65,8 +66,13 @@ class BranchController extends Controller
             $validated['contract_file'] = $filename;
         }
 
-        $validated['branch_status'] = true;
-        Branch::create($validated);
+        // Create the branch without branch_status first
+        $branchData = $validated;
+        unset($branchData['branch_status']);
+        $branch = Branch::create($branchData);
+        
+        // Update branch_status to true using raw query to avoid type casting issues
+        $branch->update(['branch_status' => DB::raw('true')]);
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch added successfully.');
     }
@@ -112,8 +118,7 @@ class BranchController extends Controller
     public function archive($id)
     {
         $branch = Branch::findOrFail($id);
-        $branch->branch_status = false;
-        $branch->save();
+        $branch->update(['branch_status' => DB::raw('false')]);
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch archived successfully.');
     }
@@ -122,8 +127,7 @@ class BranchController extends Controller
     public function restore($id)
     {
         $branch = Branch::findOrFail($id);
-        $branch->branch_status = true;
-        $branch->save();
+        $branch->update(['branch_status' => DB::raw('true')]);
 
         return redirect()->route('admin.branches.archived')->with('success', 'Branch restored successfully.');
     }

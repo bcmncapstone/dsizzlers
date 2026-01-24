@@ -15,7 +15,9 @@ use App\Http\Controllers\StaffAccountController;
 use App\Http\Controllers\Franchisee\FranchiseeController;
 use App\Http\Controllers\FranchiseeStaffItemController;
 use App\Http\Controllers\ManageOrderController;
-
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\DigitalMarketingController;
+use App\Http\Controllers\CommunicationController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -302,5 +304,25 @@ Route::post('/logout', function () {
 
     return redirect('/');
 })->name('logout');
+
+// FOR CHAT AND DIGITAL MARKETING 
+// Allow any authenticated guard (admin, franchisor_staff, franchisee, franchisee_staff)
+Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {
+    Route::get('/communication/{conversation}', [ChatController::class, 'show']);
+    Route::post('/communication/{conversation}/send', [ChatController::class, 'send']);
+    Route::get('/communication/{conversation}/messages', [ChatController::class, 'fetchMessages']);
+
+    Route::resource('digital-marketing', DigitalMarketingController::class)
+        ->only(['index', 'store']);
+
+    Route::get('/manage-communication', [CommunicationController::class, 'index'])
+        ->name('communication.index');
+    Route::post('/communication/start', [CommunicationController::class, 'start'])
+        ->name('communication.start');
+});
+
+// Fetch messages without middleware for polling to work
+Route::get('/communication/{conversation}/messages', [ChatController::class, 'fetchMessages']);
+
 
 

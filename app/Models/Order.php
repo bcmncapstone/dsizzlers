@@ -16,6 +16,7 @@ class Order extends Model
         'fstaff_id',
         'order_date',
         'order_status',
+        'order_type',
         'total_amount',
         'name',
         'contact',
