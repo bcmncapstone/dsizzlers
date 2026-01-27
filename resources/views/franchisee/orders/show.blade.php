@@ -8,8 +8,15 @@
     <p><strong>Name:</strong> {{ $order->name }}</p>
     <p><strong>Contact:</strong> {{ $order->contact }}</p>
     <p><strong>Address:</strong> {{ $order->address }}</p>
-    <p><strong>Status:</strong> {{ ucfirst($order->delivery_status ?? 'pending') }}</p>
+    <p><strong>Status:</strong> {{ $order->order_status }}</p>
     <p><strong>Total Amount:</strong> ₱{{ number_format($order->total_amount, 2) }}</p>
+    
+    @if($order->order_notes)
+    <div class="alert alert-info mt-3">
+        <strong>Order Notes:</strong><br>
+        {{ $order->order_notes }}
+    </div>
+    @endif
 
     <hr>
     <h4>Ordered Items</h4>

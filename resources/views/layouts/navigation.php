@@ -6,7 +6,7 @@
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
                     <a href="{{ route('admin.dashboard') }}">
-                        <strong>Admin Dashboard</strong>
+                        <strong>Franchisee Dashboard</strong>
                     </a>
                 </div>
 

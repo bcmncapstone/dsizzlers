@@ -2,31 +2,50 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Franchisor Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franchisor Login - D Sizzlers</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
-    <h2>Franchisor Login</h2>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 40px; height: 40px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <h2 class="login-title">Franchisor Login</h2>
+            </div>
 
-    @if ($errors->any())
-        <div style="color: red;">
-            <ul>
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
+            @if ($errors->any())
+                <div class="login-error">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('admin.login.submit') }}" class="login-form">
+                @csrf
+                
+                <div class="login-form-group">
+                    <label for="admin_username" class="login-label">Username:</label>
+                    <input type="text" id="admin_username" name="admin_username" class="login-input" placeholder="admin" required autofocus>
+                </div>
+
+                <div class="login-form-group">
+                    <label for="admin_pass" class="login-label">Password:</label>
+                    <input type="password" id="admin_pass" name="admin_pass" class="login-input" placeholder="••••••••" required>
+                </div>
+
+                <button type="submit" class="login-button">Login</button>
+            </form>
+
+            <a href="{{ url('/') }}" class="login-back-link">← Back to Home</a>
         </div>
-    @endif
-
-    <<form method="POST" action="{{ route('admin.login.submit') }}">
-    @csrf
-    <label>Username:</label>
-    <input type="text" name="admin_username" required><br>
-
-    <label>Password:</label>
-    <input type="password" name="admin_pass" required><br>
-
-    <button type="submit">Login</button>
-</form>
-
+    </div>
 </body>
 </html>

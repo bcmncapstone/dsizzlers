@@ -24,6 +24,7 @@ class Order extends Model
         'payment_receipt',
         'payment_status',
         'delivery_status',
+        'order_notes',
     ];
 
     public function orderDetails()

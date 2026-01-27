@@ -9,26 +9,27 @@ use App\Models\DigitalMarketingUpload;
 class CommunicationController extends Controller
 {
     public function index()
-    {
-        $userId = null;
-        
-        if (auth()->guard('admin')->check()) {
-            $userId = auth()->guard('admin')->id();
-        } elseif (auth()->guard('franchisee')->check()) {
-            $userId = auth()->guard('franchisee')->id();
-        }
-
-        $conversations = Conversation::where('admin_id', $userId)
-            ->orWhere('franchisee_id', $userId)
-            ->get();
-
-        $digitalMarketing = DigitalMarketingUpload::latest()->get();
-
-        return view('communication.index', compact(
-            'conversations',
-            'digitalMarketing'
-        ));
+{
+    $userId = null;
+    
+    if (auth()->guard('admin')->check()) {
+        $userId = auth()->guard('admin')->id();
+    } elseif (auth()->guard('franchisee')->check()) {
+        $userId = auth()->guard('franchisee')->id();
     }
+
+    $conversations = Conversation::with(['admin', 'franchisee'])
+        ->where('admin_id', $userId)
+        ->orWhere('franchisee_id', $userId)
+        ->get();
+
+    $digitalMarketing = DigitalMarketingUpload::latest()->get();
+
+    return view('communication.index', compact(
+        'conversations',
+        'digitalMarketing'
+    ));
+}
 
     public function start(Request $request)
     {

@@ -18,7 +18,6 @@
                 <th>Address</th>
                 <th></th>Status</th>
                 <th>Payment</th>
-                <th>Delivery</th>
                 <th>Action</th>
             </tr>
         </thead>
@@ -31,7 +30,6 @@
                 <td>{{ $order->address ?? 'N/A' }}</td>
                 <td>{{ ucfirst($order->order_status ?? 'pending') }}</td>
                 <td>{{ ucfirst($order->payment_status ?? 'pending') }}</td>
-                <td>{{ ucfirst($order->delivery_status ?? 'pending') }}</td>
                 <td>
                     <a href="{{ route('admin.manageOrder.show', $order->order_id) }}" class="btn btn-sm btn-primary">View</a>
                 </td>

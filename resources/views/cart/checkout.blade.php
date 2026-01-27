@@ -52,6 +52,11 @@
     <form action="{{ route($cartKey . '.cart.placeOrder') }}" method="POST" enctype="multipart/form-data">
         @csrf
 
+        {{-- Pass Buy Now items if they exist --}}
+        @if(request()->has('items'))
+            <input type="hidden" name="buy_now_items" value="{{ json_encode(request()->input('items')) }}">
+        @endif
+
         <div class="mb-3">
             <label for="name" class="form-label">Full Name</label>
             <input type="text" class="form-control" name="name" id="name" required>

@@ -157,12 +157,39 @@ class CartController extends Controller
     /**
      * Display the checkout page.
      */
-   public function checkout()
+   public function checkout(Request $request)
 {
     $cartKey = $this->getCartKey();
     $cart = session()->get($cartKey, []);
 
-    
+    // Handle "Buy Now" items passed via GET request
+    if ($request->has('items')) {
+        $buyNowItems = $request->input('items');
+        $tempCart = [];
+        
+        foreach ($buyNowItems as $buyNowItem) {
+            $itemId = $buyNowItem['item_id'];
+            $quantity = (int) $buyNowItem['quantity'];
+            
+            $item = Item::find($itemId);
+            if ($item) {
+                if ($quantity > $item->stock_quantity) {
+                    return redirect()->back()->with('error', 'Quantity exceeds available stock!');
+                }
+                
+                $tempCart[$itemId] = [
+                    "name" => $item->item_name,
+                    "price" => $item->price,
+                    "quantity" => $quantity,
+                    "stock_quantity" => $item->stock_quantity,
+                    "item_images" => $item->item_images,
+                ];
+            }
+        }
+        
+        // Use the temporary cart for checkout instead of session cart
+        $cart = $tempCart;
+    }
 
     if (empty($cart)) {
         return redirect()->back()->with('error', 'Your cart is empty.');
@@ -177,7 +204,6 @@ class CartController extends Controller
             unset($cart[$id]);
         }
     }
-    session()->put($cartKey, $cart);
 
     $layout = $cartKey === 'franchisee_staff' ? 'layouts.franchisee-staff' : 'layouts.franchisee';
 
@@ -196,6 +222,28 @@ class CartController extends Controller
 {
     $cartKey = $this->getCartKey();
     $cart = session()->get($cartKey, []);
+
+    // Handle "Buy Now" items passed from checkout form
+    if ($request->has('buy_now_items')) {
+        $buyNowItems = json_decode($request->input('buy_now_items'), true);
+        $cart = [];
+        
+        foreach ($buyNowItems as $buyNowItem) {
+            $itemId = $buyNowItem['item_id'];
+            $quantity = (int) $buyNowItem['quantity'];
+            
+            $item = Item::find($itemId);
+            if ($item) {
+                $cart[$itemId] = [
+                    "name" => $item->item_name,
+                    "price" => $item->price,
+                    "quantity" => $quantity,
+                    "stock_quantity" => $item->stock_quantity,
+                    "item_images" => $item->item_images,
+                ];
+            }
+        }
+    }
 
     if (empty($cart)) {
         return redirect()->route($this->getCartKey() . '.cart.index')

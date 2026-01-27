@@ -20,12 +20,11 @@ class Conversation extends Model
 
     public function admin()
     {
-        return $this->belongsTo(Admin::class);
+        return $this->belongsTo(Admin::class, 'admin_id', 'admin_id');
     }
 
     public function franchisee()
     {
-        return $this->belongsTo(Franchisee::class);
+        return $this->belongsTo(Franchisee::class, 'franchisee_id', 'franchisee_id');
     }
 }
-

@@ -1,89 +1,479 @@
-<h2>📩 Communication Management</h2>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Communication Management - D Sizzlers</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body>
 
-<hr>
-
-<section>
-    <h3>💬 Conversations</h3>
-
-    <div style="margin-bottom: 20px;">
-        <h4>➕ Start a New Conversation</h4>
-
-        <form method="POST" action="{{ route('communication.start') }}">
-            @csrf
-
-            @php
-                $isFranchisor = auth()->guard('admin')->check() || auth()->guard('franchisor_staff')->check();
-                $isFranchisee = auth()->guard('franchisee')->check() || auth()->guard('franchisee_staff')->check();
-            @endphp
-
-            @if($isFranchisor)
-    <label for="partner_id">Select Franchisee</label><br>
-    <select name="partner_id" id="partner_id" required>
-        <option value="" disabled selected>— Choose a Franchisee —</option>
-        @foreach(\App\Models\Franchisee::all() as $franchisee)
-            <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
-        @endforeach
-    </select>
-@elseif($isFranchisee)
-    <label for="partner_id">Select Franchisor</label><br>
-    <select name="partner_id" id="partner_id" required>
-        <option value="" disabled selected>— Choose a Franchisor —</option>
-        @foreach(\App\Models\Admin::all() as $admin)
-            <option value="{{ $admin->admin_id }}">{{ $admin->admin_fname }} {{ $admin->admin_lname }} (Admin)</option>
-        @endforeach
-        @foreach(\App\Models\FranchisorStaff::all() as $astaff)
-            <option value="{{ $astaff->astaff_id }}">{{ $astaff->astaff_fname }} {{ $astaff->astaff_lname }} (Staff)</option>
-        @endforeach
-    </select>
-@else
-    {{-- fallback to franchisee list if no guard detected --}}
-    <label for="partner_id">Select Franchisee</label><br>
-    <select name="partner_id" id="partner_id" required>
-        <option value="" disabled selected>— Choose a Franchisee —</option>
-        @foreach(\App\Models\Franchisee::all() as $franchisee)
-            <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
-        @endforeach
-    </select>
-@endif
-
-            <br><br>
-            <button type="submit">Start Conversation</button>
-        </form>
-    </div>
+<div class="communication-page">
+    <h2>📩 Communication Management</h2>
 
     <hr>
 
-    <h4>📨 Existing Conversations</h4>
+    <section class="conversation-section">
+        <h3>💬 Conversations</h3>
 
-    <ul>
-        @forelse($conversations as $conversation)
-            <li>
-                <a href="{{ url('/communication/' . $conversation->id) }}">
-                    Conversation #{{ $conversation->id }}
-                </a>
-            </li>
-        @empty
-            <p><em>No conversations available.</em></p>
-        @endforelse
-    </ul>
-</section>
+        <div class="new-conversation-container">
+            <h4>➕ Start a New Conversation</h4>
 
-<hr>
+            <form method="POST" action="{{ route('communication.start') }}">
+                @csrf
 
-<section>
-    <h3>📢 Digital Marketing Posts</h3>
+                @php
+                    $isFranchisor = auth()->guard('admin')->check() || auth()->guard('franchisor_staff')->check();
+                    $isFranchisee = auth()->guard('franchisee')->check() || auth()->guard('franchisee_staff')->check();
+                    $isAdmin = auth()->guard('admin')->check();
+                @endphp
 
-    @forelse($digitalMarketing as $post)
-        <div style="margin-bottom: 20px;">
-            <img 
-                src="{{ Storage::url($post->image_path) }}" 
-                alt="Marketing Image"
-                width="150"
-                style="display:block; margin-bottom:10px;"
-            >
-            <p>{{ $post->description }}</p>
+                @if($isFranchisor)
+                    <label for="partner_id">Select Franchisee</label><br>
+                    <select name="partner_id" id="partner_id" required>
+                        <option value="" disabled selected>— Choose a Franchisee —</option>
+                        @foreach(\App\Models\Franchisee::all() as $franchisee)
+                            <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
+                        @endforeach
+                    </select>
+                @elseif($isFranchisee)
+                    <label for="partner_id">Select Franchisor</label><br>
+                    <select name="partner_id" id="partner_id" required>
+                        <option value="" disabled selected>— Choose a Franchisor —</option>
+                        @foreach(\App\Models\Admin::all() as $admin)
+                            <option value="{{ $admin->admin_id }}">{{ $admin->admin_fname }} {{ $admin->admin_lname }} (Admin)</option>
+                        @endforeach
+                        @foreach(\App\Models\FranchisorStaff::all() as $astaff)
+                            <option value="{{ $astaff->astaff_id }}">{{ $astaff->astaff_fname }} {{ $astaff->astaff_lname }} (Staff)</option>
+                        @endforeach
+                    </select>
+                @else
+                    <label for="partner_id">Select Franchisee</label><br>
+                    <select name="partner_id" id="partner_id" required>
+                        <option value="" disabled selected>— Choose a Franchisee —</option>
+                        @foreach(\App\Models\Franchisee::all() as $franchisee)
+                            <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
+                        @endforeach
+                    </select>
+                @endif
+
+                <br><br>
+                <button type="submit" class="btn btn-primary">Create</button>
+            </form>
         </div>
-    @empty
-        <p><em>No digital marketing posts available.</em></p>
-    @endforelse
-</section>
+
+        <hr>
+
+        <h4>📨 Existing Conversations</h4>
+
+        <ul class="conversations-list">
+            @forelse($conversations as $conversation)
+                @php
+                    // Get conversation participants
+                    $admin = $conversation->admin;
+                    $franchisee = $conversation->franchisee;
+                    
+                    // Build conversation name based on current user
+                    $isCurrentUserAdmin = auth()->guard('admin')->check() || auth()->guard('franchisor_staff')->check();
+                    
+                    if ($isCurrentUserAdmin) {
+                        // Show franchisee name to admin
+                        $displayName = $franchisee 
+                            ? ($franchisee->franchisee_name ?: 'Franchisee') 
+                            : 'Franchisee';
+                    } else {
+                        // Show admin name to franchisee
+                        $adminName = $admin 
+                            ? trim(($admin->admin_fname ?? '') . ' ' . ($admin->admin_lname ?? '')) ?: 'System Administrator'
+                            : 'System Administrator';
+                        $displayName = $adminName;
+                    }
+                @endphp
+                <li>
+                    <a href="{{ url('/communication/' . $conversation->id) }}">
+                        💬 {{ $displayName }}
+                    </a>
+                </li>
+            @empty
+                <p class="empty-state">No conversations available.</p>
+            @endforelse
+        </ul>
+    </section>
+
+    <hr>
+
+    {{-- ADMIN ONLY: Upload Digital Marketing --}}
+    @if(auth()->guard('admin')->check())
+        <section class="marketing-section">
+            <h3>📢 Digital Marketing Management</h3>
+
+            {{-- Success/Error Messages --}}
+            @if(session('success'))
+                <div class="alert alert-success">
+                    ✅ {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="alert alert-error">
+                    ❌ {{ session('error') }}
+                </div>
+            @endif
+
+            @if($errors->any())
+                <div class="alert alert-error">
+                    <ul>
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="marketing-upload-container">
+                <h4>📤 Upload Digital Marketing</h4>
+                
+                <form method="POST" action="{{ route('digital-marketing.store') }}" enctype="multipart/form-data" id="digitalMarketingForm">
+                    @csrf
+                    
+                    <div class="form-group">
+                        <label for="marketing_image" class="form-label">
+                            Select Image:
+                        </label>
+                        
+                        <input 
+                            type="file" 
+                            name="image" 
+                            id="marketing_image" 
+                            accept="image/*" 
+                            required 
+                            class="file-input-hidden"
+                            onchange="previewMarketingImage(event)"
+                        >
+                        
+                        <div class="button-group">
+                            <button 
+                                type="button" 
+                                onclick="document.getElementById('marketing_image').click()"
+                                class="btn btn-gallery">
+                                📁 Choose from Gallery
+                            </button>
+                            
+                            <button 
+                                type="button" 
+                                onclick="openCameraModal()"
+                                class="btn btn-camera">
+                                📷 Take Photo
+                            </button>
+                        </div>
+                        
+                        <span id="file-name" class="file-name-display"></span>
+                        
+                        <div id="image-preview" class="image-preview-container">
+                            <img id="preview-img" src="" alt="Preview" class="preview-image">
+                            <button 
+                                type="button" 
+                                onclick="removeImage()"
+                                class="btn btn-remove">
+                                ✕ Remove Image
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description" class="form-label">
+                            Description (Optional):
+                        </label>
+                        <textarea 
+                            name="description" 
+                            id="description" 
+                            rows="3" 
+                            placeholder="Enter a description for this marketing post..."
+                            class="form-textarea">
+                        </textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-submit">
+                        🚀 Upload Post
+                    </button>
+                </form>
+            </div>
+
+            {{-- Camera Modal --}}
+            <div id="camera-modal" class="camera-modal">
+                <div class="camera-modal-content">
+                    <h3>📷 Take Photo</h3>
+                    <video id="camera-stream" autoplay playsinline class="camera-stream"></video>
+                    <canvas id="camera-canvas" class="camera-canvas"></canvas>
+                    <div class="modal-button-group">
+                        <button 
+                            type="button" 
+                            onclick="capturePhoto()"
+                            class="btn btn-camera">
+                            📸 Capture
+                        </button>
+                        <button 
+                            type="button" 
+                            onclick="closeCameraModal()"
+                            class="btn btn-close">
+                            ✕ Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <h4>📋 Uploaded Marketing Materials</h4>
+
+            <div class="marketing-posts-container">
+                @forelse($digitalMarketing as $post)
+                    <div class="marketing-post">
+                        <img 
+                            src="{{ Storage::url($post->image_path) }}" 
+                            alt="Marketing Image"
+                            id="admin-marketing-img-{{ $post->id }}"
+                            class="marketing-post-image"
+                            onclick="viewFullImage({{ $post->id }}, 'admin')"
+                            title="Click to view full size"
+                        >
+                        
+                        {{-- Edit Form (Hidden by default) --}}
+                        <form id="edit-form-{{ $post->id }}" method="POST" action="{{ route('digital-marketing.update', $post->id) }}" style="display: none; margin-bottom: 10px;">
+                            @csrf
+                            @method('PUT')
+                            <textarea 
+                                name="description" 
+                                rows="3" 
+                                class="form-textarea">{{ $post->description }}</textarea>
+                            <div class="button-group">
+                                <button type="submit" class="btn btn-camera">
+                                    ✓ Save
+                                </button>
+                                <button type="button" onclick="cancelEdit({{ $post->id }})" class="btn btn-submit">
+                                    ✕ Cancel
+                                </button>
+                            </div>
+                        </form>
+
+                        <div id="description-display-{{ $post->id }}">
+                            @if($post->description)
+                                <p class="marketing-post-description">{{ $post->description }}</p>
+                            @endif
+                            <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
+                        </div>
+                        
+                        {{-- Action Buttons --}}
+                        <div class="button-group">
+                            <button 
+                                onclick="viewFullImage({{ $post->id }}, 'admin')"
+                                class="btn btn-gallery">
+                                👁️ View
+                            </button>
+                            <button 
+                                onclick="editPost({{ $post->id }})"
+                                class="btn" style="background-color: #ffc107; color: #000;">
+                                ✏️ Edit
+                            </button>
+                            <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-remove">
+                                    🗑️ Delete
+                                </button>
+                            </form>
+                            <a 
+                                href="{{ Storage::url($post->image_path) }}" 
+                                download="marketing-{{ $post->id }}.jpg"
+                                class="btn btn-camera">
+                                ⬇️ Download
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state">No digital marketing posts uploaded yet.</p>
+                @endforelse
+            </div>
+        </section>
+    @endif
+
+    {{-- FRANCHISEE ONLY: View Digital Marketing --}}
+    @if(auth()->guard('franchisee')->check() || auth()->guard('franchisee_staff')->check())
+        <section class="marketing-section">
+            <h3>📢 Digital Marketing Posts</h3>
+
+            <div class="marketing-posts-container">
+                @forelse($digitalMarketing as $post)
+                    <div class="marketing-post">
+                        <img 
+                            src="{{ Storage::url($post->image_path) }}" 
+                            alt="Marketing Image"
+                            id="franchisee-marketing-img-{{ $post->id }}"
+                            class="marketing-post-image"
+                            onclick="viewFullImage({{ $post->id }}, 'franchisee')"
+                            title="Click to view full size"
+                        >
+                        @if($post->description)
+                            <p class="marketing-post-description">{{ $post->description }}</p>
+                        @endif
+                        <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
+                        
+                        {{-- Action Buttons --}}
+                        <div class="button-group">
+                            <button 
+                                onclick="viewFullImage({{ $post->id }}, 'franchisee')"
+                                class="btn btn-gallery">
+                                👁️ View
+                            </button>
+                            <a 
+                                href="{{ Storage::url($post->image_path) }}" 
+                                download="marketing-{{ $post->id }}.jpg"
+                                class="btn btn-camera">
+                                ⬇️ Download
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state">No digital marketing posts available.</p>
+                @endforelse
+            </div>
+        </section>
+    @endif
+
+    {{-- Full Image Modal (Shared) --}}
+    <div id="image-modal" class="camera-modal" onclick="closeImageModal()">
+        <div class="camera-modal-content" onclick="event.stopPropagation()">
+            <button 
+                onclick="closeImageModal()"
+                class="btn btn-close"
+                style="position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; padding: 0;">
+                ✕
+            </button>
+            <img id="modal-image" src="" alt="Full Size" style="max-width: 100%; max-height: 70vh; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;">
+            <div style="text-align: center; margin-top: 15px;">
+                <a 
+                    id="modal-download-btn" 
+                    href="" 
+                    download
+                    class="btn btn-camera">
+                    ⬇️ Download Image
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let cameraStream = null;
+
+    function previewMarketingImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('image-preview').classList.add('show');
+                document.getElementById('file-name').textContent = '✓ ' + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function openCameraModal() {
+        const modal = document.getElementById('camera-modal');
+        const video = document.getElementById('camera-stream');
+        
+        modal.classList.add('show');
+        
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            });
+            video.srcObject = cameraStream;
+        } catch (error) {
+            alert('Unable to access camera. Please check permissions or use "Choose from Gallery" instead.\n\nError: ' + error.message);
+            closeCameraModal();
+        }
+    }
+
+    function capturePhoto() {
+        const video = document.getElementById('camera-stream');
+        const canvas = document.getElementById('camera-canvas');
+        const context = canvas.getContext('2d');
+        
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        canvas.toBlob(function(blob) {
+            const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            document.getElementById('marketing_image').files = dataTransfer.files;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('preview-img').src = e.target.result;
+                document.getElementById('image-preview').classList.add('show');
+                document.getElementById('file-name').textContent = '✓ camera-photo.jpg';
+            };
+            reader.readAsDataURL(file);
+            closeCameraModal();
+        }, 'image/jpeg', 0.95);
+    }
+
+    function closeCameraModal() {
+        const modal = document.getElementById('camera-modal');
+        const video = document.getElementById('camera-stream');
+        
+        if (cameraStream) {
+            cameraStream.getTracks().forEach(track => track.stop());
+            cameraStream = null;
+        }
+        
+        video.srcObject = null;
+        modal.classList.remove('show');
+    }
+
+    function removeImage() {
+        document.getElementById('marketing_image').value = '';
+        document.getElementById('image-preview').classList.remove('show');
+        document.getElementById('file-name').textContent = '';
+    }
+
+    function editPost(postId) {
+        document.getElementById('description-display-' + postId).style.display = 'none';
+        document.getElementById('edit-form-' + postId).style.display = 'block';
+    }
+
+    function cancelEdit(postId) {
+        document.getElementById('edit-form-' + postId).style.display = 'none';
+        document.getElementById('description-display-' + postId).style.display = 'block';
+    }
+
+    function viewFullImage(postId, type) {
+        const img = document.getElementById(type + '-marketing-img-' + postId);
+        const modal = document.getElementById('image-modal');
+        const modalImg = document.getElementById('modal-image');
+        const downloadBtn = document.getElementById('modal-download-btn');
+        
+        modal.classList.add('show');
+        modalImg.src = img.src;
+        downloadBtn.href = img.src;
+        downloadBtn.download = 'marketing-' + postId + '.jpg';
+    }
+
+    function closeImageModal() {
+        document.getElementById('image-modal').classList.remove('show');
+    }
+
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeImageModal();
+            closeCameraModal();
+        }
+    });
+</script>
+
+</body>
+</html>

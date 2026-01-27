@@ -24,9 +24,10 @@ return new class extends Migration
                   ->nullOnDelete();
 
             $table->dateTime('order_date')->useCurrent();
-            $table->enum('order_status', ['Pending', 'Confirmed', 'Preparing', 'Delivered', 'Cancelled'])
+            $table->enum('order_status', ['Pending', 'Preparing', 'Shipped', 'Delivered', 'Cancelled'])
                   ->default('Pending');
             $table->decimal('total_amount', 8, 2)->default(0);
+            $table->text('order_notes')->nullable();
             $table->timestamps();
         });
     }

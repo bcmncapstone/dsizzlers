@@ -29,14 +29,16 @@
                         <td>{{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y h:i A') }}</td>
                         <td>₱{{ number_format($order->total_amount, 2) }}</td>
                         <td>
-                            <span class="badge 
-                                @if($order->delivery_status == 'pending') bg-warning 
-                                @elseif($order->delivery_status == 'shipped') bg-info 
-                                @elseif($order->delivery_status == 'delivered') bg-success 
-                                @else bg-secondary @endif">
-                                {{ ucfirst($order->delivery_status ?? 'pending') }}
-                            </span>
-                        </td>
+    <span class="badge 
+        @if($order->order_status == 'Pending') bg-warning 
+        @elseif($order->order_status == 'Preparing') bg-info 
+        @elseif($order->order_status == 'Shipped') bg-primary 
+        @elseif($order->order_status == 'Delivered') bg-success 
+        @elseif($order->order_status == 'Cancelled') bg-danger 
+        @else bg-secondary @endif">
+        {{ $order->order_status }}
+    </span>
+</td>
                         <td>
                             <a href="{{ route('franchisee.orders.show', $order->order_id) }}" class="btn btn-info btn-sm">
                                 View

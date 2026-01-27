@@ -33,7 +33,7 @@
     
     <!-- Chat Button -->
      <a href="{{ route('communication.index') }}">
-    <button>Manage Communication</button>
+    <button>Message</button>
 </a>
 
     <!-- Add Logout Button -->

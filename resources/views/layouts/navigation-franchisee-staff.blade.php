@@ -4,6 +4,7 @@
             <a href="{{ route('franchisee-staff.dashboard') }}" class="text-lg font-semibold">🏠 Franchisee Staff Dashboard</a>
         </div>
         <div class="flex gap-4 items-center">
+                <a href="{{ route('franchisee-staff.dashboard') }}">Dashboard</a>
                 <a href="{{ route('franchisee_staff.orders.index') }}">Orders</a>
                 <a href="{{ route('franchisee_staff.item.index') }}">Inventory</a>
                 <a href="{{ route('franchisee-staff.password') }}">Update Password</a>

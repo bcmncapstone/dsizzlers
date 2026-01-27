@@ -53,11 +53,11 @@
             @forelse ($items as $item)
                 <tr>
                     <td>
-                        @forelse ($item->item_images as $img)
-                            <img src="{{ asset('storage/' . $img) }}" width="40" class="me-1 mb-1 rounded">
-                        @empty
-                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40">
-                        @endforelse
+                        @if (!empty($item->item_images) && count($item->item_images) > 0)
+                            <img src="{{ asset('storage/' . $item->item_images[0]) }}" width="60" height="60" class="rounded" style="object-fit: cover;" alt="{{ $item->item_name }}">
+                        @else
+                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="60" height="60" class="rounded" style="object-fit: cover;">
+                        @endif
                     </td>
                     <td>{{ $item->item_name }}</td>
                     <td>{{ $item->item_description }}</td>
@@ -84,10 +84,10 @@
         @foreach ($items as $item)
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    @if ($item->item_images)
-                        <img src="{{ asset('storage/' . $item->item_images[0]) }}" class="card-img-top" alt="{{ $item->item_name }}">
+                    @if (!empty($item->item_images) && count($item->item_images) > 0)
+                        <img src="{{ asset('storage/' . $item->item_images[0]) }}" class="card-img-top" alt="{{ $item->item_name }}" style="height: 250px; object-fit: cover;">
                     @else
-                        <img src="{{ asset('images/default-item.png') }}" class="card-img-top" alt="Default Image" width="40">
+                        <img src="{{ asset('images/default-item.png') }}" class="card-img-top" alt="Default Image" style="height: 250px; object-fit: cover;">
                     @endif
                     <div class="card-body">
                         <h5 class="card-title">{{ $item->item_name }}</h5>
@@ -109,12 +109,11 @@
                         </form>
 
                         {{-- Buy Now --}}
-                        <form action="{{ route($prefix . '.orders.store') }}" method="POST">
-                            @csrf
-                            <input type="hidden" name="items[0][item_id]" value="{{ $item->item_id }}">
-                            <input type="hidden" name="items[0][quantity]" value="1">
-                            <button type="submit" class="btn btn-success w-100">Buy Now</button>
-                        </form>
+                        <form action="{{ route($prefix . '.cart.checkout') }}" method="GET">
+    <input type="hidden" name="items[0][item_id]" value="{{ $item->item_id }}">
+    <input type="hidden" name="items[0][quantity]" value="1">
+    <button type="submit" class="btn btn-success w-100">Buy Now</button>
+</form>
                     </div>
                 </div>
             </div>

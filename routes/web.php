@@ -189,6 +189,8 @@ Route::prefix('franchisee')
        Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+         Route::get('/orders/checkout{id}', [OrderController::class, 'show'])->name('orders.checkout');
+        Route::post('/orders/place-order{id}', [OrderController::class, 'show'])->name('orders.placeOrder');
     });
 
 // Franchisee Staff Cart & Orders 
@@ -210,6 +212,8 @@ Route::prefix('franchisee-staff')
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('/orders/checkout{id}', [OrderController::class, 'show'])->name('orders.checkout');
+        Route::post('/orders/place-order{id}', [OrderController::class, 'show'])->name('orders.placeOrder');
     });
 
 // ===============================
@@ -231,9 +235,13 @@ Route::prefix('admin')
         Route::post('manageOrder/{id}/confirm-payment', [ManageOrderController::class, 'confirmPayment'])
             ->name('manageOrder.confirmPayment');
 
-        // Update delivery status
-        Route::post('manageOrder/{id}/update-delivery', [ManageOrderController::class, 'updateDelivery'])
-            ->name('manageOrder.updateDelivery');
+        // Update order status
+        Route::post('manageOrder/{id}/update-order-status', [ManageOrderController::class, 'updateOrderStatus'])
+            ->name('manageOrder.updateOrderStatus');
+
+        // Update notes
+        Route::post('manageOrder/{id}/update-notes', [ManageOrderController::class, 'updateNotes'])
+            ->name('manageOrder.updateNotes');
 
         // Cancel order
         Route::post('manageOrder/{id}/cancel', [ManageOrderController::class, 'cancelOrder'])
@@ -260,9 +268,13 @@ Route::prefix('franchisor-staff')
         Route::post('/manageOrder/{id}/confirm-payment', [ManageOrderController::class, 'confirmPayment'])
             ->name('manageOrder.confirmPayment');
 
-        // Update delivery status
-        Route::post('/manageOrder/{id}/update-delivery', [ManageOrderController::class, 'updateDelivery'])
-            ->name('manageOrder.updateDelivery');
+        // Update order status
+        Route::post('/manageOrder/{id}/update-order-status', [ManageOrderController::class, 'updateOrderStatus'])
+            ->name('manageOrder.updateOrderStatus');
+
+        // Update notes
+        Route::post('/manageOrder/{id}/update-notes', [ManageOrderController::class, 'updateNotes'])
+            ->name('manageOrder.updateNotes');
 
         // Cancel order
         Route::post('/manageOrder/{id}/cancel', [ManageOrderController::class, 'cancelOrder'])
@@ -313,8 +325,8 @@ Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {
     Route::get('/communication/{conversation}/messages', [ChatController::class, 'fetchMessages']);
 
     Route::resource('digital-marketing', DigitalMarketingController::class)
-        ->only(['index', 'store']);
-
+        ->only(['index', 'store', 'update', 'destroy']);
+        
     Route::get('/manage-communication', [CommunicationController::class, 'index'])
         ->name('communication.index');
     Route::post('/communication/start', [CommunicationController::class, 'start'])

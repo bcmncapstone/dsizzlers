@@ -30,11 +30,13 @@
                         <td>₱{{ number_format($order->total_amount, 2) }}</td>
                         <td>
                             <span class="badge 
-                                @if($order->delivery_status == 'pending') bg-warning 
-                                @elseif($order->delivery_status == 'shipped') bg-info 
-                                @elseif($order->delivery_status == 'delivered') bg-success 
+                                @if($order->order_status == 'Pending') bg-warning 
+                                @elseif($order->order_status == 'Preparing') bg-info 
+                                @elseif($order->order_status == 'Shipped') bg-primary 
+                                @elseif($order->order_status == 'Delivered') bg-success 
+                                @elseif($order->order_status == 'Cancelled') bg-danger 
                                 @else bg-secondary @endif">
-                                {{ ucfirst($order->delivery_status ?? 'pending') }}
+                                {{ ucfirst($order->order_status) }}
                             </span>
                         </td>
                         <td>
