@@ -62,8 +62,10 @@ class OrderController extends Controller
             $orderData['franchisee_id'] = auth()->guard('franchisee')->id();
             $redirectRoute = 'franchisee.orders.index';
         } elseif (auth()->guard('franchisee_staff')->check()) {
-            $orderData['fstaff_id'] = auth()->guard('franchisee_staff')->id();
-            $redirectRoute = 'franchisee_staff.orders.index';
+    $staff = auth()->guard('franchisee_staff')->user();
+    $orderData['fstaff_id'] = $staff->fstaff_id;
+    $orderData['franchisee_id'] = $staff->franchisee_id;
+    $redirectRoute = 'franchisee_staff.orders.index';
         } else {
             abort(403, 'Unauthorized');
         }
@@ -111,8 +113,10 @@ class OrderController extends Controller
             $orderData['franchisee_id'] = auth()->guard('franchisee')->id();
             $redirectRoute = 'franchisee.orders.index';
         } elseif (auth()->guard('franchisee_staff')->check()) {
-            $orderData['fstaff_id'] = auth()->guard('franchisee_staff')->id();
-            $redirectRoute = 'franchisee_staff.orders.index';
+    $staff = auth()->guard('franchisee_staff')->user();
+    $orderData['fstaff_id'] = $staff->fstaff_id;
+    $orderData['franchisee_id'] = $staff->franchisee_id;
+    $redirectRoute = 'franchisee_staff.orders.index';
         } else {
             abort(403, 'Unauthorized');
         }

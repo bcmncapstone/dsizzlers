@@ -1,45 +1,41 @@
-<!-- resources/views/admin/dashboard.blade.php -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin Dashboard</title>
-</head>
-<body>
-    <h1>Welcome, Admin!</h1>
+{{-- resources/views/admin/dashboard.blade.php --}}
+@extends('layouts.app')
 
-    <!-- Success message if redirected from account creation -->
-    @if(session('success'))
-        <p style="color: green;">{{ session('success') }}</p>
-    @endif
+@section('title', 'Admin Dashboard')
 
-    <!-- Add Account Creation Button -->
-    <a href="{{ route('accounts.create') }}">
-        <button>Add Account</button>
-    </a>
-    <!-- Manage Branch Button -->
-    <a href="{{ route('admin.branches.index') }}">
+@section('content')
+
+<h1>Welcome, Admin!</h1>
+
+@if(session('success'))
+    <p style="color: green;">{{ session('success') }}</p>
+@endif
+
+<a href="{{ route('accounts.create') }}">
+    <button>Add Account</button>
+</a>
+
+<a href="{{ route('admin.branches.index') }}">
     <button>Branch Account</button>
 </a>
 
- <!-- Manage Item Button -->
-    <a href="{{ route('admin.items.create') }}">
+<a href="{{ route('admin.items.create') }}">
     <button>Add Item</button>
-    </a>
-
-     <!-- Manage Order Button -->
-    <a href="{{ route('admin.manageOrder.index') }}">
-    <button>Order</button>
-    
-    <!-- Chat Button -->
-     <a href="{{ route('communication.index') }}">
-    <button>Message</button>
 </a>
 
-    <!-- Add Logout Button -->
-    <form action="{{ route('admin.logout') }}" method="POST" style="margin-top: 20px;">
-        @csrf
-        <button type="submit">Logout</button>
-    </form>
-</body>
-</html>
+<a href="{{ route('admin.manageOrder.index') }}">
+    <button>Order</button>
+</a>
+
+<a href="{{ route('admin.stock.index') }}">
+    <button>Stock Management</button>
+</a>
+
+<a href="{{ route('admin.reports.index') }}">
+    <button>Reports</button>
+</a>
+
+<a href="{{ route('communication.index') }}">
+    <button>Message</button>
+</a>
+@endsection

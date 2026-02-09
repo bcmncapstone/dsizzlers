@@ -6,8 +6,10 @@
         </div>
           <div class="flex gap-4 items-center">
                 <a href="{{ route('franchisee.dashboard') }}">Dashboard</a>
+                <a href="{{ route('franchisee.branch.dashboard') }}">Manage Branch</a>
                 <a href="{{ route('franchisee.orders.index') }}">Orders</a>
-                <a href="{{ route('franchisee.item.index') }}">Inventory</a>
+                <a href="{{ route('franchisee.stock.index') }}">Item Inventory</a>
+                <a href="{{ route('franchisee.reports.index') }}">Reports</a>
                 <a href="{{ route('franchisee.password') }}">Update Password</a>
                 <a href="{{ route('logout') }}"
                onclick="event.preventDefault(); document.getElementById('logout-form').submit();"

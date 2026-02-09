@@ -18,6 +18,9 @@ use App\Http\Controllers\ManageOrderController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DigitalMarketingController;
 use App\Http\Controllers\CommunicationController;
+use App\Http\Controllers\BranchManagementController;
+use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Franchisee\ReportController as FranchiseeReportController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -79,12 +82,28 @@ Route::middleware('auth:franchisor_staff')->group(function () {
         ->name('franchisor-staff.password.update');
 });
 
+// Franchisor Staff Stock Routes
+Route::middleware(['auth:franchisor_staff'])->prefix('franchisor-staff/stock')->name('franchisor-staff.stock.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'index'])->name('index');
+    Route::get('/{stockId}/edit', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'edit'])->name('edit');
+    Route::post('/{stockId}', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'update'])->name('update');
+    Route::post('/{stockId}/cancel', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'cancel'])->name('cancel');
+});
+
 // Franchisee Staff Password Routes
 Route::middleware('auth:franchisee_staff')->group(function () {
     Route::get('franchisee-staff/password', [AccountSettingsController::class, 'editFranchiseeStaffPassword'])
         ->name('franchisee-staff.password');
     Route::post('franchisee-staff/password', [AccountSettingsController::class, 'updateFranchiseeStaffPassword'])
         ->name('franchisee-staff.password.update');
+});
+
+// Franchisee Staff Stock Routes
+Route::middleware(['auth:franchisee_staff'])->prefix('franchisee-staff/stock')->name('franchisee-staff.stock.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'index'])->name('index');
+    Route::get('/{stockId}/edit', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'edit'])->name('edit');
+    Route::post('/{stockId}', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'update'])->name('update');
+    Route::post('/{stockId}/cancel', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'cancel'])->name('cancel');
 });
 
 // Franchisee Password Routes
@@ -101,7 +120,22 @@ Route::middleware(['auth:franchisee'])->prefix('franchisee')->name('franchisee.'
     Route::get('/account/contract/{id}', [FranchiseeController::class, 'downloadContract'])->name('branches.contract');
 });
 
+// Branch Management for Franchisee
+Route::middleware(['auth:franchisee'])->prefix('franchisee/branch')->name('franchisee.branch.')->group(function () {
+    Route::get('/dashboard', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'dashboard'])->name('dashboard');
+    Route::get('/performance', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'performance'])->name('performance');
+    Route::get('/inventory', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'inventory'])->name('inventory');
+    Route::get('/financial', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'financial'])->name('financial');
+});
 
+// Stock Management for Franchisee
+Route::middleware(['auth:franchisee'])->prefix('franchisee/stock')->name('franchisee.stock.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\Franchisee\StockController::class, 'index'])->name('index');
+    Route::get('/{stockId}/edit', [\App\Http\Controllers\Franchisee\StockController::class, 'edit'])->name('edit');
+    Route::post('/{stockId}', [\App\Http\Controllers\Franchisee\StockController::class, 'update'])->name('update');
+    Route::get('/history', [\App\Http\Controllers\Franchisee\StockController::class, 'history'])->name('history');
+    Route::get('/staff-orders', [\App\Http\Controllers\Franchisee\StockController::class, 'staffOrders'])->name('staff-orders');
+});
 
 // Fallback login route required by auth middleware
 Route::get('/login', fn () => redirect('/admin/login'))->name('login');
@@ -175,6 +209,15 @@ Route::prefix('franchisee')
     ->name('franchisee.')
     ->middleware(['auth:franchisee'])
     ->group(function () {
+        // Reports
+        Route::get('/reports', [FranchiseeReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/sales', [FranchiseeReportController::class, 'sales'])->name('reports.sales');
+        Route::get('/reports/sales/pdf', [FranchiseeReportController::class, 'salesPdf'])->name('reports.sales.pdf');
+        Route::get('/reports/inventory', [FranchiseeReportController::class, 'inventory'])->name('reports.inventory');
+        Route::get('/reports/inventory/pdf', [FranchiseeReportController::class, 'inventoryPdf'])->name('reports.inventory.pdf');
+        Route::get('/reports/staff', [FranchiseeReportController::class, 'staff'])->name('reports.staff');
+        Route::get('/reports/staff/pdf', [FranchiseeReportController::class, 'staffPdf'])->name('reports.staff.pdf');
+
         // Cart
         Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
         Route::post('/cart/add/{id}', [CartController::class, 'add'])->name('cart.add');
@@ -223,6 +266,15 @@ Route::prefix('admin')
     ->name('admin.')
     ->middleware(['auth:admin'])
     ->group(function () {
+        // Reports
+        Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/sales', [AdminReportController::class, 'sales'])->name('reports.sales');
+        Route::get('/reports/sales/pdf', [AdminReportController::class, 'salesPdf'])->name('reports.sales.pdf');
+        Route::get('/reports/inventory', [AdminReportController::class, 'inventory'])->name('reports.inventory');
+        Route::get('/reports/inventory/pdf', [AdminReportController::class, 'inventoryPdf'])->name('reports.inventory.pdf');
+        Route::get('/reports/franchisee-sales', [AdminReportController::class, 'franchiseeSales'])->name('reports.franchisee-sales');
+        Route::get('/reports/franchisee-sales/pdf', [AdminReportController::class, 'franchiseeSalesPdf'])->name('reports.franchisee-sales.pdf');
+
         // View all orders
         Route::get('manageOrder', [ManageOrderController::class, 'index'])
             ->name('manageOrder.index');
@@ -246,6 +298,16 @@ Route::prefix('admin')
         // Cancel order
         Route::post('manageOrder/{id}/cancel', [ManageOrderController::class, 'cancelOrder'])
             ->name('manageOrder.cancel');
+        
+        // Stock Management
+        Route::get('/stock', [\App\Http\Controllers\Admin\StockController::class, 'index'])
+            ->name('stock.index');
+        Route::get('/stock/franchisee-inventory', [\App\Http\Controllers\Admin\StockController::class, 'franchiseeInventory'])
+            ->name('stock.franchisee-inventory');
+        Route::get('/stock/{franchiseeId}', [\App\Http\Controllers\Admin\StockController::class, 'show'])
+            ->name('stock.show');
+        Route::get('/stock/reports/all', [\App\Http\Controllers\Admin\StockController::class, 'reports'])
+            ->name('stock.reports');
     });
 
 

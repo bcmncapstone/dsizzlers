@@ -35,11 +35,11 @@ class Order extends Model
     // relationships if needed
     public function franchisee()
     {
-        return $this->belongsTo(Franchisee::class, 'franchisee_id');
+        return $this->belongsTo(Franchisee::class, 'franchisee_id', 'franchisee_id');
     }
 
     public function franchiseeStaff()
     {
-        return $this->belongsTo(FranchiseeStaff::class, 'fstaff_id');
+        return $this->belongsTo(FranchiseeStaff::class, 'fstaff_id', 'fstaff_id');
     }
 }

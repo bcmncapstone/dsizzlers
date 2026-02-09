@@ -33,7 +33,8 @@ class ItemController extends Controller
         'price' => 'required|numeric|min:0',
         'stock_quantity' => 'required|integer|min:0',
         'item_category' => 'nullable|string|max:30',
-        'item_image.*' => 'nullable|image|max:10240',
+        'item_image' => 'required',
+        'item_image.*' => 'image|max:10240',
     ]);
 
     $imagePaths = [];
@@ -73,7 +74,8 @@ class ItemController extends Controller
         'price' => 'required|numeric|min:0',
         'stock_quantity' => 'required|integer|min:0',
         'item_category' => 'nullable|string|max:30',
-        'item_image.*' => 'nullable|image|max:10240',
+        'item_image' => 'required',
+        'item_image.*' => 'image|max:10240',
     ]);
 
     $item = Item::findOrFail($id);

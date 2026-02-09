@@ -22,6 +22,10 @@
                     <x-nav-link :href="route('admin.branches.index')" :active="request()->routeIs('admin.branches.index')">
                         Branches
                     </x-nav-link>
+
+                    <x-nav-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')">
+                        Reports
+                    </x-nav-link>
                 </div>
             </div>
 

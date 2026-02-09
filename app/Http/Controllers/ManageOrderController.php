@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\FranchiseeStock;
+use App\Models\StockTransaction;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ManageOrderController extends Controller
 {
@@ -86,19 +90,98 @@ class ManageOrderController extends Controller
     // Update order status
     public function updateOrderStatus(Request $request, $id)
     {
-        $order = Order::findOrFail($id);
-        $orderStatus = $request->input('order_status');
+        $order = Order::with('orderDetails')->findOrFail($id);
+        $oldStatus = $order->order_status;
+        $newStatus = $request->input('order_status');
         
-        $order->order_status = $orderStatus;
-        $order->save();
+        DB::beginTransaction();
+        try {
+            $order->order_status = $newStatus;
+            $order->save();
 
-        if (auth('admin')->check()) {
-            return redirect()->route('admin.manageOrder.show', $id)->with('success', 'Order status updated.');
-        } elseif (auth('franchisor_staff')->check()) {
-            return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('success', 'Order status updated.');
+            // If status changed to 'Delivered' and it's a staff order, merge with franchisee stock
+            if ($newStatus === 'Delivered' && $oldStatus !== 'Delivered' && $order->fstaff_id) {
+                $this->mergeStaffOrderToStock($order);
+            }
+
+            DB::commit();
+
+            if (auth('admin')->check()) {
+                return redirect()->route('admin.manageOrder.show', $id)->with('success', 'Order status updated.');
+            } elseif (auth('franchisor_staff')->check()) {
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('success', 'Order status updated.');
+            }
+
+            abort(403, 'Unauthorized action.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update order status: ' . $e->getMessage());
+            
+            if (auth('admin')->check()) {
+                return redirect()->back()->with('error', 'Failed to update order: ' . $e->getMessage());
+            } elseif (auth('franchisor_staff')->check()) {
+                return redirect()->back()->with('error', 'Failed to update order: ' . $e->getMessage());
+            }
+
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
+    /**
+     * Merge staff order items into franchisee stock inventory
+     */
+    private function mergeStaffOrderToStock(Order $order)
+    {
+        // Safety check: ensure order has franchisee_id
+        if (!$order->franchisee_id) {
+            Log::warning("Order #{$order->order_id} has no franchisee_id, cannot merge to stock.");
+            throw new \Exception("Cannot merge order without franchisee_id. Please ensure the order is associated with a franchisee.");
         }
 
-        abort(403, 'Unauthorized action.');
+        // Check if this order has already been merged by looking for existing transactions
+        $existingMerge = StockTransaction::where('reference_type', 'staff_order')
+            ->where('reference_id', $order->order_id)
+            ->exists();
+
+        if ($existingMerge) {
+            Log::info("Order #{$order->order_id} already merged to stock, skipping.");
+            return;
+        }
+
+        foreach ($order->orderDetails as $detail) {
+            // Find or create franchisee stock record
+            $stock = FranchiseeStock::firstOrCreate(
+                [
+                    'franchisee_id' => $order->franchisee_id,
+                    'item_id' => $detail->item_id,
+                ],
+                [
+                    'current_quantity' => 0,
+                    'minimum_quantity' => 10,
+                ]
+            );
+
+            // Update stock quantity
+            $oldQuantity = $stock->current_quantity;
+            $stock->current_quantity += $detail->quantity;
+            $stock->save();
+
+            // Record the transaction
+            StockTransaction::create([
+                'franchisee_id' => $order->franchisee_id,
+                'item_id' => $detail->item_id,
+                'transaction_type' => 'in',
+                'quantity' => $detail->quantity,
+                'balance_after' => $stock->current_quantity,
+                'reference_type' => 'staff_order',
+                'reference_id' => $order->order_id,
+                'notes' => "Staff order #{$order->order_id} delivered - items added to stock",
+                'performed_by_type' => auth('admin')->check() ? 'admin' : 'franchisor_staff',
+                'performed_by_id' => auth('admin')->check() ? auth('admin')->id() : auth('franchisor_staff')->id(),
+            ]);
+
+            Log::info("Merged order #{$order->order_id}: Added {$detail->quantity} of item #{$detail->item_id} to franchisee #{$order->franchisee_id} stock (from {$oldQuantity} to {$stock->current_quantity})");
+        }
     }
 
     // Update admin notes
