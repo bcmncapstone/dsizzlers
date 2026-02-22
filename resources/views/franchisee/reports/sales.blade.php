@@ -55,6 +55,41 @@
             </div>
         </div>
 
+        <!-- Charts Section -->
+        @if(!$noData)
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Top Selling Items Chart -->
+            @if(count($topItems) > 0)
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Selling Items</h3>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="topItemsChart"></canvas>
+                </div>
+            </div>
+            @endif
+
+            <!-- Sales by Category Chart -->
+            @if(count($salesByCategory) > 0)
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Sales by Category</h3>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            @endif
+        </div>
+
+        <!-- Daily Sales Trend Chart -->
+        @if(count($dailySales) > 0)
+        <div class="bg-white shadow-sm sm:rounded-lg p-4 mb-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Daily Sales Trend</h3>
+            <div style="position: relative; height: 300px;">
+                <canvas id="dailySalesChart"></canvas>
+            </div>
+        </div>
+        @endif
+        @endif
+
         <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
             <div class="p-4 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Sales Results</h2>
@@ -65,6 +100,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item(s)</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                         </tr>
@@ -73,12 +109,13 @@
                         @forelse($orders as $order)
                             <tr>
                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $order->order_id }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ $order->item_names ?: '—' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900">₱{{ number_format($order->total_amount, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
+                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -92,4 +129,123 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Top Selling Items Chart
+    @if(!$noData && count($topItems) > 0)
+    const topItemsCtx = document.getElementById('topItemsChart');
+    if (topItemsCtx) {
+        const topItemsData = @json($topItems);
+        new Chart(topItemsCtx, {
+            type: 'bar',
+            data: {
+                labels: topItemsData.map(item => item.name.substring(0, 20) + (item.name.length > 20 ? '...' : '')),
+                datasets: [{
+                    label: 'Quantity Sold',
+                    data: topItemsData.map(item => item.quantity),
+                    backgroundColor: '#FF5722',
+                    borderColor: '#FF2D00',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                        }
+                    }
+                }
+            }
+        });
+    }
+    @endif
+
+    // Sales by Category Chart
+    @if(!$noData && count($salesByCategory) > 0)
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryCtx) {
+        const categoryData = @json($salesByCategory);
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryData.map(cat => cat.category),
+                datasets: [{
+                    data: categoryData.map(cat => cat.sales),
+                    backgroundColor: [
+                        '#FF5722', '#FF7043', '#FF8A65', '#FFAB91', '#FFCCBC',
+                        '#FF2D00', '#E74C3C', '#D35400', '#C23B1D', '#A93D20'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+    @endif
+
+    // Daily Sales Trend Chart
+    @if(!$noData && count($dailySales) > 0)
+    const dailySalesCtx = document.getElementById('dailySalesChart');
+    if (dailySalesCtx) {
+        const dailyData = @json($dailySales);
+        new Chart(dailySalesCtx, {
+            type: 'line',
+            data: {
+                labels: dailyData.map(day => {
+                    const date = new Date(day.date);
+                    return (date.getMonth() + 1) + '/' + date.getDate();
+                }),
+                datasets: [{
+                    label: 'Daily Sales (₱)',
+                    data: dailyData.map(day => day.sales),
+                    borderColor: '#FF5722',
+                    backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#FF5722',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    }
+                }
+            }
+        });
+    }
+    @endif
+</script>
 @endsection

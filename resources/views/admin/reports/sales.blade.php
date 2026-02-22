@@ -1,108 +1,262 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="py-6">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white shadow-sm sm:rounded-lg p-6 mb-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Sales Report</h1>
-                    <p class="text-sm text-gray-600">Filter sales by franchisee and date range.</p>
-                </div>
-                <a href="{{ route('admin.reports.index') }}" class="text-sm text-blue-600 hover:underline">Back to Reports</a>
+
+<div class="sales-page-wrapper">
+    <div class="sales-page-container">
+        <!-- Header -->
+        <div class="sales-header">
+            <div>
+                <h1>Sales Report</h1>
+                <p>Admin item sales to franchisees</p>
             </div>
+            <a href="{{ route('admin.reports.index') }}">← Back to Reports</a>
         </div>
 
-        <div class="bg-white shadow-sm sm:rounded-lg p-6 mb-4">
-            <form method="GET" action="{{ route('admin.reports.sales') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Franchisee</label>
-                    <select name="franchisee_id" class="w-full rounded-md border-gray-300 shadow-sm">
-                        <option value="">All Franchisees</option>
-                        @foreach($franchisees as $franchisee)
-                            <option value="{{ $franchisee->franchisee_id }}" {{ request('franchisee_id') == $franchisee->franchisee_id ? 'selected' : '' }}>
-                                {{ $franchisee->franchisee_name }}
-                            </option>
-                        @endforeach
-                    </select>
+        <!-- Filter Section -->
+        <div class="sales-filter-section">
+            <form method="GET" action="{{ route('admin.reports.sales') }}" class="sales-filter-form">
+                <div class="sales-filter-group">
+                    <label for="start_date" class="sales-filter-label">Start Date</label>
+                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="sales-filter-input" />
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}" class="w-full rounded-md border-gray-300 shadow-sm" />
+                <div class="sales-filter-group">
+                    <label for="end_date" class="sales-filter-label">End Date</label>
+                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="sales-filter-input" />
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}" class="w-full rounded-md border-gray-300 shadow-sm" />
-                </div>
-                <div class="flex items-end gap-2">
-                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold uppercase">Apply Filter</button>
-                </div>
+                <button type="submit" class="sales-filter-btn">Apply Filter</button>
             </form>
         </div>
 
+        <!-- Alerts -->
         @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-400 p-3 mb-4">
-                <p class="text-sm text-red-700">{{ session('error') }}</p>
+            <div class="sales-alert alert-danger">
+                <p>{{ session('error') }}</p>
             </div>
         @endif
 
-        @if($noData && (request('franchisee_id') || request('start_date') || request('end_date')))
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
-                <p class="text-sm text-yellow-700">No sales data found for the selected filters.</p>
+        @if($noData && (request('start_date') || request('end_date')))
+            <div class="sales-alert alert-warning">
+                <p>No sales data found for the selected filters.</p>
                 @if($availableRange && $availableRange->min_date && $availableRange->max_date)
-                    <p class="text-xs text-yellow-600 mt-1">Available range: {{ \Carbon\Carbon::parse($availableRange->min_date)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange->max_date)->format('M d, Y') }}</p>
+                    <p class="sales-alert-range">Available range: {{ \Carbon\Carbon::parse($availableRange->min_date)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange->max_date)->format('M d, Y') }}</p>
                 @endif
             </div>
         @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div class="bg-white shadow-sm sm:rounded-lg p-4">
-                <p class="text-sm text-gray-500">Total Orders</p>
-                <p class="text-2xl font-semibold text-gray-900">{{ $totalOrders }}</p>
+        <!-- Stats Cards -->
+        <div class="sales-stats-grid">
+            <div class="sales-stat-card">
+                <div class="sales-stat-content">
+                    <div class="sales-stat-label">Total Items Sold</div>
+                    <div class="sales-stat-value">{{ intval($totalQuantity ?? 0) }}</div>
+                </div>
+                <div class="sales-stat-icon">📦</div>
             </div>
-            <div class="bg-white shadow-sm sm:rounded-lg p-4">
-                <p class="text-sm text-gray-500">Total Sales</p>
-                <p class="text-2xl font-semibold text-gray-900">₱{{ number_format($totalSales, 2) }}</p>
+            <div class="sales-stat-card">
+                <div class="sales-stat-content">
+                    <div class="sales-stat-label">Total Sales</div>
+                    <div class="sales-stat-value">₱{{ number_format($totalSales, 2) }}</div>
+                </div>
+                <div class="sales-stat-icon">💰</div>
             </div>
         </div>
 
-        <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-            <div class="p-4 flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Sales Results</h2>
-                <a href="{{ route('admin.reports.sales.pdf', request()->query()) }}" class="inline-flex items-center px-3 py-2 bg-gray-800 text-white rounded-md text-xs font-semibold uppercase">Generate PDF</a>
+        <!-- Charts Section -->
+        @if(!$noData)
+        <div class="sales-charts-grid">
+            <!-- Top Selling Items Chart -->
+            <div class="sales-chart-section">
+                <h3 class="sales-chart-title">Top Selling Items</h3>
+                <div class="sales-chart-container">
+                    <canvas id="topItemsChart"></canvas>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+
+            <!-- Sales by Category Chart -->
+            @if(count($salesByCategory) > 0)
+            <div class="sales-chart-section">
+                <h3 class="sales-chart-title">Sales by Category</h3>
+                <div class="sales-chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+            @endif
+        </div>
+
+        <!-- Daily Sales Trend Chart -->
+        @if(count($dailySales) > 0)
+        <div class="sales-daily-chart">
+            <h3 class="sales-chart-title">Daily Sales Trend</h3>
+            <div class="sales-chart-container">
+                <canvas id="dailySalesChart"></canvas>
+            </div>
+        </div>
+        @endif
+        @endif
+
+        <!-- Sales Results Table -->
+        <div class="sales-table-section">
+            <div class="sales-table-header">
+                <h3>Sales Results</h3>
+                <a href="{{ route('admin.reports.sales.pdf', request()->query()) }}" class="sales-table-pdf-btn">📄 Generate PDF</a>
+            </div>
+            <div class="sales-table-overflow">
+                <table class="sales-table">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Franchisee</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                            <th>Order ID</th>
+                            <th>Item Name</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Subtotal</th>
+                            <th>Order Date</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($orders as $order)
+                    <tbody>
+                        @forelse($orderDetails as $detail)
                             <tr>
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ $order->order_id }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ optional($order->franchisee)->franchisee_name ?? '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-900">₱{{ number_format($order->total_amount, 2) }}</td>
+                                <td class="table-item-name">#{{ $detail->order_id }}</td>
+                                <td>{{ $detail->item_name }}</td>
+                                <td>{{ $detail->quantity }}</td>
+                                <td>₱{{ number_format($detail->price, 2) }}</td>
+                                <td class="table-subtotal">₱{{ number_format($detail->subtotal, 2) }}</td>
+                                <td>{{ \Carbon\Carbon::parse($detail->order_date)->format('M d, Y') }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
+                                <td colspan="6" class="sales-table-empty">No sales records found</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            @if($orders->hasPages())
-                <div class="p-4">
-                    {{ $orders->appends(request()->query())->links() }}
+            @if($orderDetails->hasPages())
+                <div class="sales-pagination-wrapper">
+                    {{ $orderDetails->appends(request()->query())->links() }}
                 </div>
             @endif
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Top Selling Items Chart
+    @if(!$noData && count($topItems) > 0)
+    const topItemsCtx = document.getElementById('topItemsChart');
+    if (topItemsCtx) {
+        const topItemsData = @json($topItems);
+        new Chart(topItemsCtx, {
+            type: 'bar',
+            data: {
+                labels: topItemsData.map(item => item.name.substring(0, 20) + (item.name.length > 20 ? '...' : '')),
+                datasets: [{
+                    label: 'Quantity Sold',
+                    data: topItemsData.map(item => item.quantity),
+                    backgroundColor: '#3b82f6',
+                    borderColor: '#1e40af',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                        }
+                    }
+                }
+            }
+        });
+    }
+    @endif
+
+    // Sales by Category Chart
+    @if(!$noData && count($salesByCategory) > 0)
+    const categoryCtx = document.getElementById('categoryChart');
+    if (categoryCtx) {
+        const categoryData = @json($salesByCategory);
+        new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryData.map(cat => cat.category),
+                datasets: [{
+                    data: categoryData.map(cat => cat.sales),
+                    backgroundColor: [
+                        '#FF5722', '#FF7043', '#FF8A65', '#FFAB91', '#FFCCBC',
+                        '#FF2D00', '#E74C3C', '#D35400', '#C23B1D', '#A93D20'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+    @endif
+
+    // Daily Sales Trend Chart
+    @if(!$noData && count($dailySales) > 0)
+    const dailySalesCtx = document.getElementById('dailySalesChart');
+    if (dailySalesCtx) {
+        const dailyData = @json($dailySales);
+        new Chart(dailySalesCtx, {
+            type: 'line',
+            data: {
+                labels: dailyData.map(day => {
+                    const date = new Date(day.date);
+                    return (date.getMonth() + 1) + '/' + date.getDate();
+                }),
+                datasets: [{
+                    label: 'Daily Sales (₱)',
+                    data: dailyData.map(day => day.sales),
+                    borderColor: '#FF5722',
+                    backgroundColor: 'rgba(255, 87, 34, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#FF5722',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                    }
+                }
+            }
+        });
+    }
+    @endif
+</script>
+
 @endsection

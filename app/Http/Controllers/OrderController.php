@@ -33,7 +33,9 @@ class OrderController extends Controller
     // Show available items (if needed)
     public function create()
     {
-        $items = Item::where('is_archived', false)->get();
+        // For now, show all items; archived filtering is handled
+        // in ItemController via a separate JSON-based archive list.
+        $items = Item::all();
 
         if (auth()->guard('franchisee_staff')->check()) {
             return view('franchisee-staff.orders.create', compact('items'));

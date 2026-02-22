@@ -1,76 +1,83 @@
 @extends('layouts.app')
 
 @section('content')
-<div style="max-width: 600px; margin: 40px auto;">
-    <h2>Create Account</h2>
 
-    @if(session('success'))
-        <div style="color: green; margin-bottom: 15px;">{{ session('success') }}</div>
-    @endif
+<div class="dashboard-wrapper">
+    <div class="form-container">
+        <h2>Create Account</h2>
 
-    @if($errors->any())
-        <div style="color: red; margin-bottom: 15px;">
-            <ul>
-                @foreach($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+        @if(session('success'))
+            <div class="alert alert-success">
+                <strong>✓</strong> {{ session('success') }}
+            </div>
+        @endif
 
-    <form method="POST" action="{{ route('accounts.store') }}">
-        @csrf
+        @if($errors->any())
+            <div class="alert alert-error">
+                <strong>✕</strong>
+                <ul>
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
 
-        <div>
-            <label>Role:</label><br>
-            <select name="role" required onchange="toggleFields(this.value)">
-                <option value="">Select</option>
-                <option value="franchisee">Franchisee</option>
-                <option value="franchisor_staff">Franchisor Staff</option>
-            </select>
-        </div><br>
+        <form method="POST" action="{{ route('accounts.store') }}">
+            @csrf
 
-        <div>
-            <label>First Name:</label><br>
-            <input type="text" name="fname" required>
-        </div><br>
+            <div class="form-group">
+                <label class="form-label">Role: *</label>
+                <select name="role" class="form-control" required onchange="toggleFields(this.value)">
+                    <option value="">Select Role</option>
+                    <option value="franchisee">Franchisee</option>
+                    <option value="franchisor_staff">Franchisor Staff</option>
+                </select>
+            </div>
 
-        <div>
-            <label>Last Name:</label><br>
-            <input type="text" name="lname" required>
-        </div><br>
+            <div class="form-group">
+                <label class="form-label">First Name: *</label>
+                <input type="text" name="fname" class="form-control" required>
+            </div>
 
-        <div>
-            <label>Contact:</label><br>
-            <input type="text" name="contact" required>
-        </div><br>
+            <div class="form-group">
+                <label class="form-label">Last Name: *</label>
+                <input type="text" name="lname" class="form-control" required>
+            </div>
 
-        <div>
-            <label>Username:</label><br>
-            <input type="text" name="username" required>
-        </div><br>
+            <div class="form-group">
+                <label class="form-label">Contact: *</label>
+                <input type="text" name="contact" class="form-control" required>
+            </div>
 
-        <div>
-            <label>Password:</label><br>
-            <input type="password" name="password" required>
-        </div><br>
+            <div class="form-group">
+                <label class="form-label">Username: *</label>
+                <input type="text" name="username" class="form-control" required>
+            </div>
 
-        {{-- Franchisee Only --}}
-        <div id="franchisee_fields" style="display:none;">
-            <div>
-                <label>Email:</label><br>
-                <input type="email" name="email">
-            </div><br>
+            <div class="form-group">
+                <label class="form-label">Password: *</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
 
-            <div>
-                <label>Address:</label><br>
-                <input type="text" name="address">
-            </div><br>
-        </div>
+            <!-- Franchisee Only Fields -->
+            <div id="franchisee_fields" style="display:none;">
+                <div class="form-group">
+                    <label class="form-label">Email:</label>
+                    <input type="email" name="email" class="form-control">
+                </div>
 
-        <button type="submit">Create Account</button>
-    </form>
+                <div class="form-group">
+                    <label class="form-label">Address:</label>
+                    <input type="text" name="address" class="form-control">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" style="padding: 12px;">Create Account</button>
+        </form>
+    </div>
 </div>
+
 <script>
 function toggleFields(role) {
     const franchiseeFields = document.getElementById('franchisee_fields');
@@ -81,4 +88,5 @@ function toggleFields(role) {
     }
 }
 </script>
+
 @endsection

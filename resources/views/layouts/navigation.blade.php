@@ -1,43 +1,29 @@
-<nav x-data="{ open: false }" class="bg-white border-b border-gray-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <div class="flex">
-                <!-- Logo -->
-                <div class="shrink-0 flex items-center">
-                    <a href="{{ route('admin.dashboard') }}">
-                        <strong>Admin Dashboard</strong>
-                    </a>
-                </div>
-
-                <!-- Navigation Links -->
-                <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                    <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">
-                        Dashboard
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('accounts.create')" :active="request()->routeIs('accounts.create')">
-                        Create Account
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('admin.branches.index')" :active="request()->routeIs('admin.branches.index')">
-                        Branches
-                    </x-nav-link>
-
-                    <x-nav-link :href="route('admin.reports.index')" :active="request()->routeIs('admin.reports.*')">
-                        Reports
-                    </x-nav-link>
-                </div>
+<nav class="navbar">
+    <div class="max-w-7xl mx-auto" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <!-- Logo and Brand -->
+        <a href="{{ route('admin.dashboard') }}" class="navbar-brand">
+            <div class="navbar-logo">D</div>
+            <div>
+                <div style="font-size: 16px; font-weight: 700;">D-SIZZLERS</div>
+                <div style="font-size: 11px; opacity: 0.9;">Admin Portal</div>
             </div>
+        </a>
 
-            <!-- Logout Button -->
-            <div class="hidden sm:flex sm:items-center sm:ml-6">
-                <form method="POST" action="{{ route('admin.logout') }}">
+        <!-- Desktop Navigation -->
+        <ul class="navbar-nav">
+            <li><a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ route('accounts.create') }}" class="{{ request()->routeIs('accounts.create') ? 'active' : '' }}">Create Account</a></li>
+            <li><a href="{{ route('admin.branches.index') }}" class="{{ request()->routeIs('admin.branches.index') ? 'active' : '' }}">Branches</a></li>
+            <li><a href="{{ route('admin.stock.index') }}" class="{{ request()->routeIs('admin.stock.*') ? 'active' : '' }}">Stock</a></li>
+            <li><a href="{{ route('admin.manageOrder.index') }}" class="{{ request()->routeIs('admin.manageOrder.*') ? 'active' : '' }}">Orders</a></li>
+            <li><a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">Reports</a></li>
+            
+            <li>
+                <form method="POST" action="{{ route('admin.logout') }}" style="display: inline;">
                     @csrf
-                    <x-nav-link href="#" onclick="event.preventDefault(); this.closest('form').submit();">
-                        Log Out
-                    </x-nav-link>
+                    <button type="submit" class="btn btn-danger navbar-logout" style="margin: 0;">Log Out</button>
                 </form>
-            </div>
-        </div>
+            </li>
+        </ul>
     </div>
 </nav>

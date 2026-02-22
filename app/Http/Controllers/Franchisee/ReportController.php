@@ -26,7 +26,7 @@ class ReportController extends Controller
 
         $franchisee = Auth::guard('franchisee')->user();
 
-        $query = Order::with('franchisee')
+        $query = Order::with(['franchisee', 'orderDetails.item'])
             ->where('franchisee_id', $franchisee->franchisee_id)
             ->when($request->start_date, function ($q) use ($request) {
                 $q->whereDate('order_date', '>=', $request->start_date);
@@ -40,15 +40,98 @@ class ReportController extends Controller
         $totalOrders = $summaryQuery->count();
 
         $orders = $query->orderBy('order_date', 'desc')->paginate(50);
+
+        // Compute concatenated item names per order for display
+        $orders->getCollection()->transform(function ($order) {
+            $order->item_names = $order->orderDetails
+                ? $order->orderDetails
+                    ->map(function ($detail) {
+                        return optional($detail->item)->item_name;
+                    })
+                    ->filter()
+                    ->implode(', ')
+                : '';
+
+            return $order;
+        });
         $noData = $orders->isEmpty();
         $availableRange = $noData ? $this->getOrderDateRange($franchisee->franchisee_id) : null;
+
+        // Get chart data
+        $chartQuery = DB::table('order_details')
+            ->join('items', 'order_details.item_id', '=', 'items.item_id')
+            ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
+            ->where('orders.franchisee_id', $franchisee->franchisee_id)
+            ->select(
+                'order_details.item_id',
+                'items.item_name',
+                'items.item_category',
+                'order_details.quantity',
+                'order_details.subtotal',
+                'orders.order_date'
+            )
+            ->when($request->start_date, function ($q) use ($request) {
+                $q->whereDate('orders.order_date', '>=', $request->start_date);
+            })
+            ->when($request->end_date, function ($q) use ($request) {
+                $q->whereDate('orders.order_date', '<=', $request->end_date);
+            })
+            ->get();
+
+        // Top selling items by quantity
+        $topItems = collect($chartQuery)
+            ->groupBy('item_name')
+            ->map(function($group) { 
+                return [
+                    'name' => $group->first()->item_name,
+                    'quantity' => $group->sum('quantity'),
+                    'sales' => $group->sum('subtotal')
+                ];
+            })
+            ->sortByDesc('quantity')
+            ->take(10)
+            ->values()
+            ->toArray();
+
+        // Sales by category
+        $salesByCategory = collect($chartQuery)
+            ->groupBy('item_category')
+            ->map(function($group) { 
+                return [
+                    'category' => $group->first()->item_category ?? 'Uncategorized',
+                    'quantity' => $group->sum('quantity'),
+                    'sales' => $group->sum('subtotal')
+                ];
+            })
+            ->sortByDesc('sales')
+            ->values()
+            ->toArray();
+
+        // Daily sales trend
+        $dailySales = collect($chartQuery)
+            ->groupBy(function($item) { 
+                return \Carbon\Carbon::parse($item->order_date)->format('Y-m-d');
+            })
+            ->map(function($group) { 
+                return [
+                    'date' => $group->first()->order_date,
+                    'sales' => $group->sum('subtotal'),
+                    'quantity' => $group->sum('quantity')
+                ];
+            })
+            ->sortBy('date')
+            ->values()
+            ->toArray();
 
         return view('franchisee.reports.sales', compact(
             'orders',
             'totalSales',
             'totalOrders',
             'noData',
-            'availableRange'
+            'availableRange',
+            'topItems',
+            'salesByCategory',
+            'dailySales'
         ));
     }
 
@@ -109,10 +192,35 @@ class ReportController extends Controller
         $noData = $transactions->isEmpty();
         $availableRange = $noData ? $this->getStockDateRange($franchisee->franchisee_id) : null;
 
+        // Get franchisee items for stock status summary
+        $franchiseeItems = DB::table('franchisee_stock')
+            ->join('items', 'franchisee_stock.item_id', '=', 'items.item_id')
+            ->where('franchisee_stock.franchisee_id', $franchisee->franchisee_id)
+            ->select('franchisee_stock.current_quantity as stock_quantity', 'items.item_name', 'items.item_category', 'items.price')
+            ->get();
+
+        // Stock status categorization
+        $inStock = $franchiseeItems->filter(fn($item) => $item->stock_quantity > 10);
+        $lowStock = $franchiseeItems->filter(fn($item) => $item->stock_quantity > 0 && $item->stock_quantity <= 10);
+        $outOfStock = $franchiseeItems->filter(fn($item) => $item->stock_quantity == 0);
+        
+        $totalQuantity = $franchiseeItems->sum('stock_quantity');
+        $totalValue = $franchiseeItems->sum(fn($item) => $item->stock_quantity * $item->price);
+
+        // Top items by stock - convert to array for JSON serialization
+        $topItems = $franchiseeItems->sortByDesc('stock_quantity')->take(5)->values()->toArray();
+
         return view('franchisee.reports.inventory', compact(
             'transactions',
             'noData',
-            'availableRange'
+            'availableRange',
+            'inStock',
+            'lowStock',
+            'outOfStock',
+            'totalQuantity',
+            'totalValue',
+            'topItems',
+            'franchiseeItems'
         ));
     }
 
@@ -178,12 +286,32 @@ class ReportController extends Controller
         $noPerformanceData = $performance->isEmpty() && ($request->start_date || $request->end_date);
         $availableRange = $this->getOrderDateRange($franchisee->franchisee_id);
 
+        // Prepare chart data for staff performance
+        $staffChartData = [];
+        foreach ($staff as $member) {
+            $perf = $performance[$member->fstaff_id] ?? null;
+            $staffChartData[] = [
+                'name' => $member->fstaff_fname . ' ' . $member->fstaff_lname,
+                'orders' => $perf->orders_count ?? 0,
+                'sales' => $perf->total_sales ?? 0
+            ];
+        }
+        
+        // Sort by sales descending and take top 5 for charts
+        $topStaffBySales = collect($staffChartData)
+            ->sortByDesc('sales')
+            ->take(5)
+            ->values()
+            ->toArray();
+
         return view('franchisee.reports.staff', compact(
             'staff',
             'performance',
             'noData',
             'noPerformanceData',
-            'availableRange'
+            'availableRange',
+            'topStaffBySales',
+            'staffChartData'
         ));
     }
 

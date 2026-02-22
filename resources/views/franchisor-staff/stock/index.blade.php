@@ -46,10 +46,16 @@
 
         <!-- Items Table -->
         @if($items->count() > 0)
+            <!-- Catalog Heading -->
+            <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden mb-4">
+                <div class="p-4">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-0">Franchisor Items Catalog</h2>
+                </div>
+            </div>
+
+            <!-- Table Container -->
             <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
                 <div class="p-4">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Franchisor Items Catalog</h2>
-                    
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">

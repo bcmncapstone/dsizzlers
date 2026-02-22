@@ -4,44 +4,131 @@
     <meta charset="UTF-8">
     <title>Sales Report</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #111; }
-        h1 { font-size: 18px; margin-bottom: 4px; }
-        .meta { font-size: 11px; margin-bottom: 12px; color: #555; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-        th { background: #f3f4f6; }
+        * { margin: 0; padding: 0; }
+        body { font-family: DejaVu Sans, sans-serif; font-size: 11px; color: #111; line-height: 1.4; }
+        h1 { font-size: 20px; margin-bottom: 4px; font-weight: bold; }
+        h2 { font-size: 13px; margin-top: 14px; margin-bottom: 8px; font-weight: bold; }
+        p { margin-bottom: 4px; }
+        
+        .header { margin-bottom: 16px; border-bottom: 2px solid #FF8C42; padding-bottom: 8px; }
+        .header p { font-size: 10px; color: #666; }
+        .meta-info { font-size: 10px; color: #555; margin-top: 4px; }
+        .meta-row { margin-bottom: 2px; }
+        
+        .summary { margin-bottom: 16px; display: flex; gap: 16px; }
+        .summary-item { flex: 1; border: 1px solid #ddd; padding: 8px; }
+        .summary-label { font-size: 10px; color: #666; margin-bottom: 4px; font-weight: bold; }
+        .summary-value { font-size: 16px; font-weight: bold; color: #FF8C42; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 10px; }
+        th { background: #f3f4f6; font-weight: bold; }
+        
+        .center { text-align: center; }
         .right { text-align: right; }
+        
+        .footer { margin-top: 16px; padding-top: 8px; border-top: 1px solid #ddd; font-size: 9px; color: #555; }
+        .page-break { page-break-after: always; margin-bottom: 20px; }
     </style>
 </head>
 <body>
-    <h1>Sales Report</h1>
-    <div class="meta">
-        Generated: {{ now()->format('M d, Y h:i A') }}
-        <br>
-        Filters: Franchisee {{ $filters['franchisee_id'] ?? 'All' }} | Start {{ $filters['start_date'] ?? 'N/A' }} | End {{ $filters['end_date'] ?? 'N/A' }}
+    <div class="header">
+        <h1>Sales Report</h1>
+        <p>D-Sizzlers Admin Portal</p>
+        <div class="meta-info">
+            <div class="meta-row"><strong>Generated:</strong> {{ now()->format('M d, Y h:i A') }}</div>
+            <div class="meta-row"><strong>Filter:</strong> {{ $filters['start_date'] ?? 'N/A' }} to {{ $filters['end_date'] ?? 'N/A' }}</div>
+        </div>
     </div>
 
-    <p><strong>Total Orders:</strong> {{ $totalOrders }} &nbsp; | &nbsp; <strong>Total Sales:</strong> ₱{{ number_format($totalSales, 2) }}</p>
+    <!-- Summary Stats -->
+    <div class="summary">
+        <div class="summary-item">
+            <div class="summary-label">Total Items Sold</div>
+            <div class="summary-value">{{ intval($totalQuantity ?? 0) }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Sales Revenue</div>
+            <div class="summary-value">₱{{ number_format($totalSales, 2) }}</div>
+        </div>
+    </div>
 
+    <!-- Top Selling Items -->
+    @if(isset($topItems) && count($topItems) > 0)
+    <h2>Top Selling Items</h2>
     <table>
         <thead>
             <tr>
-                <th>Order ID</th>
-                <th>Franchisee</th>
-                <th>Order Date</th>
-                <th class="right">Total</th>
+                <th>Item Name</th>
+                <th class="right">Qty Sold</th>
+                <th class="right">Revenue</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($orders as $order)
+            @foreach($topItems as $item)
                 <tr>
-                    <td>{{ $order->order_id }}</td>
-                    <td>{{ optional($order->franchisee)->franchisee_name ?? '-' }}</td>
-                    <td>{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
-                    <td class="right">₱{{ number_format($order->total_amount, 2) }}</td>
+                    <td>{{ $item['name'] }}</td>
+                    <td class="right">{{ $item['quantity'] }}</td>
+                    <td class="right">₱{{ number_format($item['sales'], 2) }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
+    @endif
+
+    <!-- Sales by Category -->
+    @if(isset($salesByCategory) && count($salesByCategory) > 0)
+    <h2>Sales by Category</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th class="right">Qty</th>
+                <th class="right">Revenue</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($salesByCategory as $cat)
+                <tr>
+                    <td>{{ $cat['category'] }}</td>
+                    <td class="right">{{ $cat['quantity'] }}</td>
+                    <td class="right">₱{{ number_format($cat['sales'], 2) }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    @endif
+
+    <!-- All Order Details -->
+    <h2>All Order Details</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Item Name</th>
+                <th class="right">Qty</th>
+                <th class="right">Unit Price</th>
+                <th class="right">Subtotal</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($orderDetails as $detail)
+                <tr>
+                    <td>#{{ $detail->order_id }}</td>
+                    <td>{{ $detail->item_name }}</td>
+                    <td class="right">{{ $detail->quantity }}</td>
+                    <td class="right">₱{{ number_format($detail->price, 2) }}</td>
+                    <td class="right">₱{{ number_format($detail->subtotal, 2) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($detail->order_date)->format('M d, Y') }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>This report was automatically generated by D-Sizzlers Admin System | Confidential</p>
+    </div>
 </body>
 </html>

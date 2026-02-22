@@ -44,6 +44,45 @@
             </div>
         @endif
 
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <p class="text-sm text-gray-500">Total Items</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ $franchiseeItems->count() }}</p>
+            </div>
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <p class="text-sm text-gray-500">Total Quantity</p>
+                <p class="text-2xl font-semibold text-gray-900">{{ number_format($totalQuantity) }}</p>
+            </div>
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <p class="text-sm text-gray-500">Inventory Value</p>
+                <p class="text-2xl font-semibold text-gray-900">₱{{ number_format($totalValue, 2) }}</p>
+            </div>
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <p class="text-sm text-gray-500">Low/Out Stock</p>
+                <p class="text-2xl font-semibold text-red-600">{{ $lowStock->count() + $outOfStock->count() }}</p>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <!-- Stock Status Pie Chart -->
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Stock Status Distribution</h3>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="stockStatusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Items Bar Chart -->
+            <div class="bg-white shadow-sm sm:rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Items by Stock</h3>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="topItemsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
             <div class="p-4 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Inventory Movements</h2>
@@ -85,4 +124,75 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Stock Status Pie Chart
+    const stockStatusCtx = document.getElementById('stockStatusChart');
+    if (stockStatusCtx) {
+        new Chart(stockStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['In Stock (>10)', 'Low Stock (1-10)', 'Out of Stock (0)'],
+                datasets: [{
+                    data: [{{ $inStock->count() }}, {{ $lowStock->count() }}, {{ $outOfStock->count() }}],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+
+    // Top Items Bar Chart
+    const topItemsCtx = document.getElementById('topItemsChart');
+    if (topItemsCtx) {
+        const topItemsData = @json($topItems);
+        if (topItemsData && topItemsData.length > 0) {
+            new Chart(topItemsCtx, {
+                type: 'bar',
+                data: {
+                    labels: topItemsData.map(item => {
+                        const name = item.item_name || 'Unknown';
+                        return name.substring(0, 15) + (name.length > 15 ? '...' : '');
+                    }),
+                    datasets: [{
+                        label: 'Stock Quantity',
+                        data: topItemsData.map(item => parseInt(item.stock_quantity) || 0),
+                        backgroundColor: '#FF5722',
+                        borderColor: '#FF2D00',
+                        borderWidth: 1,
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
 @endsection

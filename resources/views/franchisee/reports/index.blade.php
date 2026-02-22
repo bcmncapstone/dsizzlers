@@ -1,26 +1,41 @@
 @extends('layouts.franchisee')
 
 @section('content')
-<div class="py-6">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white shadow-sm sm:rounded-lg p-6">
-            <h1 class="text-2xl font-bold text-gray-900">Reports</h1>
-            <p class="text-sm text-gray-600 mt-1">Choose a report type to generate.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                <a href="{{ route('franchisee.reports.sales') }}" class="block border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow">
-                    <h2 class="text-lg font-semibold text-gray-900">Sales Report</h2>
-                    <p class="text-sm text-gray-600">Filter sales by date range.</p>
-                </a>
-                <a href="{{ route('franchisee.reports.inventory') }}" class="block border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow">
-                    <h2 class="text-lg font-semibold text-gray-900">Inventory Report</h2>
-                    <p class="text-sm text-gray-600">Track stock movements by date range.</p>
-                </a>
-                <a href="{{ route('franchisee.reports.staff') }}" class="block border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:shadow">
-                    <h2 class="text-lg font-semibold text-gray-900">Staff Report</h2>
-                    <p class="text-sm text-gray-600">View staff roster and performance.</p>
-                </a>
+<div class="reports-page">
+    <div class="reports-container">
+        {{-- Header with Orange Left Border --}}
+        <div class="reports-header-box">
+            <div class="reports-header">
+                <h1 class="reports-title">Reports</h1>
+                <p class="reports-subtitle">Generate and analyze business reports</p>
             </div>
+        </div>
+
+        {{-- Report Cards Grid --}}
+        <div class="reports-grid">
+            {{-- Sales Report Card --}}
+            <a href="{{ route('franchisee.reports.sales') }}" class="reports-card">
+                <span class="reports-card-icon">📊</span>
+                <h2 class="reports-card-title">Sales Report</h2>
+                <p class="reports-card-description">Filter sales by date range and franchisee</p>
+                <div class="reports-card-link">View Report →</div>
+            </a>
+
+            {{-- Inventory Report Card --}}
+            <a href="{{ route('franchisee.reports.inventory') }}" class="reports-card">
+                <span class="reports-card-icon">📦</span>
+                <h2 class="reports-card-title">Inventory Report</h2>
+                <p class="reports-card-description">Track stock movements by date range</p>
+                <div class="reports-card-link">View Report →</div>
+            </a>
+
+            {{-- Franchisee Sales Card --}}
+            <a href="{{ route('franchisee.reports.staff') }}" class="reports-card">
+                <span class="reports-card-icon">🏪</span>
+                <h2 class="reports-card-title">Staff Report Sales</h2>
+                <p class="reports-card-description">Compare sales performance per franchisee</p>
+                <div class="reports-card-link">View Report →</div>
+            </a>
         </div>
     </div>
 </div>

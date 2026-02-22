@@ -3,16 +3,18 @@
 @section('content')
 <div class="py-12">
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <!-- Header with Back Button -->
-        <div class="mb-6 flex items-center">
+        <!-- Header -->
+        <div class="mb-8 flex items-start justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Performance Metrics</h1>
+                <p class="mt-2 text-sm text-gray-600">
+                    Branch sales and operational performance
+                </p>
+            </div>
             <a href="{{ route('franchisee.branch.dashboard') }}" 
-               class="mr-4 inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 active:bg-gray-900 focus:outline-none focus:border-gray-900 focus:ring focus:ring-gray-300 disabled:opacity-25 transition">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-                Back to Dashboard
+               class="text-sm font-medium text-orange-600 hover:text-orange-700 transition">
+                ← Back to Dashboard
             </a>
-            <h1 class="text-3xl font-bold text-gray-900">Performance Metrics</h1>
         </div>
 
         <!-- Key Performance Indicators -->

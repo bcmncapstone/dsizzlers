@@ -1,13 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Communication Management - D Sizzlers</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-</head>
-<body>
+@extends($layout ?? 'layouts.app')
 
+@section('content')
 <div class="communication-page">
     <h2>📩 Communication Management</h2>
 
@@ -239,7 +232,7 @@
                         >
                         
                         {{-- Edit Form (Hidden by default) --}}
-                        <form id="edit-form-{{ $post->id }}" method="POST" action="{{ route('digital-marketing.update', $post->id) }}" style="display: none; margin-bottom: 10px;">
+                        <form id="edit-form-{{ $post->id }}" method="POST" action="{{ route('digital-marketing.update', $post->id) }}" class="edit-form-hidden">
                             @csrf
                             @method('PUT')
                             <textarea 
@@ -272,10 +265,10 @@
                             </button>
                             <button 
                                 onclick="editPost({{ $post->id }})"
-                                class="btn" style="background-color: #ffc107; color: #000;">
+                                class="btn btn-edit">
                                 ✏️ Edit
                             </button>
-                            <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this post?');">
+                            <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" class="form-inline" onsubmit="return confirm('Are you sure you want to delete this post?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-remove">
@@ -345,12 +338,11 @@
         <div class="camera-modal-content" onclick="event.stopPropagation()">
             <button 
                 onclick="closeImageModal()"
-                class="btn btn-close"
-                style="position: absolute; top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; padding: 0;">
+                class="btn btn-close">
                 ✕
             </button>
-            <img id="modal-image" src="" alt="Full Size" style="max-width: 100%; max-height: 70vh; border-radius: 8px; object-fit: contain; display: block; margin: 0 auto;">
-            <div style="text-align: center; margin-top: 15px;">
+            <img id="modal-image" src="" alt="Full Size" class="modal-image">
+            <div class="modal-download-container">
                 <a 
                     id="modal-download-btn" 
                     href="" 
@@ -474,6 +466,4 @@
         }
     });
 </script>
-
-</body>
-</html>
+@endsection

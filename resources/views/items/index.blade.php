@@ -1,70 +1,111 @@
 @extends('layouts.app')
 
 @section('content')
-<h2>Manage Items</h2>
 
-@php
-    // Detect whether the logged-in user is franchisor staff or franchisor (admin)
-    $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
-@endphp
+<div class="dashboard-wrapper">
+    <div class="dashboard-container">
 
-<!-- Action Links -->
-<a href="{{ route($prefix . '.items.create') }}">Add Item</a>
-<a href="{{ route($prefix . '.items.archived') }}">View Archived Items</a>
+        @php
+            $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
+        @endphp
 
-<!-- Search Form -->
-<form method="GET" action="{{ route($prefix . '.items.index') }}">
-    <input type="text" name="search" placeholder="Search items..." value="{{ $search ?? '' }}">
-    <button type="submit">Search</button>
-</form>
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{{ route($prefix . '.items.create') }}" class="btn btn-primary">
+                ➕ Add Item
+            </a>
+            <a href="{{ route($prefix . '.items.archived') }}" class="btn btn-gray">
+                🗂️ View Archived Items
+            </a>
+        </div>
 
-<!-- Items Table -->
-<table>
-    <thead>
-        <tr>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Item Category</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse ($items as $item)
-            <tr>
-                <td>
-                    @forelse ($item->item_images as $img)
-                        <img src="{{ asset('storage/' . $img) }}" width="60" class="me-1 mb-1 rounded" alt="Item Image">
-                    @empty
-                        No image
-                    @endforelse
-                </td>
-                <td>{{ $item->item_name }}</td>
-                <td>{{ $item->item_description }}</td>
-                <td>{{ number_format($item->price, 2) }}</td>
-                <td>{{ $item->stock_quantity }}</td>
-                <td>{{ $item->item_category }}</td>
-                <td>
-                    <!-- Edit Link -->
-                    <a href="{{ route($prefix . '.items.edit', $item->item_id) }}">Edit</a>
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Manage Items</h1>
+            <p>View, edit, and organize your menu items and products</p>
+        </div>
 
-                    <!-- Archive Form -->
-                    <form action="{{ route($prefix . '.items.archive', $item->item_id) }}"
-                          method="POST"
-                          style="display:inline;"
-                          onsubmit="return confirm('Are you sure you want to archive this item?');">
-                        @csrf
-                        <button type="submit">Archive</button>
-                    </form>
-                </td>
-            </tr>
-        @empty
-            <tr>
-                <td colspan="7" style="text-align: center;">No items found.</td>
-            </tr>
-        @endforelse
-    </tbody>
-</table>
+        <!-- Search Form -->
+        <div class="filter-section">
+            <form method="GET" action="{{ route($prefix . '.items.index') }}" class="filter-form" style="grid-template-columns: 1fr auto;">
+                <div class="filter-group">
+                    <input type="text" name="search" class="filter-select" placeholder="Search items by name..." value="{{ $search ?? '' }}">
+                </div>
+                <button type="submit" class="btn btn-info">Search</button>
+            </form>
+        </div>
+
+        <!-- Items Table -->
+        <div class="table-section">
+            <div class="table-section-header">
+                <h2>Inventory List</h2>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Price</th>
+                            <th>Quantity</th>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($items as $item)
+                            <tr>
+                                <td>
+                                    @forelse ($item->item_images as $img)
+                                        <img src="{{ asset('storage/' . $img) }}" class="table-image" alt="{{ $item->item_name }}">
+                                    @empty
+                                        <span class="table-image-placeholder">No image</span>
+                                    @endforelse
+                                </td>
+                                <td>
+                                    <div class="table-item-name">{{ $item->item_name }}</div>
+                                </td>
+                                <td>
+                                    <div class="table-item-desc">{{ $item->item_description }}</div>
+                                </td>
+                                <td>
+                                    <div class="table-price">₱{{ number_format($item->price, 2) }}</div>
+                                </td>
+                                <td>
+                                    <div class="table-quantity">{{ $item->stock_quantity }}</div>
+                                </td>
+                                <td>
+                                    <div class="table-category">{{ $item->item_category }}</div>
+                                </td>
+                                <td>
+                                    <div class="table-actions">
+                                        <a href="{{ route($prefix . '.items.edit', $item->item_id) }}" class="table-action-btn table-action-edit">
+                                            ✏️ Edit
+                                        </a>
+                                        <form action="{{ route($prefix . '.items.archive', $item->item_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to archive this item?');">
+                                            @csrf
+                                            <button type="submit" class="table-action-btn table-action-archive">
+                                                🗄️ Archive
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="table-empty">
+                                    No items found. <a href="{{ route($prefix . '.items.create') }}" style="color: var(--dsizzlers-orange); font-weight: 600;">Create your first item →</a>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 @endsection

@@ -1,4 +1,4 @@
-@extends('layouts.franchisee')
+@extends('layouts.app')
 
 @section('content')
 <div class="password-page">
@@ -28,7 +28,7 @@
         @endif
 
         {{-- Password Form --}}
-        <form action="{{ route('franchisee.password.update') }}" method="POST" class="password-form">
+        <form action="{{ route('admin.password.update') }}" method="POST" class="password-form">
             @csrf
 
             <div class="password-form-group">
@@ -72,7 +72,7 @@
 
         {{-- Back Link --}}
         <div class="password-back-link">
-            <a href="{{ route('franchisee.dashboard') }}">← Back to Dashboard</a>
+            <a href="{{ route('admin.dashboard') }}">← Back to Dashboard</a>
         </div>
     </div>
 </div>

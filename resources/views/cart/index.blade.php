@@ -1,126 +1,148 @@
 @extends($layout ?? 'layouts.app')
 
 @section('content')
-<div class="container">
-    <h2 class="mb-4">🛒 My Cart</h2>
+<div class="cart-page">
+    <div class="cart-container">
+        {{-- Header --}}
+        <div class="cart-header">
+            <h2>🛒 My Cart</h2>
+        </div>
 
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
+        {{-- Alerts --}}
+        @if(session('success'))
+            <div style="padding: 0 25px;">
+                <div class="cart-success-alert">✓ {{ session('success') }}</div>
+            </div>
+        @endif
+        @if(session('error'))
+            <div style="padding: 0 25px;">
+                <div class="cart-error-alert">✕ {{ session('error') }}</div>
+            </div>
+        @endif
 
-    @if(empty($cart))
-        <p>Your cart is empty.</p>
-        <a href="{{ url()->previous() }}" class="btn btn-primary">Go Back</a>
-    @else
+        {{-- Empty Cart --}}
+        @if(empty($cart))
+            <div class="cart-empty-message">
+                <p>Your cart is empty 🛵</p>
+                <a href="{{ url()->previous() }}" class="cart-empty-link">← Continue Shopping</a>
+            </div>
+        @else
 
-    {{-- Bulk Remove Container (NOT A FORM to avoid nested form issues) --}}
-    <div id="bulkRemoveForm">
-
-        <div class="table-responsive">
-            <table class="table table-bordered align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th width="40">
-                            <input type="checkbox" id="selectAll">
-                        </th>
-                        <th>Item Image</th>
-                        <th>Item Name</th>
-                        <th>Price</th>
-                        <th width="150">Quantity</th>
-                        <th>Subtotal</th>
-                        <th width="100">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($cart as $id => $item)
+        {{-- Bulk Remove Container --}}
+        <div id="bulkRemoveForm" class="cart-bulk-section">
+            <div class="cart-table-wrapper">
+                <table class="cart-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <input type="checkbox" name="selected_items[]" value="{{ $id }}" class="item-checkbox">
-                            </td>
-                            <td>
-                        @forelse ($item['item_images'] as $img)
-                            <img src="{{ asset('storage/' . $img) }}" width="40" class="me-1 mb-1 rounded">
-                        @empty
-                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40">
-                        @endforelse
-                    </td>
-                            <td>{{ $item['name'] }}</td>
-
-                            <td>₱{{ number_format($item['price'], 2) }}</td>
-
-                            {{-- FIXED UPDATE FORM --}}
-                            <td>
-                                <form 
-                                    action="{{ route(strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 
-                                        ? 'franchisee_staff.cart.update' 
-                                        : 'franchisee.cart.update', ['id' => $id]) }}" 
-                                    method="POST" 
-                                    class="d-flex align-items-center"
-                                >
-                                    @csrf
-
-                                    <input type="number" 
-                                           name="quantity" 
-                                           value="{{ $item['quantity'] }}"
-                                           min="1" 
-                                           max="{{ $item['stock_quantity'] }}"
-                                           class="form-control form-control-sm w-50 me-2" 
-                                           required>
-
-                                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
-                                </form>
-                            </td>
-
-                            <td>₱{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
-
-                            <td>
-                                <form action="{{ route(strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 
-                                    ? 'franchisee_staff.cart.remove' 
-                                    : 'franchisee.cart.remove', $id) }}" 
-                                      method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Remove this item?')">
-                                        Remove
-                                    </button>
-                                </form>
-                            </td>
+                            <th width="40">
+                                <input type="checkbox" id="selectAll" class="cart-checkbox">
+                            </th>
+                            <th>Item Image</th>
+                            <th>Item Name</th>
+                            <th>Price</th>
+                            <th width="150">Quantity</th>
+                            <th>Subtotal</th>
+                            <th width="80">Action</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach($cart as $id => $item)
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="selected_items[]" value="{{ $id }}" class="cart-checkbox">
+                                </td>
+                                <td>
+                                    <div class="cart-item-images-container">
+                                        @forelse ($item['item_images'] as $img)
+                                            <img src="{{ asset('storage/' . $img) }}" alt="{{ $item['name'] }}" class="cart-item-image">
+                                        @empty
+                                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" class="cart-item-image">
+                                        @endforelse
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="cart-item-name">{{ $item['name'] }}</span>
+                                </td>
+                                <td>
+                                    <span class="cart-item-price">₱{{ number_format($item['price'], 2) }}</span>
+                                    </td>
+
+                                {{-- Update Quantity Form --}}
+                                <td>
+                                    <form 
+                                        action="{{ route(strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 
+                                            ? 'franchisee_staff.cart.update' 
+                                            : 'franchisee.cart.update', ['id' => $id]) }}" 
+                                        method="POST" 
+                                        class="cart-quantity-form"
+                                    >
+                                        @csrf
+                                        <input type="number" 
+                                               name="quantity" 
+                                               value="{{ $item['quantity'] }}"
+                                               min="1" 
+                                               max="{{ $item['stock_quantity'] }}"
+                                               class="cart-quantity-input" 
+                                               required>
+                                        <button type="submit" class="cart-btn-update">Update</button>
+                                    </form>
+                                </td>
+
+                                <td>
+                                    <span class="cart-item-subtotal">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</span>
+                                </td>
+
+                                {{-- Remove Button --}}
+                                <td>
+                                    <form action="{{ route(strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 
+                                        ? 'franchisee_staff.cart.remove' 
+                                        : 'franchisee.cart.remove', $id) }}" 
+                                          method="POST" 
+                                          style="display: inline;">
+                                        @csrf
+                                        <button type="submit" class="cart-btn-remove"
+                                            onclick="return confirm('Remove this item?')">✕</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Footer with Remove Selected & Total --}}
+            <div class="cart-footer">
+                <div class="cart-actions-left">
+                    <button type="button" id="removeSelectedBtn" class="cart-btn-remove-selected" disabled>
+                        🗑 Remove Selected
+                    </button>
+                </div>
+
+                <div class="cart-total">
+                    <span class="cart-total-label">Total:</span>
+                    <span class="cart-total-amount">₱{{ number_format($total, 2) }}</span>
+                </div>
+            </div>
         </div>
 
-        {{-- Remove Selected & Total --}}
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <button type="button" id="removeSelectedBtn" class="btn btn-danger btn-sm" disabled>
-                🗑 Remove Selected
-            </button>
-
-            <h4>Total: ₱{{ number_format($total, 2) }}</h4>
+        {{-- Checkout Section --}}
+        <div class="cart-checkout-section">
+            <a href="{{ route(strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 
+                ? 'franchisee_staff.cart.checkout' 
+                : 'franchisee.cart.checkout') }}" 
+               class="cart-btn-checkout">
+                💳 Proceed to Checkout
+            </a>
         </div>
-    </div>
 
-    {{-- Checkout Button --}}
-    <div class="text-end mt-4">
-        <a href="{{ route(strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 
-            ? 'franchisee_staff.cart.checkout' 
-            : 'franchisee.cart.checkout') }}" 
-           class="btn btn-success btn-lg">
-            Proceed to Checkout →
-        </a>
+        @endif
     </div>
-
-    @endif
 </div>
 
 {{-- JavaScript --}}
 <script>
     const selectAllCheckbox = document.getElementById('selectAll');
-    const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+    const itemCheckboxes = document.querySelectorAll('input[name="selected_items[]"]');
     const removeSelectedBtn = document.getElementById('removeSelectedBtn');
 
     // Select All
@@ -139,7 +161,7 @@
 
     // Remove Selected → auto-create POST forms for each item
     removeSelectedBtn?.addEventListener('click', function() {
-        const selectedItems = [...document.querySelectorAll('.item-checkbox:checked')].map(cb => cb.value);
+        const selectedItems = [...document.querySelectorAll('input[name="selected_items[]"]:checked')].map(cb => cb.value);
 
         if (selectedItems.length === 0) return alert('No items selected.');
         if (!confirm('Remove selected items from cart?')) return;

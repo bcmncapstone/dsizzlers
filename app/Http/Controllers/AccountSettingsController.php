@@ -16,7 +16,15 @@ class AccountSettingsController extends Controller
     public function updateFranchisorStaffPassword(Request $request)
     {
         $request->validate([
-            'password' => 'required|string|min:6|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$/',
+            ],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
 
         $user = auth('franchisor_staff')->user();
@@ -36,7 +44,15 @@ class AccountSettingsController extends Controller
     public function updateFranchiseeStaffPassword(Request $request)
     {
         $request->validate([
-            'password' => 'required|string|min:6|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$/',
+            ],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
 
         $user = auth('franchisee_staff')->user();
@@ -55,11 +71,46 @@ class AccountSettingsController extends Controller
     public function updateFranchiseePassword(Request $request)
     {
         $request->validate([
-            'password' => 'required|string|min:6|confirmed',
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$/',
+            ],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
 
         $user = auth('franchisee')->user();
         $user->franchisee_pass = Hash::make($request->password);
+        $user->save();
+
+        return back()->with('success', 'Password updated successfully.');
+    }
+
+    // Admin Password
+    public function editAdminPassword()
+    {
+        return view('admin.password');
+    }
+
+    public function updateAdminPassword(Request $request)
+    {
+        $request->validate([
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'confirmed',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9]).+$/',
+            ],
+        ], [
+            'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
+        ]);
+
+        $user = auth('admin')->user();
+        $user->admin_pass = Hash::make($request->password);
         $user->save();
 
         return back()->with('success', 'Password updated successfully.');

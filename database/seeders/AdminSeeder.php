@@ -13,10 +13,10 @@ class AdminSeeder extends Seeder
         DB::table('admins')->insert([
             'admin_fname'     => 'System',
             'admin_lname'     => 'Administrator',
-            'admin_contactNo' => '09512347433',
-            'admin_email'     => 'bcmn.capstone@gmail.com',
-            'admin_username'  => 'admin',
-            'admin_pass'      => Hash::make('admin123'), // Secure password
+            'admin_contactNo' => env('ADMIN_CONTACT', '09512347433'),
+            'admin_email'     => env('ADMIN_EMAIL', 'bcmn.capstone@gmail.com'),
+            'admin_username'  => env('ADMIN_USERNAME', 'admin'),
+            'admin_pass'      => Hash::make(env('ADMIN_PASSWORD', 'TempPassword123!')),
             'admin_status'    => 'Active',
         ]);
     }

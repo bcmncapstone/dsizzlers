@@ -1,31 +1,76 @@
 @extends('layouts.app')
 
 @section('content')
-<h2>My Branch Information</h2>
+<div class="branch-info-page">
+    <div class="branch-info-container">
+        {{-- Header --}}
+        <div class="branch-info-header">
+            <h2>🏪 Branch Information</h2>
+        </div>
 
-@if($branch)
-<table border="1" cellpadding="10" cellspacing="0" style="width:100%; margin-top:15px;">
-    <tr><th>Branch Location</th><td>{{ $branch->location }}</td></tr>
-    <tr><th>Branch Manager</th><td>{{ $branch->first_name }} {{ $branch->last_name }}</td></tr>
-    <tr><th>Email</th><td>{{ $branch->email }}</td></tr>
-    <tr><th>Contact Number</th><td>{{ $branch->contact_number }}</td></tr>
-    <tr>
-        <th>Contract</th>
-        <td>
-            @if($branch->contract_file)
-                <a href="{{ route('franchisee.branches.contract', $branch->branch_id) }}" target="_blank">Preview</a>
-                &nbsp;|&nbsp;
-                <a href="{{ route('franchisee.branches.contract', ['id' => $branch->branch_id, 'mode' => 'download']) }}">Download</a>
-            @else
-                No contract uploaded
-            @endif
-        </td>
-    </tr>
-    <tr><th>Contract Expiration</th><td>{{ $branch->contract_expiration }}</td></tr>
-</table>
-@else
-<div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border-left: 4px solid #007bff;">
-    <p style="margin: 0; color: #666;">No branch assigned to your account yet. Please contact your administrator.</p>
+        {{-- Branch Information or Empty State --}}
+        @if($branch)
+            <div class="branch-info-content">
+                {{-- Branch Location --}}
+                <div class="branch-info-item">
+                    <span class="branch-info-label">Branch Location</span>
+                    <span class="branch-info-value">{{ $branch->location }}</span>
+                </div>
+
+                {{-- Branch Manager --}}
+                <div class="branch-info-item">
+                    <span class="branch-info-label">Branch Manager</span>
+                    <span class="branch-info-value">{{ $branch->first_name }} {{ $branch->last_name }}</span>
+                </div>
+
+                {{-- Email --}}
+                <div class="branch-info-item">
+                    <span class="branch-info-label">Email</span>
+                    <span class="branch-info-value">{{ $branch->email }}</span>
+                </div>
+
+                {{-- Contact Number --}}
+                <div class="branch-info-item">
+                    <span class="branch-info-label">Contact Number</span>
+                    <span class="branch-info-value">{{ $branch->contact_number }}</span>
+                </div>
+
+                {{-- Contract --}}
+                <div class="branch-info-item">
+                    <span class="branch-info-label">Contract</span>
+                    <div class="branch-info-value">
+                        @if($branch->contract_file)
+                            <div class="branch-info-links">
+                                <a href="{{ route('franchisee.branches.contract', $branch->branch_id) }}" target="_blank" class="branch-info-link">
+                                    👁️ Preview
+                                </a>
+                                <span class="branch-info-separator">|</span>
+                                <a href="{{ route('franchisee.branches.contract', ['id' => $branch->branch_id, 'mode' => 'download']) }}" class="branch-info-link">
+                                    ⬇️ Download
+                                </a>
+                            </div>
+                        @else
+                            <span style="color: #999;">No contract uploaded</span>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Contract Expiration --}}
+                <div class="branch-info-item">
+                    <span class="branch-info-label">Contract Expiration</span>
+                    <span class="branch-info-value">{{ $branch->contract_expiration }}</span>
+                </div>
+            </div>
+        @else
+            {{-- Empty State --}}
+            <div class="branch-empty-container">
+                <span class="branch-empty-icon">🔗</span>
+                <p class="branch-empty-message">
+                    No branch assigned to your account yet.
+                </p>
+                <p class="branch-empty-contact">Please contact your administrator to assign a branch to your account.</p>
+            </div>
+        @endif
+    </div>
 </div>
-@endif
 @endsection

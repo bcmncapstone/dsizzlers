@@ -1,49 +1,91 @@
 @extends('layouts.franchisor-staff')
 
 @section('content')
-
-<div class="container">
-    <h1>Franchisor Staff - Order Details</h1>
-
-<p><strong>Order ID:</strong> {{ $order->order_id }}</p>
-<p><strong>Customer:</strong> {{ $order->name }}</p>
-<p><strong>Status:</strong> {{ ucfirst($order->order_status) }}</p>
-<p><strong>Payment:</strong> {{ ucfirst($order->payment_status ?? 'pending') }}</p>
-
-<div class="mt-3">
-    <form action="{{ route('franchisor-staff.manageOrder.confirmPayment', $order->order_id) }}" method="POST" class="d-inline">
-        @csrf
-        <button type="submit" class="btn btn-success">Confirm Payment</button>
-    </form>
-
-    <form action="{{ route('franchisor-staff.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST" class="d-inline">
-        @csrf
-        <label for="order_status" class="me-2">Order Status:</label>
-        <select name="order_status" onchange="this.form.submit()" class="form-select d-inline w-auto">
-            <option value="Pending" {{ ($order->order_status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
-            <option value="Preparing" {{ ($order->order_status ?? '') == 'Preparing' ? 'selected' : '' }}>Preparing</option>
-            <option value="Shipped" {{ ($order->order_status ?? '') == 'Shipped' ? 'selected' : '' }}>Shipped</option>
-            <option value="Delivered" {{ ($order->order_status ?? '') == 'Delivered' ? 'selected' : '' }}>Delivered</option>
-        </select>
-    </form>
-
-    <form action="{{ route('franchisor-staff.manageOrder.cancel', $order->order_id) }}" method="POST" class="d-inline">
-        @csrf
-        <button type="submit" class="btn btn-danger">Cancel Order</button>
-    </form>
-</div>
-
-<div class="mt-4">
-    <form action="{{ route('franchisor-staff.manageOrder.updateNotes', $order->order_id) }}" method="POST">
-        @csrf
-        <div class="mb-3">
-            <label for="order_notes" class="form-label"><strong>Order Notes (Tracking Number, etc.):</strong></label>
-            <textarea name="order_notes" id="order_notes" class="form-control" rows="3" placeholder="Enter tracking number or other notes...">{{ old('order_notes', $order->order_notes) }}</textarea>
+<div class="py-6">
+    <div class="max-w-5xl mx-auto">
+        
+        <!-- Header -->
+        <div class="bg-white shadow-sm p-8 rounded-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1>Order #{{ $order->order_id }}</h1>
+                    <p class="order-customer">{{ $order->name }}</p>
+                    <p class="order-contact">Phone: {{ $order->contact }}</p>
+                    <p class="order-address">Address: {{ $order->address }}</p>
+                </div>
+                <div class="header-badges">
+                    @php
+                        $orderStatus = $order->order_status ?? 'pending';
+                        $statusClass = in_array(strtolower($orderStatus), ['delivered', 'completed']) ? 'status-delivered' : (strtolower($orderStatus) === 'shipped' || strtolower($orderStatus) === 'preparing' ? 'status-shipped' : 'status-pending');
+                        $paymentStatus = $order->payment_status ?? 'pending';
+                        $paymentClass = strtolower($paymentStatus) === 'paid' ? 'status-paid' : (strtolower($paymentStatus) === 'pending' ? 'status-pending-payment' : 'status-failed');
+                    @endphp
+                    <span class="status-badge {{ $statusClass }}">{{ ucfirst($orderStatus) }}</span>
+                    <span class="status-badge {{ $paymentClass }}">{{ ucfirst($paymentStatus) }}</span>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">Save Notes</button>
-    </form>
+
+        <!-- Payment Proof Section -->
+        <div class="bg-white shadow-sm p-8 rounded-lg mt-6">
+            <h2>Payment Proof</h2>
+            @if($order->payment_receipt)
+                <div class="receipt-container">
+                    <img src="{{ asset('storage/' . $order->payment_receipt) }}" alt="Payment Receipt" class="receipt-image">
+                </div>
+            @else
+                <div class="no-receipt-message">
+                    No payment receipt uploaded
+                </div>
+            @endif
+        </div>
+
+        <!-- Actions Section -->
+        <div class="bg-white shadow-sm p-8 rounded-lg mt-6">
+            <h2>Actions</h2>
+            <div class="actions-grid">
+                
+                <!-- Confirm Payment -->
+                <form action="{{ route('franchisor-staff.manageOrder.confirmPayment', $order->order_id) }}" method="POST" class="action-form">
+                    @csrf
+                    <button type="submit" class="action-button confirm-payment">
+                        ✓ Confirm Payment
+                    </button>
+                </form>
+
+                <!-- Update Status -->
+                <form action="{{ route('franchisor-staff.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST" class="action-form">
+                    @csrf
+                    <select name="order_status" onchange="this.form.submit()" class="status-select">
+                        <option value="">Update Order Status</option>
+                        <option value="Pending" {{ ($order->order_status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="Preparing" {{ ($order->order_status ?? '') == 'Preparing' ? 'selected' : '' }}>Preparing</option>
+                        <option value="Shipped" {{ ($order->order_status ?? '') == 'Shipped' ? 'selected' : '' }}>Shipped</option>
+                        <option value="Delivered" {{ ($order->order_status ?? '') == 'Delivered' ? 'selected' : '' }}>Delivered</option>
+                    </select>
+                </form>
+
+                <!-- Cancel Order -->
+                <form action="{{ route('franchisor-staff.manageOrder.cancel', $order->order_id) }}" method="POST" class="action-form">
+                    @csrf
+                    <button type="submit" class="action-button cancel-order" onclick="return confirm('Are you sure you want to cancel this order?');">
+                        ✕ Cancel Order
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="bg-white shadow-sm p-8 rounded-lg mt-6">
+            <h2>Order Notes</h2>
+            <form action="{{ route('franchisor-staff.manageOrder.updateNotes', $order->order_id) }}" method="POST" class="notes-form">
+                @csrf
+                <textarea name="order_notes" class="notes-textarea" placeholder="Tracking number, delivery instructions...">{{ old('order_notes', $order->order_notes) }}</textarea>
+                <button type="submit" class="save-button">Save Notes</button>
+            </form>
+        </div>
+
+    </div>
 </div>
 
-
-</div>
 @endsection

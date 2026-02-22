@@ -1,123 +1,148 @@
 @extends('layouts.franchisee')
 
 @section('content')
-<div class="container">
-    <h1 class="mb-4">Items</h1>
+<div class="items-page">
+    {{-- Page Header --}}
+    <div class="items-page-header">
+        <h1>🍽️ Items</h1>
+        <p>Browse and purchase available menu items</p>
+    </div>
 
-    {{-- Filter & Sort Form --}}
-    <form method="GET" action="{{ route(request()->route()->getName()) }}" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <label for="item_category" class="form-label">Filter by Category</label>
-            <select name="item_category" id="item_category" class="form-select" onchange="this.form.submit()">
-                <option value="">All Categories</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category }}" {{ $selectedCategory == $category ? 'selected' : '' }}>
-                        {{ ucfirst($category) }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
+    {{-- Filter Section --}}
+    <div class="items-filter-section">
+        <h3>🔍 Filter & Sort</h3>
+        <form method="GET" action="{{ route(request()->route()->getName()) }}" class="items-filter-form">
+            <div class="items-filter-group">
+                <label for="item_category" class="items-filter-label">Category</label>
+                <select name="item_category" id="item_category" class="items-filter-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    @foreach ($categories as $category)
+                        <option value="{{ $category }}" {{ $selectedCategory == $category ? 'selected' : '' }}>
+                            {{ ucfirst($category) }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
 
-        <div class="col-md-4">
-            <label for="sort_by" class="form-label">Sort By</label>
-            <select name="sort_by" id="sort_by" class="form-select" onchange="this.form.submit()">
-                <option value="name" {{ $sortBy == 'name' ? 'selected' : '' }}>Name</option>
-                <option value="price" {{ $sortBy == 'price' ? 'selected' : '' }}>Price</option>
-                <option value="quantity" {{ $sortBy == 'quantity' ? 'selected' : '' }}>Quantity</option>
-            </select>
-        </div>
+            <div class="items-filter-group">
+                <label for="sort_by" class="items-filter-label">Sort By</label>
+                <select name="sort_by" id="sort_by" class="items-filter-select" onchange="this.form.submit()">
+                    <option value="name" {{ $sortBy == 'name' ? 'selected' : '' }}>Name</option>
+                    <option value="price" {{ $sortBy == 'price' ? 'selected' : '' }}>Price</option>
+                    <option value="quantity" {{ $sortBy == 'quantity' ? 'selected' : '' }}>Quantity</option>
+                </select>
+            </div>
 
-        <div class="col-md-4">
-            <label for="sort_order" class="form-label">Order</label>
-            <select name="sort_order" id="sort_order" class="form-select" onchange="this.form.submit()">
-                <option value="asc" {{ $sortOrder == 'asc' ? 'selected' : '' }}>Ascending</option>
-                <option value="desc" {{ $sortOrder == 'desc' ? 'selected' : '' }}>Descending</option>
-            </select>
-        </div>
-    </form>
+            <div class="items-filter-group">
+                <label for="sort_order" class="items-filter-label">Order</label>
+                <select name="sort_order" id="sort_order" class="items-filter-select" onchange="this.form.submit()">
+                    <option value="asc" {{ $sortOrder == 'asc' ? 'selected' : '' }}>Ascending ↑</option>
+                    <option value="desc" {{ $sortOrder == 'desc' ? 'selected' : '' }}>Descending ↓</option>
+                </select>
+            </div>
+        </form>
+    </div>
 
-    {{-- Items Table --}}
-    <table class="table table-bordered table-hover mb-5">
-        <thead class="table-light">
-            <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
-                <th>Quantity</th>
-                <th>Category</th>
-                <th>View</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse ($items as $item)
-                <tr>
-                    <td>
-                        @if (!empty($item->item_images) && count($item->item_images) > 0)
-                            <img src="{{ asset('storage/' . $item->item_images[0]) }}" width="60" height="60" class="rounded" style="object-fit: cover;" alt="{{ $item->item_name }}">
-                        @else
-                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="60" height="60" class="rounded" style="object-fit: cover;">
-                        @endif
-                    </td>
-                    <td>{{ $item->item_name }}</td>
-                    <td>{{ $item->item_description }}</td>
-                    <td>{{ number_format($item->price, 2) }}</td>
-                    <td>{{ $item->stock_quantity }}</td>
-                    <td>{{ ucfirst($item->item_category) }}</td>
-                    <td>
-                        <a href="{{ route('franchisee.item.show', $item->item_id) }}" class="btn btn-primary btn-sm">
-                            View
-                        </a>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="7" class="text-center">No items found.</td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-
-    {{-- Card Layout with Add to Cart & Buy Now --}}
-    <h2 class="mb-4">Available Items</h2>
-    <div class="row">
-        @foreach ($items as $item)
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
+    {{-- Items Grid --}}
+    <h2 class="items-grid-title">Available Items</h2>
+    
+    @if ($items->count() > 0)
+        <div class="items-grid">
+            @foreach ($items as $item)
+                <div class="item-card">
+                    {{-- Item Image --}}
                     @if (!empty($item->item_images) && count($item->item_images) > 0)
-                        <img src="{{ asset('storage/' . $item->item_images[0]) }}" class="card-img-top" alt="{{ $item->item_name }}" style="height: 250px; object-fit: cover;">
+                        <img src="{{ asset('storage/' . $item->item_images[0]) }}" alt="{{ $item->item_name }}" class="item-card-image">
                     @else
-                        <img src="{{ asset('images/default-item.png') }}" class="card-img-top" alt="Default Image" style="height: 250px; object-fit: cover;">
+                        <img src="{{ asset('images/default-item.png') }}" alt="Default Image" class="item-card-image">
                     @endif
-                    <div class="card-body">
-                        <h5 class="card-title">{{ $item->item_name }}</h5>
-                        <p class="card-text">{{ $item->item_description }}</p>
-                        <p class="card-text">₱{{ number_format($item->price, 2) }}</p>
 
-                        @php
-                            $prefix = strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 ? 'franchisee_staff' : 'franchisee';
-                        @endphp
+                    {{-- Item Details --}}
+                    <div class="item-card-body">
+                        <h3 class="item-card-name">{{ $item->item_name }}</h3>
+                        <p class="item-card-description">{{ $item->item_description }}</p>
+                        
+                        <div class="item-card-price">₱{{ number_format($item->price, 2) }}</div>
+                        <small class="item-card-stock">
+                            @if ($item->stock_quantity > 0)
+                                Available: <strong>{{ $item->stock_quantity }}</strong>
+                            @else
+                                <span style="color: #f44336;">Out of Stock</span>
+                            @endif
+                        </small>
 
-                        {{-- Add to Cart --}}
-                        <form action="{{ route($prefix . '.cart.add', $item->item_id) }}" method="POST" class="mb-2">
-                            @csrf
-                            <input type="number" name="quantity" value="1" min="1" max="{{ $item->stock_quantity }}" class="form-control mb-2" @if($item->stock_quantity == 0) disabled @endif>
-                            <small class="text-muted">Available: {{ $item->stock_quantity }}</small>
-                            <button type="submit" class="btn btn-primary w-100" @if($item->stock_quantity == 0) disabled @endif>
-                                Add to Cart
-                            </button>
-                        </form>
+                        {{-- Action Buttons --}}
+                        <div class="item-card-actions">
+                            @php
+                                $prefix = strpos(Route::currentRouteName(), 'franchisee_staff.') === 0 ? 'franchisee_staff' : 'franchisee';
+                            @endphp
 
-                        {{-- Buy Now --}}
-                        <form action="{{ route($prefix . '.cart.checkout') }}" method="GET">
-    <input type="hidden" name="items[0][item_id]" value="{{ $item->item_id }}">
-    <input type="hidden" name="items[0][quantity]" value="1">
-    <button type="submit" class="btn btn-success w-100">Buy Now</button>
-</form>
+                            {{-- Add to Cart Form --}}
+                            <form action="{{ route($prefix . '.cart.add', $item->item_id) }}" method="POST">
+                                @csrf
+                                <input 
+                                    type="number" 
+                                    name="quantity" 
+                                    value="1" 
+                                    min="1" 
+                                    max="{{ $item->stock_quantity }}" 
+                                    id="list-quantity-{{ $item->item_id }}"
+                                    class="item-quantity-input"
+                                    @if($item->stock_quantity == 0) disabled @endif
+                                >
+                                <button 
+                                    type="submit" 
+                                    class="item-btn item-btn-cart"
+                                    @if($item->stock_quantity == 0) disabled @endif
+                                >
+                                    🛒 Add to Cart
+                                </button>
+                            </form>
+
+                            {{-- Buy Now Form --}}
+                            <form action="{{ route($prefix . '.cart.checkout') }}" method="GET" class="buy-now-form">
+                                <input type="hidden" name="items[0][item_id]" value="{{ $item->item_id }}">
+                                <input type="hidden" name="items[0][quantity]" value="1" class="buy-now-quantity" data-item-id="{{ $item->item_id }}">
+                                <button 
+                                    type="submit" 
+                                    class="item-btn item-btn-buy"
+                                    @if($item->stock_quantity == 0) disabled @endif
+                                >
+                                    💳 Buy Now
+                                </button>
+                            </form>
+
+                            {{-- View Details Link --}}
+                            <a href="{{ route('franchisee.item.show', $item->item_id) }}" class="item-btn item-btn-view">
+                                👁️ View Details
+                            </a>
+                        </div>
                     </div>
                 </div>
-            </div>
-        @endforeach
-    </div>
+            @endforeach
+        </div>
+    @else
+        <div class="items-grid-empty">
+            <p>📭 No items found.</p>
+            <p style="font-size: 14px; opacity: 0.7;">Try adjusting your filters or browse all items.</p>
+        </div>
+    @endif
 </div>
+<script>
+    // Ensure Buy Now uses the same quantity as the list quantity input
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.buy-now-form').forEach(function (form) {
+            form.addEventListener('submit', function () {
+                var hiddenQty = form.querySelector('.buy-now-quantity');
+                if (!hiddenQty) return;
+
+                var itemId = hiddenQty.getAttribute('data-item-id');
+                var qtyInput = document.getElementById('list-quantity-' + itemId);
+                if (qtyInput && qtyInput.value) {
+                    hiddenQty.value = qtyInput.value;
+                }
+            });
+        });
+    });
+</script>
 @endsection

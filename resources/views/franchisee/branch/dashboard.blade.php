@@ -74,62 +74,65 @@
         </div>
 
         <!-- Management Modules -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-            <div class="p-6 bg-white border-b border-gray-200">
-                <h2 class="text-xl font-semibold text-gray-900 mb-4">Branch Management Modules</h2>
-                <p class="text-sm text-gray-600 mb-6">
-                    Select a module below to view detailed information about your branch operations
+        <div class="mb-8">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Branch Management Modules</h2>
+                <p class="text-gray-600">
+                    Select a module to view detailed information about your branch operations
                 </p>
+            </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <!-- Performance Module -->
-                    <a href="{{ route('franchisee.branch.performance') }}" 
-                       class="block p-6 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg hover:shadow-lg transition duration-200 transform hover:scale-105">
-                        <div class="flex items-center justify-center mb-4">
-                            <div class="bg-blue-500 rounded-full p-4">
-                                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Performance</h3>
-                        <p class="text-sm text-gray-600 text-center">
-                            View sales and operational performance metrics
-                        </p>
-                    </a>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Performance Module -->
+                <a href="{{ route('franchisee.branch.performance') }}" 
+                   class="group block bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 p-8 text-center border border-gray-100">
+                    <div class="flex items-center justify-center mb-6">
+                        <svg class="h-16 w-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Performance</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                        View sales and operational performance metrics
+                    </p>
+                    <span class="text-blue-500 font-medium group-hover:text-blue-700 transition text-sm">
+                        View Report →
+                    </span>
+                </a>
 
-                    <!-- Inventory Module -->
-                    <a href="{{ route('franchisee.branch.inventory') }}" 
-                       class="block p-6 bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-lg hover:shadow-lg transition duration-200 transform hover:scale-105">
-                        <div class="flex items-center justify-center mb-4">
-                            <div class="bg-orange-500 rounded-full p-4">
-                                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Item Inventory</h3>
-                        <p class="text-sm text-gray-600 text-center">
-                            Monitor and adjust your stock levels
-                        </p>
-                    </a>
+                <!-- Inventory Module -->
+                <a href="{{ route('franchisee.branch.inventory') }}" 
+                   class="group block bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 p-8 text-center border border-gray-100">
+                    <div class="flex items-center justify-center mb-6">
+                        <svg class="h-16 w-16 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Item Inventory</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                        Track stock movements by date range
+                    </p>
+                    <span class="text-orange-500 font-medium group-hover:text-orange-700 transition text-sm">
+                        View Report →
+                    </span>
+                </a>
 
-                    <!-- Financial Module -->
-                    <a href="{{ route('franchisee.branch.financial') }}" 
-                       class="block p-6 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg hover:shadow-lg transition duration-200 transform hover:scale-105">
-                        <div class="flex items-center justify-center mb-4">
-                            <div class="bg-green-500 rounded-full p-4">
-                                <svg class="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-900 text-center mb-2">Financial</h3>
-                        <p class="text-sm text-gray-600 text-center">
-                            Track revenue, expenses, and profitability
-                        </p>
-                    </a>
-                </div>
+                <!-- Financial Module -->
+                <a href="{{ route('franchisee.branch.financial') }}" 
+                   class="group block bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 p-8 text-center border border-gray-100">
+                    <div class="flex items-center justify-center mb-6">
+                        <svg class="h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Financial</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                        Track revenue, expenses, and profitability
+                    </p>
+                    <span class="text-green-500 font-medium group-hover:text-green-700 transition text-sm">
+                        View Report →
+                    </span>
+                </a>
             </div>
         </div>
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Item;
 
 class ItemController extends Controller
@@ -11,9 +12,16 @@ class ItemController extends Controller
     {
         $search = $request->input('search');
 
+        // Load archived item IDs from a small JSON file (no DB change)
+        $archivedIds = $this->getArchivedItemIds();
+
+        // Show only items that are not archived
         $items = Item::query()
             ->when($search, function ($query, $search) {
                 return $query->where('item_name', 'ILIKE', "%{$search}%");
+            })
+            ->when(!empty($archivedIds), function ($query) use ($archivedIds) {
+                return $query->whereNotIn('item_id', $archivedIds);
             })
             ->get();
 
@@ -106,13 +114,67 @@ class ItemController extends Controller
     public function archive($id)
     {
         $item = Item::findOrFail($id);
-        $item->delete(); // manual archive simulation
-        return redirect()->route('admin.items.index')->with('success', 'Item archived successfully!');
+
+        // Mark as archived in a JSON file (do NOT delete from DB)
+        $archivedIds = $this->getArchivedItemIds();
+        if (!in_array($item->item_id, $archivedIds)) {
+            $archivedIds[] = $item->item_id;
+            $this->saveArchivedItemIds($archivedIds);
+        }
+
+        // Redirect back to the archived items page for the current role
+        $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
+
+        return redirect()->route($prefix . '.items.archived')
+            ->with('success', 'Item archived successfully!');
     }
 
     public function archived()
     {
-        $items = Item::all(); // show all items manually
+        // Load archived items based on IDs stored in JSON file
+        $archivedIds = $this->getArchivedItemIds();
+        $items = empty($archivedIds)
+            ? collect()
+            : Item::whereIn('item_id', $archivedIds)->get();
         return view('items.archived', compact('items'));
+    }
+
+    public function restore($id)
+    {
+        // Remove the item ID from the archived list
+        $archivedIds = $this->getArchivedItemIds();
+        $archivedIds = array_values(array_filter($archivedIds, function ($archivedId) use ($id) {
+            return (int) $archivedId !== (int) $id;
+        }));
+        $this->saveArchivedItemIds($archivedIds);
+
+        return redirect()->route('admin.items.archived')
+            ->with('success', 'Item restored successfully!');
+    }
+
+    /**
+     * Read archived item IDs from storage/app/archived_items.json
+     * This avoids any database schema changes.
+     */
+    protected function getArchivedItemIds(): array
+    {
+        if (!Storage::disk('local')->exists('archived_items.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_items.json');
+        $data = json_decode($raw, true);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Persist archived item IDs into storage/app/archived_items.json
+     */
+    protected function saveArchivedItemIds(array $ids): void
+    {
+        // Ensure unique, numeric IDs
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        Storage::disk('local')->put('archived_items.json', json_encode($ids));
     }
 }

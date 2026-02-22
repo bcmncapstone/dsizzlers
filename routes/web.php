@@ -114,6 +114,14 @@ Route::middleware('auth:franchisee')->group(function () {
         ->name('franchisee.password.update');
 });
 
+// Admin Password Routes
+Route::middleware('auth:admin')->group(function () {
+    Route::get('admin/password', [AccountSettingsController::class, 'editAdminPassword'])
+        ->name('admin.password');
+    Route::post('admin/password', [AccountSettingsController::class, 'updateAdminPassword'])
+        ->name('admin.password.update');
+});
+
 //Franchisee to View the User Account 
 Route::middleware(['auth:franchisee'])->prefix('franchisee')->name('franchisee.')->group(function () {
     Route::get('/account', [FranchiseeController::class, 'account'])->name('account.index');
@@ -162,6 +170,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
     Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');
     Route::post('/items/{id}/archive', [ItemController::class, 'archive'])->name('items.archive');
+    Route::post('/items/{id}/restore', [ItemController::class, 'restore'])->name('items.restore');
 
     // Archived view (manual archive)
     Route::get('/items/archived', [ItemController::class, 'archived'])->name('items.archived');
@@ -178,6 +187,7 @@ Route::prefix('franchisor-staff')
         Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
         Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');
         Route::post('/items/{id}/archive', [ItemController::class, 'archive'])->name('items.archive');
+        Route::post('/items/{id}/restore', [ItemController::class, 'restore'])->name('items.restore');
         Route::get('/items/archived', [ItemController::class, 'archived'])->name('items.archived');
     });
 

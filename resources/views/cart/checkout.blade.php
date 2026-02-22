@@ -1,121 +1,150 @@
 @extends($layout ?? 'layouts.app')
 
 @section('content')
-<div class="container">
-    <h2 class="mb-4">Checkout</h2>
-
-    @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
-
-    {{-- Order Summary --}}
-    <div class="card mb-4">
-        <div class="card-header bg-light">
-            <strong>Order Summary</strong>
+<div class="py-6">
+    <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white shadow-sm sm:rounded-lg p-8 mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">Checkout</h1>
+            <p class="text-sm text-gray-600 mt-2">Review your order and complete payment</p>
         </div>
-        <div class="card-body">
-            <table class="table table-sm">
-                <thead>
-                    <tr>
-                        <th>Image</th>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($cart as $item)
-                        <tr>
-                             <td>
-                        @forelse ($item['item_images'] as $img)
-                            <img src="{{ asset('storage/' . $img) }}" width="40" class="me-1 mb-1 rounded">
-                        @empty
-                            <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40">
-                        @endforelse
-                    </td>
-                            <td>{{ $item['name'] }}</td>
-                            <td>{{ $item['quantity'] }}</td>
-                            <td>₱{{ number_format($item['price'], 2) }}</td>
-                            <td>₱{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            <div class="text-end">
-                <h5>Total: ₱{{ number_format($total, 2) }}</h5>
+
+        <!-- Error Alert -->
+        @if(session('error'))
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                <p class="text-red-700 font-semibold">{{ session('error') }}</p>
             </div>
-        </div>
-    </div>
-
-    {{-- Customer Info --}}
-    <form action="{{ route($cartKey . '.cart.placeOrder') }}" method="POST" enctype="multipart/form-data">
-        @csrf
-
-        {{-- Pass Buy Now items if they exist --}}
-        @if(request()->has('items'))
-            <input type="hidden" name="buy_now_items" value="{{ json_encode(request()->input('items')) }}">
         @endif
 
-        <div class="mb-3">
-            <label for="name" class="form-label">Full Name</label>
-            <input type="text" class="form-control" name="name" id="name" required>
-        </div>
-
-        <div class="mb-3">
-            <label for="contact" class="form-label">Contact Number</label>
-            <input type="text" class="form-control" name="contact" id="contact" required>
-        </div>
-
-        {{-- Delivery Address --}}
-        <div class="mb-3">
-            <label class="form-label">Delivery Address</label>
-
-            <div class="row g-2">
-                <div class="col-md-6">
-                    <select id="region" class="form-control" required>
-                        <option value="">Select Region</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6">
-                    <select id="province" class="form-control" disabled required>
-                        <option value="">Select Province</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6 mt-2">
-                    <select id="city" class="form-control" disabled required>
-                        <option value="">Select City</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6 mt-2">
-                    <select id="barangay" class="form-control" disabled required>
-                        <option value="">Select Barangay</option>
-                    </select>
-                </div>
-
-                <div class="col-md-12 mt-2">
-                    <input type="text" id="street" class="form-control" placeholder="House No. / Street Name" required>
-                </div>
+        <!-- Order Summary -->
+        <div class="bg-white shadow-sm sm:rounded-lg p-8 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-6">Order Summary</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b-2 border-gray-200">
+                            <th class="text-left text-sm font-semibold text-gray-900 pb-3">Image</th>
+                            <th class="text-left text-sm font-semibold text-gray-900 pb-3">Item</th>
+                            <th class="text-center text-sm font-semibold text-gray-900 pb-3">Qty</th>
+                            <th class="text-right text-sm font-semibold text-gray-900 pb-3">Price</th>
+                            <th class="text-right text-sm font-semibold text-gray-900 pb-3">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($cart as $item)
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3">
+                                    @forelse ($item['item_images'] as $img)
+                                        <img src="{{ asset('storage/' . $img) }}" width="40" alt="{{ $item['name'] }}" class="rounded object-cover">
+                                    @empty
+                                        <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40" class="rounded">
+                                    @endforelse
+                                </td>
+                                <td class="py-3 text-sm text-gray-900">{{ $item['name'] }}</td>
+                                <td class="py-3 text-sm text-gray-900 text-center">{{ $item['quantity'] }}</td>
+                                <td class="py-3 text-sm text-gray-900 text-right">₱{{ number_format($item['price'], 2) }}</td>
+                                <td class="py-3 text-sm font-semibold text-orange-600 text-right">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
 
-            {{-- Hidden field that stores the full formatted address --}}
-            <input type="hidden" name="address" id="fullAddress">
+            <div class="border-t border-gray-200 mt-4 pt-4 text-right">
+                <p class="text-lg font-bold text-gray-900">Total: <span class="text-orange-600">₱{{ number_format($total, 2) }}</span></p>
+            </div>
         </div>
 
-        <div class="mb-3">
-            <label for="payment_receipt" class="form-label">Upload Payment Receipt</label>
-            <input type="file" class="form-control" name="payment_receipt" id="payment_receipt" accept="image/*" required onchange="previewReceipt(event)">
-        </div>
+        <!-- Customer Info Form -->
+        <form action="{{ route($cartKey . '.cart.placeOrder') }}" method="POST" enctype="multipart/form-data" class="bg-white shadow-sm sm:rounded-lg p-8">
+            @csrf
 
-        <div class="mb-3">
-            <img id="receiptPreview" style="display:none;max-width:200px;border:1px solid #ddd;padding:4px;border-radius:5px;">
-        </div>
+            {{-- Pass Buy Now items if they exist --}}
+            @if(request()->has('items'))
+                <input type="hidden" name="buy_now_items" value="{{ json_encode(request()->input('items')) }}">
+            @endif
 
-        <button type="submit" class="btn btn-success w-100"> Place Order</button>
-    </form>
+            <h2 class="text-lg font-semibold text-gray-900 mb-6">Delivery Information</h2>
+
+            <!-- Full Name -->
+            <div class="mb-6">
+                <label for="name" class="block text-sm font-semibold text-gray-900 mb-2">Full Name <span class="text-red-500">*</span></label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="name" id="name" required>
+            </div>
+
+            <!-- Contact Number -->
+            <div class="mb-6">
+                <label for="contact" class="block text-sm font-semibold text-gray-900 mb-2">Contact Number <span class="text-red-500">*</span></label>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="contact" id="contact" required>
+            </div>
+
+            <!-- Delivery Address -->
+            <div class="mb-6 pb-6 border-b border-gray-200">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">Delivery Address</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="region" class="block text-sm font-semibold text-gray-900 mb-2">Region <span class="text-red-500">*</span></label>
+                        <select id="region" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
+                            <option value="">Select Region</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="province" class="block text-sm font-semibold text-gray-900 mb-2">Province <span class="text-red-500">*</span></label>
+                        <select id="province" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" disabled required>
+                            <option value="">Select Province</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="city" class="block text-sm font-semibold text-gray-900 mb-2">City / Municipality <span class="text-red-500">*</span></label>
+                        <select id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" disabled required>
+                            <option value="">Select City</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="barangay" class="block text-sm font-semibold text-gray-900 mb-2">Barangay <span class="text-red-500">*</span></label>
+                        <select id="barangay" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" disabled required>
+                            <option value="">Select Barangay</option>
+                        </select>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="street" class="block text-sm font-semibold text-gray-900 mb-2">Street Address <span class="text-red-500">*</span></label>
+                        <input type="text" id="street" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="House No. / Street Name" required>
+                    </div>
+                </div>
+
+                {{-- Hidden field that stores the full formatted address --}}
+                <input type="hidden" name="address" id="fullAddress">
+            </div>
+
+            <!-- Payment Receipt -->
+            <div class="mb-6">
+                <label for="payment_receipt" class="block text-sm font-semibold text-gray-900 mb-2">Upload Payment Receipt <span class="text-red-500">*</span></label>
+                <input type="file" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="payment_receipt" id="payment_receipt" accept="image/*" required onchange="previewReceipt(event)">
+                <p class="text-xs text-gray-500 mt-2">Accepted formats: JPG, PNG, GIF (Max 5MB)</p>
+            </div>
+
+            <!-- Receipt Preview -->
+            <div class="mb-6">
+                <img id="receiptPreview" style="display:none; max-width:300px; border:1px solid #e5e7eb; padding:8px; border-radius:8px;">
+            </div>
+
+            <!-- Form Buttons -->
+            <div class="flex gap-3 pt-6 border-t border-gray-200">
+                <a href="{{ route($cartKey . '.cart.index') }}" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 text-center">
+                    Back to Cart
+                </a>
+                <button type="submit" class="flex-1 px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700">
+                    Place Order
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>

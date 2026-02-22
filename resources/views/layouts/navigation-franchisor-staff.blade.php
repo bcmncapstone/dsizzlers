@@ -1,20 +1,26 @@
-<nav class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-        <div>
-            <a href="{{ route('franchisor-staff.dashboard') }}" class="text-lg font-semibold">Franchisor Staff Dashboard</a>
-        </div>
-        <div class="flex gap-4 items-center">
-                <a href="{{ route('admin.branches.index') }}">Branches</a>
-                <a href="{{ route('franchisor-staff.items.index') }}">Items</a>
-                <a href="{{ route('franchisor-staff.stock.index') }}">Items Stock</a>
-                <a href="{{ route('franchisor-staff.password') }}">Update Password</a>
-                <a href="{{ route('logout') }}"
-                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                    class="text-red-600"> Logout</a>
+<nav class="navbar">
+    <div class="max-w-7xl mx-auto" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <!-- Logo and Brand -->
+        <a href="{{ route('franchisor-staff.dashboard') }}" class="navbar-brand">
+            <div class="navbar-logo">D</div>
+            <div>
+                <div style="font-size: 16px; font-weight: 700;">D-SIZZLERS</div>
+                <div style="font-size: 11px; opacity: 0.9;">Franchisor Staff Portal</div>
+            </div>
+        </a>
 
-            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                @csrf
-            </form>
-        </div>
+        <!-- Desktop Navigation -->
+        <ul class="navbar-nav">
+            <li><a href="{{ route('franchisor-staff.dashboard') }}" class="{{ request()->routeIs('franchisor-staff.dashboard') ? 'active' : '' }}">Dashboard</a></li>
+            <li><a href="{{ route('franchisor-staff.items.index') }}" class="{{ request()->routeIs('franchisor-staff.items.*') ? 'active' : '' }}">Items</a></li>
+            <li><a href="{{ route('franchisor-staff.stock.index') }}" class="{{ request()->routeIs('franchisor-staff.stock.*') ? 'active' : '' }}">Item Stock</a></li>
+            <li><a href="{{ route('franchisor-staff.password') }}" class="{{ request()->routeIs('franchisor-staff.password') ? 'active' : '' }}">Update Password</a></li>
+            <li>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">
+                    @csrf
+                    <button type="submit" class="btn btn-danger navbar-logout" style="margin: 0;">Log Out</button>
+                </form>
+            </li>
+        </ul>
     </div>
 </nav>

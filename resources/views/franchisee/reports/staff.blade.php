@@ -50,6 +50,19 @@
             </div>
         @endif
 
+        <!-- Charts Section -->
+        @if(!$noData && !$noPerformanceData && count($topStaffBySales) > 0)
+        <div class="flex justify-center mb-4">
+            <!-- Top Staff by Sales Chart -->
+            <div class="bg-white shadow-sm sm:rounded-lg p-4 w-full max-w-xl">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 text-center">Top Staff by Sales</h3>
+                <div style="position: relative; height: 300px;">
+                    <canvas id="staffSalesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        @endif
+
         <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
             <div class="p-4 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Staff Roster</h2>
@@ -89,4 +102,46 @@
         </div>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Top Staff by Sales Chart
+    @if(!$noData && !$noPerformanceData && count($topStaffBySales) > 0)
+    const staffSalesCtx = document.getElementById('staffSalesChart');
+    if (staffSalesCtx) {
+        const staffSalesData = @json($topStaffBySales);
+        new Chart(staffSalesCtx, {
+            type: 'bar',
+            data: {
+                labels: staffSalesData.map(staff => {
+                    const name = staff.name;
+                    return name.substring(0, 15) + (name.length > 15 ? '...' : '');
+                }),
+                datasets: [{
+                    label: 'Sales (₱)',
+                    data: staffSalesData.map(staff => staff.sales),
+                    backgroundColor: '#FF5722',
+                    borderColor: '#FF2D00',
+                    borderWidth: 1,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                    }
+                }
+            }
+        });
+    }
+    @endif
+</script>
 @endsection

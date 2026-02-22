@@ -1,23 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="py-6">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <div class="bg-white shadow-sm sm:rounded-lg p-6 mb-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Franchisee Sales Report</h1>
-                    <p class="text-sm text-gray-600">Compare sales performance per franchisee.</p>
-                </div>
-                <a href="{{ route('admin.reports.index') }}" class="text-sm text-blue-600 hover:underline">Back to Reports</a>
+
+<div class="franchisee-page-wrapper">
+    <div class="franchisee-page-container">
+        <!-- Header -->
+        <div class="franchisee-header">
+            <div>
+                <h1>Franchisee Sales Report</h1>
+                <p>Compare sales performance per franchisee.</p>
             </div>
+            <a href="{{ route('admin.reports.index') }}">← Back to Reports</a>
         </div>
 
-        <div class="bg-white shadow-sm sm:rounded-lg p-6 mb-4">
-            <form method="GET" action="{{ route('admin.reports.franchisee-sales') }}" class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Franchisee</label>
-                    <select name="franchisee_id" class="w-full rounded-md border-gray-300 shadow-sm">
+        <!-- Filter Section -->
+        <div class="franchisee-filter-section">
+            <form method="GET" action="{{ route('admin.reports.franchisee-sales') }}" class="franchisee-filter-form">
+                <div class="franchisee-filter-group">
+                    <label class="franchisee-filter-label">Franchisee</label>
+                    <select name="franchisee_id" class="franchisee-filter-select">
                         <option value="">All Franchisees</option>
                         @foreach($franchisees as $franchisee)
                             <option value="{{ $franchisee->franchisee_id }}" {{ request('franchisee_id') == $franchisee->franchisee_id ? 'selected' : '' }}>
@@ -26,59 +27,107 @@
                         @endforeach
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}" class="w-full rounded-md border-gray-300 shadow-sm" />
+                <div class="franchisee-filter-group">
+                    <label class="franchisee-filter-label">Start Date</label>
+                    <input type="date" name="start_date" value="{{ request('start_date') }}" class="franchisee-filter-input" />
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}" class="w-full rounded-md border-gray-300 shadow-sm" />
+                <div class="franchisee-filter-group">
+                    <label class="franchisee-filter-label">End Date</label>
+                    <input type="date" name="end_date" value="{{ request('end_date') }}" class="franchisee-filter-input" />
                 </div>
-                <div class="flex items-end gap-2">
-                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold uppercase">Apply Filter</button>
-                </div>
+                <button type="submit" class="franchisee-filter-btn">Apply Filter</button>
             </form>
         </div>
 
+        <!-- Alerts -->
         @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-400 p-3 mb-4">
-                <p class="text-sm text-red-700">{{ session('error') }}</p>
+            <div class="franchisee-alert alert-danger">
+                <p>{{ session('error') }}</p>
             </div>
         @endif
 
         @if($noData && (request('franchisee_id') || request('start_date') || request('end_date')))
-            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
-                <p class="text-sm text-yellow-700">No franchisee sales data found for the selected filters.</p>
+            <div class="franchisee-alert alert-warning">
+                <p>No franchisee sales data found for the selected filters.</p>
                 @if($availableRange && $availableRange->min_date && $availableRange->max_date)
-                    <p class="text-xs text-yellow-600 mt-1">Available range: {{ \Carbon\Carbon::parse($availableRange->min_date)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange->max_date)->format('M d, Y') }}</p>
+                    <p class="franchisee-alert-range">Available range: {{ \Carbon\Carbon::parse($availableRange->min_date)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange->max_date)->format('M d, Y') }}</p>
                 @endif
             </div>
         @endif
 
-        <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-            <div class="p-4 flex justify-between items-center">
-                <h2 class="text-lg font-semibold text-gray-900">Franchisee Sales</h2>
-                <a href="{{ route('admin.reports.franchisee-sales.pdf', request()->query()) }}" class="inline-flex items-center px-3 py-2 bg-gray-800 text-white rounded-md text-xs font-semibold uppercase">Generate PDF</a>
+        @if(!$noData)
+            <!-- Stat Cards -->
+            <div class="franchisee-stats-grid">
+                <div class="franchisee-stat-card">
+                    <div class="franchisee-stat-content">
+                        <div class="franchisee-stat-label">Total Franchisees</div>
+                        <div class="franchisee-stat-value">{{ $rows->count() }}</div>
+                    </div>
+                    <div class="franchisee-stat-icon">🏪</div>
+                </div>
+
+                <div class="franchisee-stat-card">
+                    <div class="franchisee-stat-content">
+                        <div class="franchisee-stat-label">Total Orders</div>
+                        <div class="franchisee-stat-value">{{ $totalOrders }}</div>
+                    </div>
+                    <div class="franchisee-stat-icon">📦</div>
+                </div>
+
+                <div class="franchisee-stat-card">
+                    <div class="franchisee-stat-content">
+                        <div class="franchisee-stat-label">Total Revenue</div>
+                        <div class="franchisee-stat-value">₱{{ number_format($totalSales, 2) }}</div>
+                    </div>
+                    <div class="franchisee-stat-icon">💰</div>
+                </div>
             </div>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+
+            <!-- Charts Section -->
+            <div class="franchisee-charts-grid">
+                <!-- Top Franchisees by Revenue -->
+                <div class="franchisee-chart-section">
+                    <h3 class="franchisee-chart-title">🏆 Top Franchisees by Revenue</h3>
+                    <div class="franchisee-chart-container">
+                        <canvas id="topFranchiseesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Franchisee Market Share -->
+                <div class="franchisee-chart-section">
+                    <h3 class="franchisee-chart-title">📈 Franchisee Market Share</h3>
+                    <div class="franchisee-chart-container">
+                        <canvas id="marketShareChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <!-- Franchisee Sales Table -->
+        <div class="franchisee-table-section">
+            <div class="franchisee-table-header">
+                <h3>Franchisee Sales</h3>
+                <a href="{{ route('admin.reports.franchisee-sales.pdf', request()->query()) }}" class="franchisee-table-pdf-btn">📄 Generate PDF</a>
+            </div>
+            <div class="franchisee-table-overflow">
+                <table class="franchisee-table">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Franchisee</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Orders</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Sales</th>
+                            <th>Franchisee</th>
+                            <th>Orders</th>
+                            <th>Total Sales</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody>
                         @forelse($rows as $row)
                             <tr>
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ $franchiseeMap[$row->franchisee_id]->franchisee_name ?? 'N/A' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ $row->orders_count }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-900">₱{{ number_format($row->total_sales, 2) }}</td>
+                                <td>{{ $franchiseeMap[$row->franchisee_id]->franchisee_name ?? 'N/A' }}</td>
+                                <td>{{ $row->orders_count }}</td>
+                                <td class="franchisee-table-revenue">₱{{ number_format($row->total_sales, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
+                                <td colspan="3" class="franchisee-table-empty">No results.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -87,4 +136,74 @@
         </div>
     </div>
 </div>
+
+@if(!$noData)
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Top Franchisees by Revenue Chart
+    const topFranchiseesCtx = document.getElementById('topFranchiseesChart').getContext('2d');
+    const allChartRows = @json($chartRows);
+    const topFranchisees = allChartRows.slice(0, 5);
+    
+    new Chart(topFranchiseesCtx, {
+        type: 'bar',
+        data: {
+            labels: topFranchisees.map(f => f.name),
+            datasets: [{
+                label: 'Revenue',
+                data: topFranchisees.map(f => f.sales),
+                backgroundColor: '#FF5722',
+                borderColor: '#E64A19',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        callback: function(value) {
+                            return '₱' + value.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Franchisee Market Share Chart
+    const marketShareCtx = document.getElementById('marketShareChart').getContext('2d');
+    const marketShareData = allChartRows;
+    const colors = ['#FF5722', '#FF7043', '#FF8A65', '#FFAB91', '#FFCCBC', '#FF2D00', '#E74C3C', '#D35400'];
+    
+    new Chart(marketShareCtx, {
+        type: 'doughnut',
+        data: {
+            labels: marketShareData.map(f => f.name),
+            datasets: [{
+                data: marketShareData.map(f => f.sales),
+                backgroundColor: colors.slice(0, marketShareData.length),
+                borderColor: '#fff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+</script>
+@endif
+
 @endsection
