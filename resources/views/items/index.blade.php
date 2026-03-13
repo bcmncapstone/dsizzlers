@@ -12,16 +12,16 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <a href="{{ route($prefix . '.items.create') }}" class="btn btn-primary">
-                ➕ Add Item
+                Add Item
             </a>
             <a href="{{ route($prefix . '.items.archived') }}" class="btn btn-gray">
-                🗂️ View Archived Items
+                View Archived Items
             </a>
         </div>
 
         <!-- Page Header -->
         <div class="page-header">
-            <h1>Manage Items</h1>
+            <h1>Manage Item</h1>
             <p>View, edit, and organize your menu items and products</p>
         </div>
 
@@ -82,12 +82,12 @@
                                 <td>
                                     <div class="table-actions">
                                         <a href="{{ route($prefix . '.items.edit', $item->item_id) }}" class="table-action-btn table-action-edit">
-                                            ✏️ Edit
+                                            Edit
                                         </a>
                                         <form action="{{ route($prefix . '.items.archive', $item->item_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to archive this item?');">
                                             @csrf
                                             <button type="submit" class="table-action-btn table-action-archive">
-                                                🗄️ Archive
+                                                Archive
                                             </button>
                                         </form>
                                     </div>

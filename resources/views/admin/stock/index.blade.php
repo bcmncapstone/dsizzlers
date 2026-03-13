@@ -8,13 +8,13 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <a href="{{ route('admin.stock.franchisee-inventory') }}" class="btn btn-accent">
-                📦 Manage Franchisee Inventory
+                Manage Franchisee Inventory
             </a>
             <a href="{{ route('admin.items.archived') }}" class="btn btn-gray">
-                🗂️ Archived Items
+                Archived Items
             </a>
             <a href="{{ route('admin.items.create') }}" class="btn btn-info">
-                ➕ Add Stock Item
+                Add Stock Item
             </a>
         </div>
 
@@ -71,12 +71,12 @@
                                 <td>
                                     <div class="table-actions">
                                         <a href="{{ route('admin.items.edit', $item->item_id) }}" class="table-action-btn table-action-edit">
-                                            ✏️ Update
+                                            Update
                                         </a>
                                         <form action="{{ route('admin.items.archive', $item->item_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to archive this item?');">
                                             @csrf
                                             <button type="submit" class="table-action-btn table-action-archive">
-                                                🗄️ Archive
+                                                Archive
                                             </button>
                                         </form>
                                     </div>

@@ -104,7 +104,7 @@
             <!-- Action Buttons -->
             <div class="form-actions">
                 <a href="{{ route($prefix . '.items.index') }}" class="btn btn-secondary">← Back to Items</a>
-                <button type="submit" class="btn btn-primary">🍽️ Update Item</button>
+                <button type="submit" class="btn btn-primary">Update Item</button>
             </div>
         </form>
     </div>

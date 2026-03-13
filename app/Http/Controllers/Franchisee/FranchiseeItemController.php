@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Franchisee;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Item;
 
 class FranchiseeItemController extends Controller
@@ -13,6 +14,8 @@ class FranchiseeItemController extends Controller
      */
     public function index(Request $request)
     {
+        $archivedIds = $this->getArchivedItemIds();
+
         // Sort mapping from UI keys to database columns
         $sortMap = [
             'name'     => 'item_name',
@@ -26,6 +29,10 @@ class FranchiseeItemController extends Controller
 
         // Start query
         $query = Item::query();
+
+        if (!empty($archivedIds)) {
+            $query->whereNotIn('item_id', $archivedIds);
+        }
 
         // Apply category filter if selected
         if (!empty($selectedCategory)) {
@@ -43,7 +50,13 @@ class FranchiseeItemController extends Controller
         $items = $query->get();
 
         // Get all unique categories
-        $categories = Item::select('item_category')
+        $categories = Item::query()
+            ->when(!empty($archivedIds), function ($q) use ($archivedIds) {
+                $q->whereNotIn('item_id', $archivedIds);
+            })
+            ->whereNotNull('item_category')
+            ->where('item_category', '!=', '')
+            ->select('item_category')
             ->distinct()
             ->orderBy('item_category', 'asc')
             ->pluck('item_category');
@@ -62,6 +75,11 @@ class FranchiseeItemController extends Controller
      */
     public function show($id)
     {
+        $archivedIds = $this->getArchivedItemIds();
+        if (in_array((int) $id, $archivedIds, true)) {
+            abort(404, 'Item not found.');
+        }
+
         $item = Item::find($id);
 
         if (!$item) {
@@ -69,5 +87,21 @@ class FranchiseeItemController extends Controller
         }
 
         return view('franchisee.item.show', compact('item'));
+    }
+
+    protected function getArchivedItemIds(): array
+    {
+        if (!Storage::disk('local')->exists('archived_items.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_items.json');
+        $data = json_decode($raw, true);
+
+        if (!is_array($data)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $data)));
     }
 }
