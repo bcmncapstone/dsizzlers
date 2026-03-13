@@ -99,7 +99,7 @@ class ItemController extends Controller
             'price' => 'required|numeric|min:0.01',
             'stock_quantity' => 'required|integer|min:0',
             'item_category' => 'nullable|string|max:30',
-            'item_image' => 'required',
+            'item_image' => 'nullable',
             'item_image.*' => 'image|max:10240',
         ], [
             'price.min' => 'Price must be greater than zero.',

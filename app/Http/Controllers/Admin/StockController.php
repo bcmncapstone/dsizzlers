@@ -9,6 +9,7 @@ use App\Models\Franchisee;
 use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class StockController extends Controller
 {
@@ -17,8 +18,17 @@ class StockController extends Controller
      */
     public function index(Request $request)
     {
-        // Get all items from master catalog
-        $items = Item::orderBy('item_name')->get();
+        // Exclude archived items (same JSON file used by ItemController)
+        $archivedIds = [];
+        if (Storage::disk('local')->exists('archived_items.json')) {
+            $raw = Storage::disk('local')->get('archived_items.json');
+            $decoded = json_decode($raw, true);
+            $archivedIds = is_array($decoded) ? $decoded : [];
+        }
+
+        $items = Item::orderBy('item_name')
+            ->when(!empty($archivedIds), fn($q) => $q->whereNotIn('item_id', $archivedIds))
+            ->get();
 
         return view('admin.stock.index', compact('items'));
     }

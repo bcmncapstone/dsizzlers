@@ -31,8 +31,8 @@
                 <p class="form-section-description">Upload up to 3 images (First one is required)</p>
                 
                 <div class="form-group">
-                    <label class="form-label">Image 1 *</label>
-                    <input type="file" name="item_image[]" accept="image/*" class="form-control" required>
+                    <label class="form-label">Image 1 {{ $item->item_images ? '(optional — keep existing if blank)' : '*' }}</label>
+                    <input type="file" name="item_image[]" accept="image/*" class="form-control">
                     @error('item_image')
                         <span class="form-error-message">{{ $message }}</span>
                     @enderror
