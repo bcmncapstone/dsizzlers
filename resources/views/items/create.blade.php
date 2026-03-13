@@ -92,9 +92,8 @@
                 <label class="form-label" for="item_category">Category: *</label>
                 <select name="item_category" class="form-control" required onchange="toggleFields(this.value)">
                     <option value="none">-</option>
-                    <option value="toolsandequipment">Tools and Equipment</option>
-                    <option value="meat">Meat</option>
-                    <option value="drygoods">Dry Goods</option>
+                    <option value="food">Food</option>
+                    <option value="supplies">Supplies</option>
                 </select>
             </div>
 

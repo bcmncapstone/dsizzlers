@@ -19,7 +19,7 @@
             </form>
             
             <div style="display: flex; gap: 10px;">
-                <a href="{{ route('admin.branches.create') }}" class="btn btn-primary">+ Add Contract</a>
+                <a href="{{ route('admin.branches.create') }}" class="btn btn-primary">Add Contract</a>
                 <a href="{{ route('admin.branches.archived') }}" class="btn btn-secondary">View Archived</a>
             </div>
         </div>
@@ -45,9 +45,7 @@
                         <td>{{ $branch->email }}</td>
                         <td>
                             @if($branch->contract_file)
-                                <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">Preview</a>
-                                <a href="{{ route('admin.branches.downloadContract', ['id' => $branch->branch_id, 'mode' => 'download']) }}" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">Download</a>
-                            @else
+                                <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">View</a>                            @else
                                 <span style="color: var(--dsizzlers-gray-dark);">No file</span>
                             @endif
                         </td>

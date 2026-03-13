@@ -4,13 +4,13 @@
 <div class="items-page">
     {{-- Page Header --}}
     <div class="items-page-header">
-        <h1>🍽️ Items</h1>
+        <h1>Items</h1>
         <p>Browse and purchase available menu items</p>
     </div>
 
     {{-- Filter Section --}}
     <div class="items-filter-section">
-        <h3>🔍 Filter & Sort</h3>
+        <h3>Filter & Sort</h3>
         <form method="GET" action="{{ route(request()->route()->getName()) }}" class="items-filter-form">
             <div class="items-filter-group">
                 <label for="item_category" class="items-filter-label">Category</label>
@@ -95,7 +95,7 @@
                                     class="item-btn item-btn-cart"
                                     @if($item->stock_quantity == 0) disabled @endif
                                 >
-                                    🛒 Add to Cart
+                                    Add to Cart
                                 </button>
                             </form>
 
@@ -108,13 +108,13 @@
                                     class="item-btn item-btn-buy"
                                     @if($item->stock_quantity == 0) disabled @endif
                                 >
-                                    💳 Buy Now
+                                    Buy Now
                                 </button>
                             </form>
 
                             {{-- View Details Link --}}
                             <a href="{{ route('franchisee.item.show', $item->item_id) }}" class="item-btn item-btn-view">
-                                👁️ View Details
+                                View Details
                             </a>
                         </div>
                     </div>
