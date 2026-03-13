@@ -101,6 +101,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item(s)</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered By</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                         </tr>
@@ -110,12 +111,13 @@
                             <tr>
                                 <td class="px-6 py-4 text-sm text-gray-900">{{ $order->order_id }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ $order->item_names ?: '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ $order->ordered_by }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-700">{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-900">₱{{ number_format($order->total_amount, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
+                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
                             </tr>
                         @endforelse
                     </tbody>

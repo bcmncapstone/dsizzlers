@@ -13,10 +13,10 @@
         <ul class="navbar-nav">
             <li><a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">Dashboard</a></li>
             <li><a href="{{ route('accounts.create') }}" class="{{ request()->routeIs('accounts.create') ? 'active' : '' }}">Create Account</a></li>
-            <li><a href="{{ route('admin.branches.index') }}" class="{{ request()->routeIs('admin.branches.index') ? 'active' : '' }}">Branches</a></li>
+            <li><a href="{{ route('admin.branches.index') }}" class="{{ request()->routeIs('admin.branches.index') ? 'active' : '' }}">Contract</a></li>
             <li><a href="{{ route('admin.stock.index') }}" class="{{ request()->routeIs('admin.stock.*') ? 'active' : '' }}">Stock</a></li>
-            <li><a href="{{ route('admin.manageOrder.index') }}" class="{{ request()->routeIs('admin.manageOrder.*') ? 'active' : '' }}">Orders</a></li>
-            <li><a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">Reports</a></li>
+            <li><a href="{{ route('admin.manageOrder.index') }}" class="{{ request()->routeIs('admin.manageOrder.*') ? 'active' : '' }}">Order</a></li>
+            <li><a href="{{ route('admin.reports.index') }}" class="{{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">Report</a></li>
             
             <li>
                 <form method="POST" action="{{ route('admin.logout') }}" style="display: inline;">

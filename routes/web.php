@@ -32,8 +32,10 @@ Route::get('/admin/dashboard', function () {
 })->name('admin.dashboard');
 
 // ACCOUNT CREATION (Admin only)
-Route::get('/admin/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
-Route::post('/admin/accounts/store', [AccountController::class, 'store'])->name('accounts.store');
+Route::middleware('auth:admin')->group(function () {
+    Route::get('/admin/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
+    Route::post('/admin/accounts/store', [AccountController::class, 'store'])->name('accounts.store');
+});
 
 //Account Creation for Franchisee Staff (Franchisee)
 Route::middleware(['auth:franchisee'])->group(function () {
@@ -42,6 +44,9 @@ Route::middleware(['auth:franchisee'])->group(function () {
 });
 
 // LOGIN ROUTES FOR EACH ROLE
+
+// Unified Login from Welcome Page
+Route::post('/login/unified', [LoginController::class, 'unifiedLogin'])->name('login.unified');
 
 // Franchisee Login
 Route::get('/login/franchisee', [LoginController::class, 'showFranchiseeLogin'])->name('login.franchisee');
@@ -80,6 +85,11 @@ Route::middleware('auth:franchisor_staff')->group(function () {
         ->name('franchisor-staff.password');
     Route::post('franchisor-staff/password', [AccountSettingsController::class, 'updateFranchisorStaffPassword'])
         ->name('franchisor-staff.password.update');
+    // Username
+    Route::get('franchisor-staff/username', [AccountSettingsController::class, 'editFranchisorStaffUsername'])
+        ->name('franchisor-staff.username');
+    Route::post('franchisor-staff/username', [AccountSettingsController::class, 'updateFranchisorStaffUsername'])
+        ->name('franchisor-staff.username.update');
 });
 
 // Franchisor Staff Stock Routes
@@ -96,6 +106,11 @@ Route::middleware('auth:franchisee_staff')->group(function () {
         ->name('franchisee-staff.password');
     Route::post('franchisee-staff/password', [AccountSettingsController::class, 'updateFranchiseeStaffPassword'])
         ->name('franchisee-staff.password.update');
+    // Username
+    Route::get('franchisee-staff/username', [AccountSettingsController::class, 'editFranchiseeStaffUsername'])
+        ->name('franchisee-staff.username');
+    Route::post('franchisee-staff/username', [AccountSettingsController::class, 'updateFranchiseeStaffUsername'])
+        ->name('franchisee-staff.username.update');
 });
 
 // Franchisee Staff Stock Routes
@@ -112,6 +127,11 @@ Route::middleware('auth:franchisee')->group(function () {
         ->name('franchisee.password');
     Route::post('franchisee/password', [AccountSettingsController::class, 'updateFranchiseePassword'])
         ->name('franchisee.password.update');
+    // Username
+    Route::get('franchisee/username', [AccountSettingsController::class, 'editFranchiseeUsername'])
+        ->name('franchisee.username');
+    Route::post('franchisee/username', [AccountSettingsController::class, 'updateFranchiseeUsername'])
+        ->name('franchisee.username.update');
 });
 
 // Admin Password Routes
@@ -120,6 +140,11 @@ Route::middleware('auth:admin')->group(function () {
         ->name('admin.password');
     Route::post('admin/password', [AccountSettingsController::class, 'updateAdminPassword'])
         ->name('admin.password.update');
+    // Username
+    Route::get('admin/username', [AccountSettingsController::class, 'editAdminUsername'])
+        ->name('admin.username');
+    Route::post('admin/username', [AccountSettingsController::class, 'updateAdminUsername'])
+        ->name('admin.username.update');
 });
 
 //Franchisee to View the User Account 

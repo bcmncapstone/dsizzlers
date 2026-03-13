@@ -26,8 +26,8 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">🔑</div>
                 </div>
-                <h3>Update Password</h3>
-                <p>Secure your account with a new password</p>
+                <h3>Update Profile</h3>
+                <p>Secure your account with a new password and username</p>
                 <div class="card-arrow">View →</div>
             </a>
 

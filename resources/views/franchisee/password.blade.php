@@ -6,8 +6,8 @@
         {{-- Header Section --}}
         <div class="password-header">
             <div class="password-header-icon">🔐</div>
-            <h1>Update Password</h1>
-            <p>Secure your account with a new password</p>
+            <h1>Update Profile</h1>
+            <p>Secure your account with a new password and username</p>
         </div>
 
         {{-- Alert Messages --}}
@@ -30,6 +30,18 @@
         {{-- Password Form --}}
         <form action="{{ route('franchisee.password.update') }}" method="POST" class="password-form">
             @csrf
+
+            <div class="password-form-group">
+                <label for="username">Username</label>
+                <input 
+                    type="text"
+                    id="username"
+                    name="username"
+                    required
+                    value="{{ old('username', auth('franchisee')->user()->franchisee_username) }}"
+                    placeholder="Enter your username"
+                >
+            </div>
 
             <div class="password-form-group">
                 <label for="password">New Password</label>
@@ -66,7 +78,7 @@
             </div>
 
             <button type="submit" class="password-submit-btn">
-                🔄 Update Password
+                Update Profile
             </button>
         </form>
 
@@ -76,4 +88,18 @@
         </div>
     </div>
 </div>
+
+<script>
+    // Auto-hide alert messages after 3 seconds
+    const alerts = document.querySelectorAll('.password-alert');
+    alerts.forEach(function(alert) {
+        setTimeout(function() {
+            alert.style.transition = 'opacity 0.5s ease-out';
+            alert.style.opacity = '0';
+            setTimeout(function() {
+                alert.remove();
+            }, 500);
+        }, 3000);
+    });
+</script>
 @endsection

@@ -25,7 +25,7 @@ class AccountController extends Controller
             'role' => 'required|in:franchisee,franchisor_staff',
             'fname' => 'required|string',
             'lname' => 'required|string',
-            'contact' => 'required|string',
+            'contact' => 'required|string|max:11',
             'password' => 'required|string|min:6',
         ]);
 
@@ -65,7 +65,7 @@ class AccountController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Account created successfully.');
+        return redirect()->back()->with('success', 'Account created successfully.')->with('flash_timeout', 3000);
     }
 
     //Show Franchisee Account Creation Form
@@ -98,6 +98,7 @@ class AccountController extends Controller
         ]);
 
         return redirect()->route('account.create')
-            ->with('success', 'Franchisee Staff account created successfully!');
+            ->with('success', 'Franchisee Staff account created successfully!')
+            ->with('flash_timeout', 3000);
     }
 }

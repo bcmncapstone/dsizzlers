@@ -29,12 +29,12 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">👤</div>
                 </div>
-                <h3>Create Account</h3>
+                <h3>Account</h3>
                 <p>Add new user accounts and manage permissions</p>
                 <div class="card-arrow">View →</div>
             </a>
 
-            <!-- Update Password Card -->
+             <!-- Update Password Card -->
             <a href="{{ route('admin.password.update') }}" class="card card-orange">
                 <div class="card-icon-wrapper">
                     <div class="card-icon">🔑</div>
@@ -47,10 +47,10 @@
             <!-- Manage Branches Card -->
             <a href="{{ route('admin.branches.index') }}" class="card card-red">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">🏢</div>
+                    <div class="card-icon">📝</div>
                 </div>
-                <h3>Branches</h3>
-                <p>View and manage all branch locations</p>
+                <h3>Contract</h3>
+                <p>View and manage contracts</p>
                 <div class="card-arrow">View →</div>
             </a>
 
@@ -69,7 +69,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">📦</div>
                 </div>
-                <h3>Orders</h3>
+                <h3>Order</h3>
                 <p>Track and manage all customer orders</p>
                 <div class="card-arrow">View →</div>
             </a>
@@ -89,7 +89,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">📈</div>
                 </div>
-                <h3>Reports</h3>
+                <h3>Report</h3>
                 <p>View detailed analytics and business reports</p>
                 <div class="card-arrow">View →</div>
             </a>
@@ -99,7 +99,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">💬</div>
                 </div>
-                <h3>Messages</h3>
+                <h3>Message</h3>
                 <p>Communicate with team and users in real-time</p>
                 <div class="card-arrow">View →</div>
             </a>

@@ -99,8 +99,9 @@ class ManageOrderController extends Controller
             $order->order_status = $newStatus;
             $order->save();
 
-            // If status changed to 'Delivered' and it's a staff order, merge with franchisee stock
-            if ($newStatus === 'Delivered' && $oldStatus !== 'Delivered' && $order->fstaff_id) {
+            // If status changed to 'Delivered', merge with franchisee stock
+            // This applies to both staff orders (fstaff_id) and direct franchisee orders (franchisee_id)
+            if ($newStatus === 'Delivered' && $oldStatus !== 'Delivered' && ($order->fstaff_id || $order->franchisee_id)) {
                 $this->mergeStaffOrderToStock($order);
             }
 
@@ -128,18 +129,29 @@ class ManageOrderController extends Controller
     }
 
     /**
-     * Merge staff order items into franchisee stock inventory
+     * Merge order items into franchisee stock inventory
+     * Handles both staff orders (fstaff_id) and direct franchisee orders (franchisee_id)
      */
     private function mergeStaffOrderToStock(Order $order)
     {
-        // Safety check: ensure order has franchisee_id
-        if (!$order->franchisee_id) {
+        $franchiseeId = $order->franchisee_id;
+        
+        // If order doesn't have franchisee_id but has fstaff_id, get it from the staff member
+        if (!$franchiseeId && $order->fstaff_id) {
+            $staff = \App\Models\FranchiseeStaff::find($order->fstaff_id);
+            if ($staff) {
+                $franchiseeId = $staff->franchisee_id;
+            }
+        }
+        
+        // Safety check: ensure we have a franchisee_id
+        if (!$franchiseeId) {
             Log::warning("Order #{$order->order_id} has no franchisee_id, cannot merge to stock.");
             throw new \Exception("Cannot merge order without franchisee_id. Please ensure the order is associated with a franchisee.");
         }
 
         // Check if this order has already been merged by looking for existing transactions
-        $existingMerge = StockTransaction::where('reference_type', 'staff_order')
+        $existingMerge = StockTransaction::where('reference_type', 'order_delivered')
             ->where('reference_id', $order->order_id)
             ->exists();
 
@@ -152,7 +164,7 @@ class ManageOrderController extends Controller
             // Find or create franchisee stock record
             $stock = FranchiseeStock::firstOrCreate(
                 [
-                    'franchisee_id' => $order->franchisee_id,
+                    'franchisee_id' => $franchiseeId,
                     'item_id' => $detail->item_id,
                 ],
                 [
@@ -168,19 +180,19 @@ class ManageOrderController extends Controller
 
             // Record the transaction
             StockTransaction::create([
-                'franchisee_id' => $order->franchisee_id,
+                'franchisee_id' => $franchiseeId,
                 'item_id' => $detail->item_id,
                 'transaction_type' => 'in',
                 'quantity' => $detail->quantity,
                 'balance_after' => $stock->current_quantity,
-                'reference_type' => 'staff_order',
+                'reference_type' => 'order_delivered',
                 'reference_id' => $order->order_id,
-                'notes' => "Staff order #{$order->order_id} delivered - items added to stock",
+                'notes' => "Order #{$order->order_id} delivered - items added to stock",
                 'performed_by_type' => auth('admin')->check() ? 'admin' : 'franchisor_staff',
                 'performed_by_id' => auth('admin')->check() ? auth('admin')->id() : auth('franchisor_staff')->id(),
             ]);
 
-            Log::info("Merged order #{$order->order_id}: Added {$detail->quantity} of item #{$detail->item_id} to franchisee #{$order->franchisee_id} stock (from {$oldQuantity} to {$stock->current_quantity})");
+            Log::info("Merged order #{$order->order_id}: Added {$detail->quantity} of item #{$detail->item_id} to franchisee #{$franchiseeId} stock (from {$oldQuantity} to {$stock->current_quantity})");
         }
     }
 

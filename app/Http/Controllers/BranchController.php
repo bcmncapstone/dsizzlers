@@ -6,27 +6,51 @@ use Illuminate\Http\Request;
 use App\Models\Branch;
 use App\Models\Franchisee;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BranchController extends Controller
 {
     // Show active branches
-    public function index()
+    public function index(Request $request)
     {
-        $branches = Branch::where('branch_status', '=', DB::raw('true'))->get();
-        return view('admin.branches.index', compact('branches'));
+        $search = $request->get('search', '');
+        
+        // Load archived branch IDs from JSON file
+        $archivedIds = $this->getArchivedBranchIds();
+        
+        // Show only branches that are not archived
+        $branches = Branch::query()
+            ->when($search, function ($query) use ($search) {
+                return $query->where('location', 'like', "%$search%")
+                    ->orWhere('first_name', 'like', "%$search%")
+                    ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhere('email', 'like', "%$search%");
+            })
+            ->when(!empty($archivedIds), function ($query) use ($archivedIds) {
+                return $query->whereNotIn('branch_id', $archivedIds);
+            })
+            ->get();
+        
+        return view('admin.branches.index', compact('branches', 'search'));
     }
 
     // Show archived branches
     public function archived()
     {
-        $branches = Branch::where('branch_status', '=', DB::raw('false'))->get();
+        // Load archived branch IDs from JSON file
+        $archivedIds = $this->getArchivedBranchIds();
+        $branches = empty($archivedIds)
+            ? collect()
+            : Branch::whereIn('branch_id', $archivedIds)->get();
         return view('admin.branches.archive', compact('branches'));
     }
 
     // Show form to add a new branch
     public function create()
     {
-        return view('admin.branches.create');
+        // Pass existing franchisees so admin can select and auto-fill details
+        $franchisees = Franchisee::select('franchisee_id','franchisee_name','franchisee_email','franchisee_contactNo')->get();
+        return view('admin.branches.create', compact('franchisees'));
     }
 
     //  Show edit form
@@ -118,7 +142,13 @@ class BranchController extends Controller
     public function archive($id)
     {
         $branch = Branch::findOrFail($id);
-        $branch->update(['branch_status' => DB::raw('false')]);
+
+        // Mark as archived in JSON file (do NOT update DB)
+        $archivedIds = $this->getArchivedBranchIds();
+        if (!in_array($branch->branch_id, $archivedIds)) {
+            $archivedIds[] = $branch->branch_id;
+            $this->saveArchivedBranchIds($archivedIds);
+        }
 
         return redirect()->route('admin.branches.index')->with('success', 'Branch archived successfully.');
     }
@@ -126,8 +156,12 @@ class BranchController extends Controller
     // Restore branch
     public function restore($id)
     {
-        $branch = Branch::findOrFail($id);
-        $branch->update(['branch_status' => DB::raw('true')]);
+        // Remove the branch ID from the archived list
+        $archivedIds = $this->getArchivedBranchIds();
+        $archivedIds = array_values(array_filter($archivedIds, function ($archivedId) use ($id) {
+            return (int) $archivedId !== (int) $id;
+        }));
+        $this->saveArchivedBranchIds($archivedIds);
 
         return redirect()->route('admin.branches.archived')->with('success', 'Branch restored successfully.');
     }
@@ -151,4 +185,30 @@ class BranchController extends Controller
     // This tries to preview if supported (PDF, image, etc.)
     return response()->file($filePath);
 }
+
+    /**
+     * Read archived branch IDs from storage/app/archived_branches.json
+     * This avoids any database schema changes.
+     */
+    protected function getArchivedBranchIds(): array
+    {
+        if (!Storage::disk('local')->exists('archived_branches.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_branches.json');
+        $data = json_decode($raw, true);
+
+        return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Persist archived branch IDs into storage/app/archived_branches.json
+     */
+    protected function saveArchivedBranchIds(array $ids): void
+    {
+        // Ensure unique, numeric IDs
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        Storage::disk('local')->put('archived_branches.json', json_encode($ids));
+    }
 }

@@ -6,7 +6,7 @@
         <!-- Header -->
         <div class="mb-8 flex items-start justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-900">Inventory Management</h1>
+                <h1 class="text-3xl font-bold text-gray-900">Financial Management</h1>
                 <p class="mt-2 text-sm text-gray-600">
                     Branch inventory and stock levels
                 </p>

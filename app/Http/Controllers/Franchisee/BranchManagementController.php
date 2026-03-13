@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrderDetail;
 use App\Models\Item;
 use App\Models\FranchiseeStock;
+use App\Models\StockTransaction;
 use Carbon\Carbon;
 
 class BranchManagementController extends Controller
@@ -54,6 +55,7 @@ class BranchManagementController extends Controller
     /**
      * Show performance metrics
      * Displays sales and operational performance of the branch with date filtering
+     * Sales are based on manual stock reductions by the franchisee
      */
     public function performance()
     {
@@ -63,33 +65,37 @@ class BranchManagementController extends Controller
         $startDate = request('start_date');
         $endDate = request('end_date');
 
-        // Build base query
-        $baseQuery = Order::where('franchisee_id', $franchisee->franchisee_id);
+        // Build base query for stock transactions (manual adjustments only - negative quantities = sales)
+        $baseQuery = StockTransaction::where('franchisee_id', $franchisee->franchisee_id)
+                                    ->where('transaction_type', 'adjustment')
+                                    ->where('quantity', '<', 0); // Only sold items (negative quantity)
         
         if ($startDate && $endDate) {
-            $baseQuery->whereBetween('order_date', [$startDate, $endDate]);
+            $baseQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
 
-        // Get total sales
-        $totalSales = (clone $baseQuery)->sum('total_amount');
+        // Get total sales (sum of negative quantities converted to positive)
+        $totalSales = abs((clone $baseQuery)->sum('quantity'));
 
-        // Get total orders
+        // Get total orders (count of transactions)
         $totalOrders = (clone $baseQuery)->count();
 
         // Average order value
         $averageOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
 
-        // Sales trend grouped by date
-        $salesQuery = Order::where('franchisee_id', $franchisee->franchisee_id)
-                          ->selectRaw('DATE(order_date) as date, SUM(total_amount) as sales')
-                          ->groupBy('date')
-                          ->orderBy('date', 'desc');
+        // Sales trend grouped by date - from stock transactions
+        $salesQuery = StockTransaction::where('franchisee_id', $franchisee->franchisee_id)
+                                      ->where('transaction_type', 'adjustment')
+                                      ->where('quantity', '<', 0)
+                                      ->selectRaw('DATE(created_at) as date, ABS(SUM(quantity)) as sales')
+                                      ->groupBy('date')
+                                      ->orderBy('date', 'desc');
         
         if ($startDate && $endDate) {
-            $salesQuery->whereBetween('order_date', [$startDate, $endDate]);
+            $salesQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         } else {
             // Default to last 30 days if no filter
-            $salesQuery->where('order_date', '>=', Carbon::now()->subDays(30));
+            $salesQuery->where('created_at', '>=', Carbon::now()->subDays(30));
         }
         
         $salesTrend = $salesQuery->get()->map(function($item) {
@@ -99,26 +105,23 @@ class BranchManagementController extends Controller
             ];
         });
 
-        // Top selling items
-        $topSellingQuery = OrderDetail::join('orders', 'order_details.order_id', '=', 'orders.order_id')
-                                      ->join('items', 'order_details.item_id', '=', 'items.item_id')
-                                      ->where('orders.franchisee_id', $franchisee->franchisee_id);
+        // Top selling items - from stock transactions (manual reductions)
+        $topSellingQuery = StockTransaction::where('franchisee_id', $franchisee->franchisee_id)
+                                          ->where('transaction_type', 'adjustment')
+                                          ->where('quantity', '<', 0)
+                                          ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+                                          ->selectRaw('items.item_name, ABS(SUM(stock_transactions.quantity)) as total_quantity, ABS(SUM(stock_transactions.quantity)) as total_revenue')
+                                          ->groupBy('items.item_id', 'items.item_name')
+                                          ->orderBy('total_quantity', 'desc')
+                                          ->limit(10);
         
         if ($startDate && $endDate) {
-            $topSellingQuery->whereBetween('orders.order_date', [$startDate, $endDate]);
+            $topSellingQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
         
-        $topSellingItems = $topSellingQuery->select(
-                                          'items.item_name',
-                                          DB::raw('SUM(order_details.quantity) as total_quantity'),
-                                          DB::raw('SUM(order_details.subtotal) as total_revenue')
-                                      )
-                                      ->groupBy('items.item_id', 'items.item_name')
-                                      ->orderBy('total_quantity', 'desc')
-                                      ->limit(10)
-                                      ->get();
+        $topSellingItems = $topSellingQuery->get();
 
-        // Recent orders
+        // Recent orders - show recent stock transactions (sales)
         $recentOrdersQuery = Order::where('franchisee_id', $franchisee->franchisee_id);
         
         if ($startDate && $endDate) {

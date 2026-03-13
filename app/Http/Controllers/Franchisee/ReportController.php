@@ -26,8 +26,9 @@ class ReportController extends Controller
 
         $franchisee = Auth::guard('franchisee')->user();
 
-        $query = Order::with(['franchisee', 'orderDetails.item'])
+        $query = Order::with(['franchisee', 'orderDetails.item', 'staff'])
             ->where('franchisee_id', $franchisee->franchisee_id)
+            ->where('order_status', 'Delivered')
             ->when($request->start_date, function ($q) use ($request) {
                 $q->whereDate('order_date', '>=', $request->start_date);
             })
@@ -41,7 +42,7 @@ class ReportController extends Controller
 
         $orders = $query->orderBy('order_date', 'desc')->paginate(50);
 
-        // Compute concatenated item names per order for display
+        // Compute concatenated item names per order for display and ordered by info
         $orders->getCollection()->transform(function ($order) {
             $order->item_names = $order->orderDetails
                 ? $order->orderDetails
@@ -52,16 +53,41 @@ class ReportController extends Controller
                     ->implode(', ')
                 : '';
 
+            // Determine who ordered: Staff or Franchisee
+            $order->ordered_by = $order->fstaff_id && $order->staff 
+                ? $order->staff->fstaff_fname . ' ' . $order->staff->fstaff_lname
+                : 'Franchisee';
+
             return $order;
         });
         $noData = $orders->isEmpty();
         $availableRange = $noData ? $this->getOrderDateRange($franchisee->franchisee_id) : null;
 
-        // Get chart data
-        $chartQuery = DB::table('order_details')
+        // Get chart data using separate method
+        $chartQuery = $this->getChartQueryData($franchisee->franchisee_id, $request);
+        $topItems = $this->getTopItems($chartQuery);
+        $salesByCategory = $this->getSalesByCategory($chartQuery);
+        $dailySales = $this->getDailySales($chartQuery);
+
+        return view('franchisee.reports.sales', compact(
+            'orders',
+            'totalSales',
+            'totalOrders',
+            'noData',
+            'availableRange',
+            'topItems',
+            'salesByCategory',
+            'dailySales'
+        ));
+    }
+
+    private function getChartQueryData(int $franchiseeId, Request $request)
+    {
+        return DB::table('order_details')
             ->join('items', 'order_details.item_id', '=', 'items.item_id')
             ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
-            ->where('orders.franchisee_id', $franchisee->franchisee_id)
+            ->where('orders.franchisee_id', $franchiseeId)
+            ->where('orders.order_status', 'Delivered')
             ->select(
                 'order_details.item_id',
                 'items.item_name',
@@ -77,9 +103,11 @@ class ReportController extends Controller
                 $q->whereDate('orders.order_date', '<=', $request->end_date);
             })
             ->get();
+    }
 
-        // Top selling items by quantity
-        $topItems = collect($chartQuery)
+    private function getTopItems($chartQuery)
+    {
+        return collect($chartQuery)
             ->groupBy('item_name')
             ->map(function($group) { 
                 return [
@@ -92,9 +120,11 @@ class ReportController extends Controller
             ->take(10)
             ->values()
             ->toArray();
+    }
 
-        // Sales by category
-        $salesByCategory = collect($chartQuery)
+    private function getSalesByCategory($chartQuery)
+    {
+        return collect($chartQuery)
             ->groupBy('item_category')
             ->map(function($group) { 
                 return [
@@ -106,9 +136,11 @@ class ReportController extends Controller
             ->sortByDesc('sales')
             ->values()
             ->toArray();
+    }
 
-        // Daily sales trend
-        $dailySales = collect($chartQuery)
+    private function getDailySales($chartQuery)
+    {
+        return collect($chartQuery)
             ->groupBy(function($item) { 
                 return \Carbon\Carbon::parse($item->order_date)->format('Y-m-d');
             })
@@ -122,17 +154,6 @@ class ReportController extends Controller
             ->sortBy('date')
             ->values()
             ->toArray();
-
-        return view('franchisee.reports.sales', compact(
-            'orders',
-            'totalSales',
-            'totalOrders',
-            'noData',
-            'availableRange',
-            'topItems',
-            'salesByCategory',
-            'dailySales'
-        ));
     }
 
     public function salesPdf(Request $request)
@@ -143,8 +164,9 @@ class ReportController extends Controller
 
         $franchisee = Auth::guard('franchisee')->user();
 
-        $orders = Order::with('franchisee')
+        $orders = Order::with(['franchisee', 'staff', 'orderDetails.item'])
             ->where('franchisee_id', $franchisee->franchisee_id)
+            ->where('order_status', 'Delivered')
             ->when($request->start_date, function ($q) use ($request) {
                 $q->whereDate('order_date', '>=', $request->start_date);
             })
@@ -157,6 +179,14 @@ class ReportController extends Controller
         if ($orders->isEmpty()) {
             return redirect()->back()->with('error', 'No sales data found for the selected filters.');
         }
+
+        // Compute ordered by info for each order
+        $orders->transform(function ($order) {
+            $order->ordered_by = $order->fstaff_id && $order->staff 
+                ? $order->staff->fstaff_fname . ' ' . $order->staff->fstaff_lname
+                : 'Franchisee';
+            return $order;
+        });
 
         $totalSales = $orders->sum('total_amount');
         $totalOrders = $orders->count();

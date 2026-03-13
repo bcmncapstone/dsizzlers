@@ -14,9 +14,9 @@
             <li><a href="{{ route('franchisee.dashboard') }}" class="{{ request()->routeIs('franchisee.dashboard') ? 'active' : '' }}">Dashboard</a></li>
             <li><a href="{{ route('franchisee.branch.dashboard') }}" class="{{ request()->routeIs('franchisee.branch.*') ? 'active' : '' }}">Manage Branch</a></li>
             <li><a href="{{ route('franchisee.cart.index') }}" class="{{ request()->routeIs('franchisee.cart.*') ? 'active' : '' }}">Cart</a></li>
-            <li><a href="{{ route('franchisee.orders.index') }}" class="{{ request()->routeIs('franchisee.orders.*') ? 'active' : '' }}">Orders</a></li>
-            <li><a href="{{ route('franchisee.item.index') }}" class="{{ request()->routeIs('franchisee.item.*') ? 'active' : '' }}">Items</a></li>
-            <li><a href="{{ route('franchisee.reports.index') }}" class="{{ request()->routeIs('franchisee.reports.*') ? 'active' : '' }}">Reports</a></li>
+            <li><a href="{{ route('franchisee.orders.index') }}" class="{{ request()->routeIs('franchisee.orders.*') ? 'active' : '' }}">Order</a></li>
+            <li><a href="{{ route('franchisee.item.index') }}" class="{{ request()->routeIs('franchisee.item.*') ? 'active' : '' }}">Item</a></li>
+            <li><a href="{{ route('franchisee.reports.index') }}" class="{{ request()->routeIs('franchisee.reports.*') ? 'active' : '' }}">Report</a></li>
             <li><a href="{{ route('franchisee.password') }}" class="{{ request()->routeIs('franchisee.password*') ? 'active' : '' }}">Account</a></li>
             
             <li>

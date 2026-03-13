@@ -18,6 +18,17 @@
                 <h2 class="login-title">Franchisor Login</h2>
             </div>
 
+            <!-- Role Selector -->
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label class="form-label" for="login_role">Switch Role:</label>
+                <select name="login_role" id="login_role" class="form-control" onchange="switchLoginRole(this.value)">
+                    <option value="{{ url('/admin/login') }}" selected>Franchisor Login</option>
+                    <option value="{{ url('/login/franchisee') }}">Franchisee Login</option>
+                    <option value="{{ url('/login/franchisor-staff') }}">Franchisor Staff Login</option>
+                    <option value="{{ url('/login/franchisee-staff') }}">Franchisee Staff Login</option>
+                </select>
+            </div>
+
             @if ($errors->any())
                 <div class="login-error">
                     <ul style="margin: 0; padding-left: 20px;">
@@ -47,5 +58,13 @@
             <a href="{{ url('/') }}" class="login-back-link">← Back to Home</a>
         </div>
     </div>
+
+    <script>
+        function switchLoginRole(loginUrl) {
+            if (loginUrl) {
+                window.location.href = loginUrl;
+            }
+        }
+    </script>
 </body>
 </html>

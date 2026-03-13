@@ -34,16 +34,23 @@ class ItemController extends Controller
     }
 
     public function store(Request $request)
-{
-    $request->validate([
-        'item_name' => 'required|string|max:50',
-        'item_description' => 'nullable|string',
-        'price' => 'required|numeric|min:0',
-        'stock_quantity' => 'required|integer|min:0',
-        'item_category' => 'nullable|string|max:30',
-        'item_image' => 'required',
-        'item_image.*' => 'image|max:10240',
-    ]);
+    {
+        $request->validate([
+            'item_name' => 'required|string|max:50',
+            'item_description' => 'nullable|string',
+            'price' => 'required|numeric|min:0.01',
+            'stock_quantity' => 'required|integer|min:0',
+            'item_category' => 'nullable|string|max:30',
+            'item_image' => 'required',
+            'item_image.*' => 'image|max:10240',
+        ], [
+            'stock_quantity.required' => 'Please enter the stock quantity.',
+            'stock_quantity.integer' => 'Stock quantity must be a whole number.',
+            'stock_quantity.min' => 'Stock quantity cannot be negative.',
+            'price.required' => 'Please enter the price.',
+            'price.numeric' => 'Price must be a whole number.',
+            'price.min' => 'Price must be greater than zero.',
+        ]);
 
     $imagePaths = [];
 
@@ -76,15 +83,17 @@ class ItemController extends Controller
 
    public function update(Request $request, $id)
 {
-    $request->validate([
-        'item_name' => 'required',
-        'item_description' => 'required',
-        'price' => 'required|numeric|min:0',
-        'stock_quantity' => 'required|integer|min:0',
-        'item_category' => 'nullable|string|max:30',
-        'item_image' => 'required',
-        'item_image.*' => 'image|max:10240',
-    ]);
+        $request->validate([
+            'item_name' => 'required',
+            'item_description' => 'required',
+            'price' => 'required|numeric|min:0.01',
+            'stock_quantity' => 'required|integer|min:0',
+            'item_category' => 'nullable|string|max:30',
+            'item_image' => 'required',
+            'item_image.*' => 'image|max:10240',
+        ], [
+            'price.min' => 'Price must be greater than zero.',
+        ]);
 
     $item = Item::findOrFail($id);
 

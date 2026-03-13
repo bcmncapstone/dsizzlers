@@ -87,17 +87,9 @@
             <div class="franchisee-charts-grid">
                 <!-- Top Franchisees by Revenue -->
                 <div class="franchisee-chart-section">
-                    <h3 class="franchisee-chart-title">🏆 Top Franchisees by Revenue</h3>
+                    <h3 class="franchisee-chart-title">🏆 Top Franchisees by Sales</h3>
                     <div class="franchisee-chart-container">
                         <canvas id="topFranchiseesChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Franchisee Market Share -->
-                <div class="franchisee-chart-section">
-                    <h3 class="franchisee-chart-title">📈 Franchisee Market Share</h3>
-                    <div class="franchisee-chart-container">
-                        <canvas id="marketShareChart"></canvas>
                     </div>
                 </div>
             </div>

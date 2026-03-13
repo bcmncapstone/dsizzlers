@@ -7,8 +7,8 @@
         
         <!-- Header -->
         <div class="dashboard-header">
-            <h1>Active Branches</h1>
-            <p>Manage and view all branch locations</p>
+            <h1>Active Contract</h1>
+            <p>Manage and view contracts</p>
         </div>
 
         <!-- Search Form -->
@@ -19,7 +19,7 @@
             </form>
             
             <div style="display: flex; gap: 10px;">
-                <a href="{{ route('admin.branches.create') }}" class="btn btn-primary">+ Add Branch</a>
+                <a href="{{ route('admin.branches.create') }}" class="btn btn-primary">+ Add Contract</a>
                 <a href="{{ route('admin.branches.archived') }}" class="btn btn-secondary">View Archived</a>
             </div>
         </div>
@@ -29,11 +29,11 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Branch Manager</th>
+                        <th>Franchisee Name</th>
                         <th>Location</th>
                         <th>Email</th>
                         <th>Contract</th>
-                        <th>Expiration</th>
+                        <th>Contract Expiration</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -53,10 +53,10 @@
                         </td>
                         <td>{{ $branch->contract_expiration }}</td>
                         <td>
-                            <a href="{{ route('admin.branches.edit', $branch->branch_id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">✏️ Edit</a>
-                            <form method="POST" action="{{ route('admin.branches.archive', $branch->branch_id) }}" style="display:inline;">
+                            <a href="{{ route('admin.branches.edit', $branch->branch_id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">Edit</a>
+                            <form method="POST" action="{{ route('admin.branches.archive', $branch->branch_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this contract?');">
                                 @csrf
-                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">🗄 Archive</button>
+                                <button type="submit" class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;">Archive</button>
                             </form>
                         </td>
                     </tr>

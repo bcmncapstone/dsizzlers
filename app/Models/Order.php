@@ -9,7 +9,10 @@ class Order extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'order_id'; // important since you used order_id in migration
+    protected $table = 'orders';
+    protected $primaryKey = 'order_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'franchisee_id',
@@ -39,6 +42,11 @@ class Order extends Model
     }
 
     public function franchiseeStaff()
+    {
+        return $this->belongsTo(FranchiseeStaff::class, 'fstaff_id', 'fstaff_id');
+    }
+
+    public function staff()
     {
         return $this->belongsTo(FranchiseeStaff::class, 'fstaff_id', 'fstaff_id');
     }

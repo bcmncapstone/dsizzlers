@@ -69,7 +69,7 @@
                                 <td>
                                     <div class="table-actions">
                                         <a href="{{ route('admin.manageOrder.show', $order->order_id) }}" class="table-action-btn table-action-edit">
-                                            👁️ View
+                                            View
                                         </a>
                                     </div>
                                 </td>

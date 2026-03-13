@@ -53,24 +53,6 @@
                 </div>
             </div>
 
-            <!-- Monthly Revenue -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">This Month</dt>
-                                <dd class="text-2xl font-semibold text-gray-900">₱{{ number_format($monthlyRevenue, 2) }}</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Management Modules -->
@@ -93,7 +75,7 @@
                     </div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">Performance</h3>
                     <p class="text-gray-600 text-sm leading-relaxed mb-4">
-                        View sales and operational performance metrics
+                        View operational performance metrics
                     </p>
                     <span class="text-blue-500 font-medium group-hover:text-blue-700 transition text-sm">
                         View Report →

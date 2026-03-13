@@ -10383,3 +10383,278 @@ table tbody tr:last-child td {
         font-size: 12px !important;
     }
 }
+
+/* ===== BRANCHES CREATE PAGE STYLING ===== */
+
+/* Header */
+.py-6 > .max-w-2xl > .bg-white:nth-of-type(1) {
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    border-left: 5px solid #FF5722 !important;
+    padding: 32px !important;
+    margin-bottom: 24px !important;
+}
+
+.py-6 > .max-w-2xl > .bg-white:nth-of-type(1) h1 {
+    font-size: 32px !important;
+    font-weight: 700 !important;
+    color: #1a1a1a !important;
+    margin: 0 0 12px 0 !important;
+}
+
+.py-6 > .max-w-2xl .header-subtitle {
+    font-size: 14px !important;
+    color: #999 !important;
+    margin: 0 !important;
+}
+
+/* Error Alert */
+.py-6 > .max-w-2xl > .error-alert {
+    background-color: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    border-left: 4px solid #ef4444 !important;
+    border-radius: 8px !important;
+    padding: 20px !important;
+    margin-bottom: 24px !important;
+}
+
+.py-6 > .max-w-2xl > .error-alert h3 {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #dc2626 !important;
+    margin: 0 0 12px 0 !important;
+}
+
+.py-6 > .max-w-2xl > .error-alert .error-list {
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.py-6 > .max-w-2xl > .error-alert .error-list li {
+    color: #b91c1c !important;
+    font-size: 14px !important;
+    margin-bottom: 6px !important;
+    padding-left: 20px !important;
+    position: relative !important;
+}
+
+.py-6 > .max-w-2xl > .error-alert .error-list li::before {
+    content: "•" !important;
+    position: absolute !important;
+    left: 0 !important;
+    color: #ef4444 !important;
+}
+
+/* Form Container */
+.py-6 > .max-w-2xl > form {
+    background: white !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+    padding: 32px !important;
+}
+
+/* Form Groups */
+.py-6 > .max-w-2xl .form-group {
+    margin-bottom: 24px !important;
+}
+
+.py-6 > .max-w-2xl .form-label {
+    display: block !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #1a1a1a !important;
+    margin-bottom: 8px !important;
+}
+
+/* Form Inputs */
+.py-6 > .max-w-2xl .form-input {
+    width: 100% !important;
+    padding: 12px 16px !important;
+    border: 1px solid #d0d0d0 !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-family: inherit !important;
+    transition: all 0.3s ease !important;
+    box-sizing: border-box !important;
+}
+
+.py-6 > .max-w-2xl .form-input:focus {
+    outline: none !important;
+    border-color: #FF5722 !important;
+    box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1) !important;
+}
+
+.py-6 > .max-w-2xl .form-input::placeholder {
+    color: #999 !important;
+}
+
+/* Section Divider */
+.py-6 > .max-w-2xl .section-divider {
+    margin: 32px 0 24px 0 !important;
+    padding-top: 24px !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+/* File Input */
+.py-6 > .max-w-2xl .file-input-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: 2px dashed #d0d0d0 !important;
+    border-radius: 8px !important;
+    padding: 32px 16px !important;
+    background-color: #fafafa !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.py-6 > .max-w-2xl .file-input-wrapper:hover {
+    border-color: #FF5722 !important;
+    background-color: #fff5f0 !important;
+}
+
+.py-6 > .max-w-2xl .file-input {
+    position: absolute !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+}
+
+.py-6 > .max-w-2xl .file-input-label {
+    text-align: center !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+    pointer-events: none !important;
+}
+
+.py-6 > .max-w-2xl .field-help {
+    font-size: 12px !important;
+    color: #999 !important;
+    margin-top: 8px !important;
+}
+
+/* Field Error */
+.py-6 > .max-w-2xl .field-error {
+    display: block !important;
+    font-size: 13px !important;
+    color: #dc2626 !important;
+    margin-top: 6px !important;
+}
+
+/* Form Actions */
+.py-6 > .max-w-2xl .form-actions {
+    display: flex !important;
+    gap: 12px !important;
+    margin-top: 32px !important;
+    padding-top: 24px !important;
+    border-top: 1px solid #e5e7eb !important;
+}
+
+.py-6 > .max-w-2xl .cancel-button {
+    flex: 1 !important;
+    padding: 12px 24px !important;
+    background-color: white !important;
+    border: 1px solid #d0d0d0 !important;
+    color: #666 !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.py-6 > .max-w-2xl .cancel-button:hover {
+    background-color: #f9fafb !important;
+    border-color: #999 !important;
+}
+
+.py-6 > .max-w-2xl .submit-button {
+    flex: 1 !important;
+    padding: 12px 24px !important;
+    background-color: #FF5722 !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+.py-6 > .max-w-2xl .submit-button:hover {
+    background-color: #FF2D00 !important;
+    box-shadow: 0 4px 6px rgba(255, 87, 34, 0.2) !important;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .py-6 > .max-w-2xl > .bg-white:nth-of-type(1),
+    .py-6 > .max-w-2xl > form {
+        padding: 20px !important;
+    }
+    
+    .py-6 > .max-w-2xl > .bg-white:nth-of-type(1) h1 {
+        font-size: 24px !important;
+    }
+    
+    .py-6 > .max-w-2xl .form-actions {
+        flex-direction: column !important;
+    }
+    
+    .py-6 > .max-w-2xl .cancel-button,
+    .py-6 > .max-w-2xl .submit-button {
+        width: 100% !important;
+    }
+}
+
+/* Map Search Button Styling */
+#location_search_btn:hover {
+    background-color: #FF2D00 !important;
+    box-shadow: 0 4px 6px rgba(255, 87, 34, 0.2) !important;
+}
+
+#location_search_btn:active {
+    transform: scale(0.98) !important;
+}
+
+.remove-btn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.remove-btn:hover {
+    background: #c0392b;
+}
+
+/* Map Loading Animation */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+#map-loading {
+    animation: fadeOut 0.5s ease 2s forwards;
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        pointer-events: none;
+    }
+}

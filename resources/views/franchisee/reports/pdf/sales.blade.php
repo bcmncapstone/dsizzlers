@@ -27,6 +27,7 @@
         <thead>
             <tr>
                 <th>Order ID</th>
+                <th>Ordered By</th>
                 <th>Order Date</th>
                 <th class="right">Total</th>
             </tr>
@@ -35,6 +36,7 @@
             @foreach($orders as $order)
                 <tr>
                     <td>{{ $order->order_id }}</td>
+                    <td>{{ $order->ordered_by }}</td>
                     <td>{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
                     <td class="right">₱{{ number_format($order->total_amount, 2) }}</td>
                 </tr>
