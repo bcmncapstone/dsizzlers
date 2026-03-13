@@ -8,7 +8,7 @@
             <!-- Main Image -->
             <div class="item-main-image-wrapper">
                 @if (!empty($item->item_images) && count($item->item_images) > 0)
-                    <img id="mainImage" src="{{ asset('storage/' . $item->item_images[0]) }}" alt="{{ $item->item_name }}" class="item-main-image">
+                    <img id="mainImage" src="{{ media_url($item->item_images[0]) }}" alt="{{ $item->item_name }}" class="item-main-image">
                 @else
                     <img id="mainImage" src="{{ asset('images/default-item.png') }}" alt="Default Image" class="item-main-image">
                 @endif
@@ -28,11 +28,11 @@
                     @foreach ($item->item_images as $index => $image)
                         <div class="item-thumbnail-wrapper">
                             <img 
-                                src="{{ asset('storage/' . $image) }}" 
+                                src="{{ media_url($image) }}" 
                                 class="item-thumbnail @if ($index === 0) active @endif" 
                                 alt="Thumbnail {{ $index + 1 }}"
                                 data-index="{{ $index }}"
-                                data-image="{{ asset('storage/' . $image) }}"
+                                data-image="{{ media_url($image) }}"
                             >
                         </div>
                     @endforeach

@@ -74,7 +74,7 @@
                                     <td class="px-4 py-3 whitespace-nowrap">
                                         <div class="flex items-center">
                                             @if($item->image_path)
-                                                <img src="{{ asset('storage/' . $item->image_path) }}" alt="{{ $item->item_name }}" class="h-10 w-10 rounded object-cover mr-3">
+                                                <img src="{{ media_url($item->image_path) }}" alt="{{ $item->item_name }}" class="h-10 w-10 rounded object-cover mr-3">
                                             @endif
                                             <div class="text-sm font-medium text-gray-900">{{ $item->item_name }}</div>
                                         </div>

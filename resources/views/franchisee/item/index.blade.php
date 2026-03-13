@@ -52,7 +52,7 @@
                 <div class="item-card">
                     {{-- Item Image --}}
                     @if (!empty($item->item_images) && count($item->item_images) > 0)
-                        <img src="{{ asset('storage/' . $item->item_images[0]) }}" alt="{{ $item->item_name }}" class="item-card-image">
+                        <img src="{{ media_url($item->item_images[0]) }}" alt="{{ $item->item_name }}" class="item-card-image">
                     @else
                         <img src="{{ asset('images/default-item.png') }}" alt="Default Image" class="item-card-image">
                     @endif

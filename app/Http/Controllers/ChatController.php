@@ -6,11 +6,15 @@ use Illuminate\Http\Request;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Events\MessageSent;
+use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class ChatController extends Controller
 {
+    public function __construct(private CloudinaryService $cloudinary)
+    {
+    }
 
     protected function ensureAdminOrFranchisee()
     {
@@ -141,8 +145,13 @@ class ChatController extends Controller
                 $fileName = $file->getClientOriginalName();
                 $fileType = $file->getMimeType();
 
-                // Store file
-                $filePath = $file->store('chat_files', 'public');
+                // Store file in Cloudinary when configured.
+                if ($this->cloudinary->isConfigured()) {
+                    $upload = $this->cloudinary->upload($file, 'chat_files', 'auto');
+                    $filePath = $upload['secure_url'];
+                } else {
+                    $filePath = $file->store('chat_files', 'public');
+                }
                 
                 Log::info('File uploaded', [
                     'path' => $filePath,

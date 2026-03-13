@@ -21,13 +21,32 @@
             @endif
         </div>
 
+        <!-- Report Summary Stats -->
+        <div class="sales-stats-grid">
+            <div class="sales-stat-card">
+                <div class="sales-stat-content">
+                    <div class="sales-stat-label">Total Items Sold</div>
+                    <div class="sales-stat-value">{{ intval($totalItemsSold ?? 0) }}</div>
+                </div>
+                <div class="sales-stat-icon">📦</div>
+            </div>
+
+            <div class="sales-stat-card">
+                <div class="sales-stat-content">
+                    <div class="sales-stat-label">Low/Out Stock</div>
+                    <div class="sales-stat-value">{{ ($lowStockCount ?? 0) + ($outOfStockCount ?? 0) }}</div>
+                </div>
+                <div class="sales-stat-icon">⚠️</div>
+            </div>
+        </div>
+
         <!-- Dashboard Cards Grid -->
         <div class="card-grid">
             
             <!-- Create Account Card -->
             <a href="{{ route('accounts.create') }}" class="card card-orange">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">👤</div>
+                    <div class="card-icon"></div>
                 </div>
                 <h3>Account</h3>
                 <p>Add new user accounts and manage permissions</p>

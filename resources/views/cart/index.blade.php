@@ -54,7 +54,7 @@
                                 <td>
                                     <div class="cart-item-images-container">
                                         @forelse ($item['item_images'] as $img)
-                                            <img src="{{ asset('storage/' . $img) }}" alt="{{ $item['name'] }}" class="cart-item-image">
+                                            <img src="{{ media_url($img) }}" alt="{{ $item['name'] }}" class="cart-item-image">
                                         @empty
                                             <img src="{{ asset('images/default-item.png') }}" alt="Default Image" class="cart-item-image">
                                         @endforelse

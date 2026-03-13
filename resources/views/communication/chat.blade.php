@@ -60,11 +60,10 @@
                         {{-- IMAGE --}}
                         @if(
                             $msg->file_path &&
-                            str_starts_with($msg->file_type, 'image/') &&
-                            Storage::disk('public')->exists($msg->file_path)
+                            str_starts_with($msg->file_type, 'image/')
                         )
                             <img
-                                src="{{ Storage::url($msg->file_path) }}"
+                                src="{{ media_url($msg->file_path) }}"
                                 class="chat-image"
                                 alt="Image"
                             >
@@ -73,11 +72,10 @@
                         {{-- FILE --}}
                         @if(
                             $msg->file_path &&
-                            !str_starts_with($msg->file_type, 'image/') &&
-                            Storage::disk('public')->exists($msg->file_path)
+                            !str_starts_with($msg->file_type, 'image/')
                         )
                             <div class="chat-attachment">
-                                <a href="{{ Storage::url($msg->file_path) }}" download="{{ $msg->file_name }}">
+                                <a href="{{ media_url($msg->file_path) }}" download="{{ $msg->file_name }}">
                                     📎 {{ $msg->file_name }}
                                 </a>
                             </div>
@@ -283,7 +281,11 @@ function appendMessage(message) {
 
     const className = isMe ? 'sent' : 'received';
     const senderName = message.sender_name || 'User';
-    const fileUrl = message.file_path ? `/storage/${message.file_path}?t=${Date.now()}` : '';
+    const fileUrl = message.file_path
+        ? ((message.file_path.startsWith('http://') || message.file_path.startsWith('https://'))
+            ? message.file_path
+            : `/storage/${message.file_path}?t=${Date.now()}`)
+        : '';
     const timeStr = message.formatted_time || formatTime(message.created_at);
 
     let attachment = '';

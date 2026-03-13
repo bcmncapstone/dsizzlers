@@ -36,7 +36,7 @@
                             <tr class="border-b border-gray-100">
                                 <td class="py-3">
                                     @forelse ($item['item_images'] as $img)
-                                        <img src="{{ asset('storage/' . $img) }}" width="40" alt="{{ $item['name'] }}" class="rounded object-cover">
+                                        <img src="{{ media_url($img) }}" width="40" alt="{{ $item['name'] }}" class="rounded object-cover">
                                     @empty
                                         <img src="{{ asset('images/default-item.png') }}" alt="Default Image" width="40" class="rounded">
                                     @endforelse

@@ -31,7 +31,7 @@
             <h2>Payment Proof</h2>
             @if($order->payment_receipt)
                 <div class="receipt-container">
-                    <img src="{{ asset('storage/' . $order->payment_receipt) }}" alt="Payment Receipt" class="receipt-image">
+                    <img src="{{ media_url($order->payment_receipt) }}" alt="Payment Receipt" class="receipt-image">
                 </div>
             @else
                 <div class="no-receipt-message">

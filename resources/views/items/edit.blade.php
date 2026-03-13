@@ -50,7 +50,7 @@
 
                 <!-- Current Images Display -->
                 @forelse ($item->item_images as $img)
-                    <img src="{{ asset('storage/' . $img) }}" alt="Current image" width="120" class="me-1 mb-1">
+                    <img src="{{ media_url($img) }}" alt="Current image" width="120" class="me-1 mb-1">
                 @empty
                     No images
                 @endforelse

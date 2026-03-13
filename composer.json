@@ -8,9 +8,11 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^2.1",
+        "cloudinary/cloudinary_php": "^3.1",
         "laravel/framework": "^11.0",
         "laravel/reverb": "^1.7",
         "laravel/tinker": "^2.10.1",
+        "pusher/pusher-php-server": "*",
         "resend/resend-php": "^1.1"
     },
     "require-dev": {
@@ -27,7 +29,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

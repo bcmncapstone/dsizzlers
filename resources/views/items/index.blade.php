@@ -59,7 +59,7 @@
                             <tr>
                                 <td>
                                     @forelse ($item->item_images as $img)
-                                        <img src="{{ asset('storage/' . $img) }}" class="table-image" alt="{{ $item->item_name }}">
+                                        <img src="{{ media_url($img) }}" class="table-image" alt="{{ $item->item_name }}">
                                     @empty
                                         <span class="table-image-placeholder">No image</span>
                                     @endforelse

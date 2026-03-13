@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Item;
+use App\Services\CloudinaryService;
 
 class ItemController extends Controller
 {
+    public function __construct(private CloudinaryService $cloudinary)
+    {
+    }
+
     public function index(Request $request)
     {
         $search = $request->input('search');
@@ -57,7 +62,12 @@ class ItemController extends Controller
     if ($request->hasFile('item_image')) {
         foreach ($request->file('item_image') as $file) {
             if ($file) {
-                $imagePaths[] = $file->store('item_images', 'public');
+                if ($this->cloudinary->isConfigured()) {
+                    $upload = $this->cloudinary->upload($file, 'item_images', 'image');
+                    $imagePaths[] = $upload['secure_url'];
+                } else {
+                    $imagePaths[] = $file->store('item_images', 'public');
+                }
             }
         }
     }
@@ -103,7 +113,12 @@ class ItemController extends Controller
         $imagePaths = []; // replace all
         foreach ($request->file('item_image') as $file) {
             if ($file) {
-                $imagePaths[] = $file->store('item_images', 'public');
+                if ($this->cloudinary->isConfigured()) {
+                    $upload = $this->cloudinary->upload($file, 'item_images', 'image');
+                    $imagePaths[] = $upload['secure_url'];
+                } else {
+                    $imagePaths[] = $file->store('item_images', 'public');
+                }
             }
         }
     }

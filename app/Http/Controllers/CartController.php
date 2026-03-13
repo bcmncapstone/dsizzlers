@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Item;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Services\CloudinaryService;
 
 class CartController extends Controller
 {
+    public function __construct(private CloudinaryService $cloudinary)
+    {
+    }
+
     // Determine whether the current user is a franchisee or franchisee staff.
     private function getCartKey()
     {
@@ -258,8 +263,13 @@ class CartController extends Controller
         'payment_receipt' => 'required|image|mimes:jpeg,png,jpg|max:5120',
     ]);
 
-    // Store uploaded payment receipt
-    $receiptPath = $request->file('payment_receipt')->store('receipts', 'public');
+    // Store uploaded payment receipt in Cloudinary when configured.
+    if ($this->cloudinary->isConfigured()) {
+        $upload = $this->cloudinary->upload($request->file('payment_receipt'), 'receipts', 'image');
+        $receiptPath = $upload['secure_url'];
+    } else {
+        $receiptPath = $request->file('payment_receipt')->store('receipts', 'public');
+    }
 
     // Identify who is logged in
     $fstaff_id = auth()->guard('franchisee_staff')->check() ? auth()->guard('franchisee_staff')->id() : null;

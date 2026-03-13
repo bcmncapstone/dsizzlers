@@ -4,11 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\DigitalMarketingUpload;
+use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 class DigitalMarketingController extends Controller
 {
+    public function __construct(private CloudinaryService $cloudinary)
+    {
+    }
+
     public function index()
     {
         return view('communication.digital', [
@@ -30,7 +35,12 @@ class DigitalMarketingController extends Controller
                 'description' => 'nullable|string|max:500'
             ]);
 
-            $path = $request->file('image')->store('digital_marketing', 'public');
+            if ($this->cloudinary->isConfigured()) {
+                $upload = $this->cloudinary->upload($request->file('image'), 'digital_marketing', 'image');
+                $path = $upload['secure_url'];
+            } else {
+                $path = $request->file('image')->store('digital_marketing', 'public');
+            }
 
             DigitalMarketingUpload::create([
                 'uploaded_by' => $admin->admin_id,
@@ -83,8 +93,12 @@ class DigitalMarketingController extends Controller
 
             $post = DigitalMarketingUpload::findOrFail($id);
             
-            // Delete the file from storage
-            if (Storage::disk('public')->exists($post->image_path)) {
+            // Delete cloud copy when URL is from Cloudinary; fallback to local disk.
+            if (str_starts_with((string) $post->image_path, 'http')) {
+                if ($this->cloudinary->isConfigured()) {
+                    $this->cloudinary->deleteByUrl((string) $post->image_path, 'image');
+                }
+            } elseif (Storage::disk('public')->exists($post->image_path)) {
                 Storage::disk('public')->delete($post->image_path);
             }
             

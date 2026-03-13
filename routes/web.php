@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\LoginController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\BranchManagementController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Franchisee\ReportController as FranchiseeReportController;
+use App\Models\Item;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -28,7 +30,13 @@ Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 Route::get('/admin/dashboard', function () {
-    return view('admin.dashboard');
+    $totalItemsSold = (int) DB::table('order_details')->sum('quantity');
+    $lowStockCount = Item::where('stock_quantity', '>', 0)
+        ->where('stock_quantity', '<=', 10)
+        ->count();
+    $outOfStockCount = Item::where('stock_quantity', '<=', 0)->count();
+
+    return view('admin.dashboard', compact('totalItemsSold', 'lowStockCount', 'outOfStockCount'));
 })->name('admin.dashboard');
 
 // ACCOUNT CREATION (Admin only)

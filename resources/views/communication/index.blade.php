@@ -223,7 +223,7 @@
                 @forelse($digitalMarketing as $post)
                     <div class="marketing-post">
                         <img 
-                            src="{{ Storage::url($post->image_path) }}" 
+                            src="{{ media_url($post->image_path) }}" 
                             alt="Marketing Image"
                             id="admin-marketing-img-{{ $post->id }}"
                             class="marketing-post-image"
@@ -276,7 +276,7 @@
                                 </button>
                             </form>
                             <a 
-                                href="{{ Storage::url($post->image_path) }}" 
+                                href="{{ media_url($post->image_path) }}" 
                                 download="marketing-{{ $post->id }}.jpg"
                                 class="btn btn-camera">
                                 ⬇️ Download
@@ -299,7 +299,7 @@
                 @forelse($digitalMarketing as $post)
                     <div class="marketing-post">
                         <img 
-                            src="{{ Storage::url($post->image_path) }}" 
+                            src="{{ media_url($post->image_path) }}" 
                             alt="Marketing Image"
                             id="franchisee-marketing-img-{{ $post->id }}"
                             class="marketing-post-image"
@@ -319,7 +319,7 @@
                                 👁️ View
                             </button>
                             <a 
-                                href="{{ Storage::url($post->image_path) }}" 
+                                href="{{ media_url($post->image_path) }}" 
                                 download="marketing-{{ $post->id }}.jpg"
                                 class="btn btn-camera">
                                 ⬇️ Download
