@@ -28,12 +28,21 @@ class ManageOrderController extends Controller
     // Show specific order details
     public function show($id)
     {
-        $order = Order::findOrFail($id);
+        $order = Order::with([
+            'orderDetails.item',
+            'franchisee:franchisee_id,franchisee_name',
+            'franchiseeStaff:fstaff_id,fstaff_fname,fstaff_lname',
+        ])->findOrFail($id);
+
+        $paymentStatus = strtolower((string) ($order->payment_status ?? ''));
+        $orderStatus = strtolower((string) ($order->order_status ?? ''));
+        $canCancelOrder = ! in_array($paymentStatus, ['confirmed', 'paid'], true)
+            && ! in_array($orderStatus, ['preparing', 'shipped', 'delivered', 'completed', 'cancelled'], true);
 
         if (auth('admin')->check()) {
-            return view('admin.manageOrder.show', compact('order'));
+            return view('admin.manageOrder.show', compact('order', 'canCancelOrder'));
         } elseif (auth('franchisor_staff')->check()) {
-            return view('franchisor-staff.manageOrder.show', compact('order'));
+            return view('franchisor-staff.manageOrder.show', compact('order', 'canCancelOrder'));
         }
 
         abort(403, 'Unauthorized action.');
@@ -47,9 +56,13 @@ class ManageOrderController extends Controller
         // Check if payment is already confirmed to prevent duplicate stock reduction
         if ($order->payment_status === 'confirmed') {
             if (auth('admin')->check()) {
-                return redirect()->route('admin.manageOrder.show', $id)->with('info', 'Payment already confirmed.');
+                return redirect()->route('admin.manageOrder.show', $id)
+                    ->with('info', 'Payment already confirmed.')
+                    ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('info', 'Payment already confirmed.');
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                    ->with('info', 'Payment already confirmed.')
+                    ->with('flash_timeout', 3000);
             }
         }
         
@@ -62,10 +75,12 @@ class ManageOrderController extends Controller
                 if ($item->stock_quantity < $detail->quantity) {
                     if (auth('admin')->check()) {
                         return redirect()->route('admin.manageOrder.show', $id)
-                            ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}");
+                            ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}")
+                            ->with('flash_timeout', 3000);
                     } elseif (auth('franchisor_staff')->check()) {
                         return redirect()->route('franchisor-staff.manageOrder.show', $id)
-                            ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}");
+                            ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}")
+                            ->with('flash_timeout', 3000);
                     }
                 }
                 
@@ -79,9 +94,13 @@ class ManageOrderController extends Controller
         $order->save();
 
         if (auth('admin')->check()) {
-            return redirect()->route('admin.manageOrder.show', $id)->with('success', 'Payment confirmed and stock updated.');
+            return redirect()->route('admin.manageOrder.show', $id)
+                ->with('success', 'Payment confirmed and stock updated.')
+                ->with('flash_timeout', 3000);
         } elseif (auth('franchisor_staff')->check()) {
-            return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('success', 'Payment confirmed and stock updated.');
+            return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                ->with('success', 'Payment confirmed and stock updated.')
+                ->with('flash_timeout', 3000);
         }
 
         abort(403, 'Unauthorized action.');
@@ -108,9 +127,13 @@ class ManageOrderController extends Controller
             DB::commit();
 
             if (auth('admin')->check()) {
-                return redirect()->route('admin.manageOrder.show', $id)->with('success', 'Order status updated.');
+                return redirect()->route('admin.manageOrder.show', $id)
+                    ->with('success', 'Order status updated.')
+                    ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('success', 'Order status updated.');
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                    ->with('success', 'Order status updated.')
+                    ->with('flash_timeout', 3000);
             }
 
             abort(403, 'Unauthorized action.');
@@ -119,9 +142,13 @@ class ManageOrderController extends Controller
             Log::error('Failed to update order status: ' . $e->getMessage());
             
             if (auth('admin')->check()) {
-                return redirect()->back()->with('error', 'Failed to update order: ' . $e->getMessage());
+                return redirect()->back()
+                    ->with('error', 'Failed to update order: ' . $e->getMessage())
+                    ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->back()->with('error', 'Failed to update order: ' . $e->getMessage());
+                return redirect()->back()
+                    ->with('error', 'Failed to update order: ' . $e->getMessage())
+                    ->with('flash_timeout', 3000);
             }
 
             abort(403, 'Unauthorized action.');
@@ -208,9 +235,13 @@ class ManageOrderController extends Controller
         $order->save();
 
         if (auth('admin')->check()) {
-            return redirect()->route('admin.manageOrder.show', $id)->with('success', 'Notes updated.');
+            return redirect()->route('admin.manageOrder.show', $id)
+                ->with('success', 'Notes updated.')
+                ->with('flash_timeout', 3000);
         } elseif (auth('franchisor_staff')->check()) {
-            return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('success', 'Notes updated.');
+            return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                ->with('success', 'Notes updated.')
+                ->with('flash_timeout', 3000);
         }
 
         abort(403, 'Unauthorized action.');
@@ -224,9 +255,13 @@ class ManageOrderController extends Controller
         $order->save();
 
         if (auth('admin')->check()) {
-            return redirect()->route('admin.manageOrder.show', $id)->with('success', 'Order cancelled.');
+            return redirect()->route('admin.manageOrder.show', $id)
+                ->with('success', 'Order cancelled.')
+                ->with('flash_timeout', 3000);
         } elseif (auth('franchisor_staff')->check()) {
-            return redirect()->route('franchisor-staff.manageOrder.show', $id)->with('success', 'Order cancelled.');
+            return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                ->with('success', 'Order cancelled.')
+                ->with('flash_timeout', 3000);
         }
 
         abort(403, 'Unauthorized action.');

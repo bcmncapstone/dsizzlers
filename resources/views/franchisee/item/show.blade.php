@@ -100,7 +100,7 @@
                         @csrf
                         <input type="hidden" name="quantity" id="cartQuantity" value="1">
                         <button type="submit" class="item-action-btn item-action-btn-cart">
-                            🛒 Add to Cart
+                            Add to Cart
                         </button>
                     </form>
 
@@ -109,7 +109,7 @@
                         <input type="hidden" name="items[0][item_id]" value="{{ $item->item_id }}">
                         <input type="hidden" name="items[0][quantity]" id="buyNowQuantity" value="1">
                         <button type="submit" class="item-action-btn item-action-btn-buy">
-                            💳 Buy Now
+                            Buy Now
                         </button>
                     </form>
                 </div>

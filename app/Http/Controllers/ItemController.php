@@ -64,7 +64,7 @@ class ItemController extends Controller
             if ($file) {
                 if ($this->cloudinary->isConfigured()) {
                     $upload = $this->cloudinary->upload($file, 'item_images', 'image');
-                    $imagePaths[] = $upload['secure_url'];
+                    $imagePaths[] = $upload['public_id'];
                 } else {
                     $imagePaths[] = $file->store('item_images', 'public');
                 }
@@ -115,7 +115,7 @@ class ItemController extends Controller
             if ($file) {
                 if ($this->cloudinary->isConfigured()) {
                     $upload = $this->cloudinary->upload($file, 'item_images', 'image');
-                    $imagePaths[] = $upload['secure_url'];
+                    $imagePaths[] = $upload['public_id'];
                 } else {
                     $imagePaths[] = $file->store('item_images', 'public');
                 }

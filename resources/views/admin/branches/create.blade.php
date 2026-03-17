@@ -6,8 +6,8 @@
         
         <!-- Header -->
         <div class="bg-white shadow-sm p-8 rounded-lg mb-6">
-            <h1>Add Branch</h1>
-            <p class="header-subtitle">Create a new branch location with franchisee details</p>
+            <h1>Add Contract</h1>
+            <p class="header-subtitle">Create a new contract location with franchisee details</p>
         </div>
 
         <!-- Error Messages -->
@@ -29,7 +29,7 @@
             <!-- Leaflet Branch Location -->
             <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
             <div class="form-group">
-                <label class="form-label" style="margin-bottom: 16px;">Branch Location</label>
+                <label class="form-label" style="margin-bottom: 16px;">Location</label>
 
                 <!-- Map Container -->
                 <div style="position: relative; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); overflow: hidden; border: 1px solid #e5e7eb;">
@@ -132,7 +132,7 @@
                     <span class="file-input-label" id="contract_filename">Choose file or drag and drop</span>
                     <button type="button" id="contract_clear_btn" title="Remove selected file" style="margin-left:8px; background:transparent; border:1px solid #e5e7eb; border-radius:6px; padding:6px 8px; cursor:pointer;">✕</button>
                 </div>
-                <p class="field-help">Supported formats: PDF, DOC, DOCX (Max 10MB)</p>
+                <p class="field-help">Supported formats: PDF, DOC, DOCX (Max 5MB)</p>
                 @error('contract_file')<span class="field-error">{{ $message }}</span>@enderror
             </div>
 
@@ -215,6 +215,18 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
+    const errorAlert = document.querySelector('.error-alert');
+    if (errorAlert) {
+        setTimeout(() => {
+            errorAlert.style.transition = 'opacity 0.4s ease';
+            errorAlert.style.opacity = '0';
+
+            setTimeout(() => {
+                errorAlert.remove();
+            }, 400);
+        }, 3000);
+    }
 
     const defaultLocation = [9.65, 123.85];
     const latInput = document.getElementById('latitude');

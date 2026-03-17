@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Branch;
 use App\Models\Franchisee;
+use App\Support\MediaStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -57,7 +58,8 @@ class BranchController extends Controller
     public function edit($id)
     {
         $branch = Branch::findOrFail($id);
-        return view('admin.branches.edit', compact('branch'));
+        $franchisees = Franchisee::select('franchisee_id', 'franchisee_name', 'franchisee_email', 'franchisee_contactNo')->get();
+        return view('admin.branches.edit', compact('branch', 'franchisees'));
     }
 
     // Store new branch
@@ -70,7 +72,6 @@ class BranchController extends Controller
             'email' => [
                 'required',
                 'email',
-                'unique:branches,email',
                 function ($attribute, $value, $fail) {
                     $exists = Franchisee::where('franchisee_email', $value)->exists();
                     if (!$exists) {
@@ -79,8 +80,10 @@ class BranchController extends Controller
                 }
             ],
             'contact_number' => 'required|string|max:20',
-            'contract_file' => 'required|file|mimes:pdf,docx,doc|max:2048',
+            'contract_file' => 'required|file|mimes:pdf,docx,doc|max:5120',
             'contract_expiration' => 'required|date',
+        ], [
+            'contract_file.max' => 'The contract file must not be greater than 5MB.',
         ]);
 
         if ($request->hasFile('contract_file')) {
@@ -113,7 +116,6 @@ class BranchController extends Controller
             'email' => [
                 'required',
                 'email',
-                'unique:branches,email,' . $branch->branch_id . ',branch_id',
                 function ($attribute, $value, $fail) {
                     $exists = Franchisee::where('franchisee_email', $value)->exists();
                     if (!$exists) {
@@ -122,8 +124,10 @@ class BranchController extends Controller
                 }
             ],
             'contact_number' => 'required|string|max:20',
-            'contract_file' => 'nullable|file|mimes:pdf,docx,doc|max:2048',
+            'contract_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120',
             'contract_expiration' => 'required|date',
+        ], [
+            'contract_file.max' => 'The contract file must not be greater than 5MB.',
         ]);
 
         if ($request->hasFile('contract_file')) {
@@ -167,24 +171,36 @@ class BranchController extends Controller
     }
 
     // Download/Preview contract file
-     // Download/view contract file
- public function downloadContract(Request $request, $id)
-{
-    $branch = Branch::findOrFail($id);
-    $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
+    public function downloadContract(Request $request, $id)
+    {
+        $branch = Branch::findOrFail($id);
 
-    if (!file_exists($filePath)) {
-        return back()->with('error', 'File not found.');
+        if (! $branch->contract_file) {
+            return back()->with('error', 'File not found.');
+        }
+
+        if (MediaStorage::isRemote($branch->contract_file)) {
+            $downloadName = basename(parse_url($branch->contract_file, PHP_URL_PATH) ?: 'contract');
+
+            if ($request->query('mode') === 'download') {
+                return MediaStorage::downloadResponse($branch->contract_file, null, $downloadName);
+            }
+
+            return MediaStorage::previewResponse($branch->contract_file);
+        }
+
+        $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
+
+        if (! file_exists($filePath)) {
+            return back()->with('error', 'File not found.');
+        }
+
+        if ($request->query('mode') === 'download') {
+            return MediaStorage::downloadResponse($branch->contract_file, $filePath, basename($branch->contract_file));
+        }
+
+        return MediaStorage::previewResponse($branch->contract_file, $filePath);
     }
-
-    // This forces download for ALL file types (PDF, DOCX, etc.)
-    if ($request->query('mode') === 'download') {
-        return response()->download($filePath);
-    }
-
-    // This tries to preview if supported (PDF, image, etc.)
-    return response()->file($filePath);
-}
 
     /**
      * Read archived branch IDs from storage/app/archived_branches.json

@@ -4,7 +4,7 @@
 
 <div class="dashboard-wrapper">
     <div class="form-container" style="max-width: 800px;">
-        <h2>Add New Item</h2>
+        <h2>Add Item</h2>
 
         @php
             $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
@@ -27,7 +27,7 @@
             <!-- Item Images Section -->
 <div class="item-images-section">
     <h3>Item Images</h3>
-    <p class="form-section-description">Upload up to 3 images (First one is required)</p>
+    <p class="form-section-description">Upload up to 3 images</p>
     
     @for ($i = 0; $i < 3; $i++)
         <div class="form-group image-upload-group">
@@ -80,7 +80,7 @@
 
                 <div class="form-group">
                     <label class="form-label" for="stock_quantity">Stock Quantity *</label>
-                    <input type="number" name="stock_quantity" id="stock_quantity" class="form-control" required value="{{ old('stock_quantity') }}" placeholder="0">
+                    <input type="number" name="stock_quantity" id="stock_quantity" class="form-control" required min="1" value="{{ old('stock_quantity') }}" placeholder="0">
                     @error('stock_quantity')
                         <span class="form-error-message">{{ $message }}</span>
                     @enderror
@@ -90,10 +90,12 @@
             <!-- Category -->
              <div class="form-group">
                 <label class="form-label" for="item_category">Category: *</label>
-                <select name="item_category" class="form-control" required onchange="toggleFields(this.value)">
-                    <option value="none">-</option>
-                    <option value="food">Food</option>
-                    <option value="supplies">Supplies</option>
+                <select name="item_category" id="item_category" class="form-control" required>
+                    <option value="" disabled {{ old('item_category') ? '' : 'selected' }}>Select category</option>
+                    <option value="food" {{ old('item_category') === 'food' ? 'selected' : '' }}>Food</option>
+                    <option value="supplies" {{ old('item_category') === 'supplies' ? 'selected' : '' }}>Supplies</option>
+                    <option value="package" {{ old('item_category') === 'package' ? 'selected' : '' }}>Package</option>
+
                 </select>
             </div>
 

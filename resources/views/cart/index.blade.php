@@ -5,25 +5,25 @@
     <div class="cart-container">
         {{-- Header --}}
         <div class="cart-header">
-            <h2>🛒 My Cart</h2>
+            <h2>Cart</h2>
         </div>
 
         {{-- Alerts --}}
         @if(session('success'))
             <div style="padding: 0 25px;">
-                <div class="cart-success-alert">✓ {{ session('success') }}</div>
+                <div class="cart-success-alert js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">✓ {{ session('success') }}</div>
             </div>
         @endif
         @if(session('error'))
             <div style="padding: 0 25px;">
-                <div class="cart-error-alert">✕ {{ session('error') }}</div>
+                <div class="cart-error-alert js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">✕ {{ session('error') }}</div>
             </div>
         @endif
 
         {{-- Empty Cart --}}
         @if(empty($cart))
             <div class="cart-empty-message">
-                <p>Your cart is empty 🛵</p>
+                <p>Your cart is empty</p>
                 <a href="{{ url()->previous() }}" class="cart-empty-link">← Continue Shopping</a>
             </div>
         @else
@@ -114,7 +114,7 @@
             <div class="cart-footer">
                 <div class="cart-actions-left">
                     <button type="button" id="removeSelectedBtn" class="cart-btn-remove-selected" disabled>
-                        🗑 Remove Selected
+                        Remove Selected
                     </button>
                 </div>
 
@@ -131,7 +131,7 @@
                 ? 'franchisee_staff.cart.checkout' 
                 : 'franchisee.cart.checkout') }}" 
                class="cart-btn-checkout">
-                💳 Proceed to Checkout
+                Proceed to Checkout
             </a>
         </div>
 
@@ -183,6 +183,20 @@
             document.body.appendChild(form);
             form.submit();
         });
+    });
+
+    // Auto-hide flash alerts using controller-provided timeout
+    document.querySelectorAll('.js-flash-alert').forEach(function(alertEl) {
+        const timeout = parseInt(alertEl.dataset.timeout || '3000', 10);
+
+        setTimeout(function() {
+            alertEl.style.transition = 'opacity 0.4s ease';
+            alertEl.style.opacity = '0';
+
+            setTimeout(function() {
+                alertEl.remove();
+            }, 400);
+        }, Number.isFinite(timeout) ? timeout : 3000);
     });
 </script>
 @endsection

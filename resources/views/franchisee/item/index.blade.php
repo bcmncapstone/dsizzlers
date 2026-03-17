@@ -61,6 +61,9 @@
                     <div class="item-card-body">
                         <h3 class="item-card-name">{{ $item->item_name }}</h3>
                         <p class="item-card-description">{{ $item->item_description }}</p>
+                        @if (!empty($item->item_category) && $item->item_category !== 'none')
+                            <div class="item-card-category">{{ ucfirst($item->item_category) }}</div>
+                        @endif
                         
                         <div class="item-card-price">₱{{ number_format($item->price, 2) }}</div>
                         <small class="item-card-stock">
@@ -123,7 +126,7 @@
         </div>
     @else
         <div class="items-grid-empty">
-            <p>📭 No items found.</p>
+            <p>No items found.</p>
             <p style="font-size: 14px; opacity: 0.7;">Try adjusting your filters or browse all items.</p>
         </div>
     @endif

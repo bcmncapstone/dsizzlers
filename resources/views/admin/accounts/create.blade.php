@@ -74,6 +74,13 @@
             </div>
 
             <button type="submit" class="btn btn-primary btn-block" style="padding: 12px;">Create Account</button>
+
+            <a href="{{ route('accounts.index') }}"
+               style="display:block; margin-top: 1rem; padding: 12px; text-align:center; font-size: 1rem; font-weight: 600; color: #374151; text-decoration: none; border: 2px solid #d1d5db; border-radius: 8px; background-color: #f9fafb;"
+               onmouseover="this.style.backgroundColor='#f3f4f6'; this.style.borderColor='#9ca3af';"
+               onmouseout="this.style.backgroundColor='#f9fafb'; this.style.borderColor='#d1d5db';">
+                View All Accounts
+            </a>
         </form>
     </div>
 </div>

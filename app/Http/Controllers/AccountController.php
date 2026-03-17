@@ -39,7 +39,7 @@ class AccountController extends Controller
                 'address' => 'required|string',
             ]);
 
-            Franchisee::create([
+            $created = Franchisee::create([
                 'admin_id' => Auth::guard('admin')->user()->admin_id,
                 'franchisee_name' => $request->fname . ' ' . $request->lname,
                 'franchisee_contactNo' => $request->contact,
@@ -54,7 +54,7 @@ class AccountController extends Controller
                 'username' => 'required|string|unique:admin_staff,astaff_username',
             ]);
 
-            FranchisorStaff::create([
+            $created = FranchisorStaff::create([
                 'admin_id' => Auth::guard('admin')->user()->admin_id,
                 'astaff_fname' => $request->fname,
                 'astaff_lname' => $request->lname,
@@ -65,7 +65,31 @@ class AccountController extends Controller
             ]);
         }
 
-        return redirect()->back()->with('success', 'Account created successfully.')->with('flash_timeout', 3000);
+        $newId   = $created->getKey();
+        $newType = ($role === 'franchisee') ? 'franchisee' : 'franchisor_staff';
+
+        return redirect()->route('accounts.show', ['type' => $newType, 'id' => $newId])
+            ->with('success', 'Account created successfully.')
+            ->with('flash_timeout', 3000);
+    }
+
+    public function index()
+    {
+        $franchisees    = Franchisee::orderBy('franchisee_name')->get();
+        $franchisorStaff = FranchisorStaff::orderByRaw("astaff_fname || ' ' || astaff_lname")->get();
+
+        return view('admin.accounts.index', compact('franchisees', 'franchisorStaff'));
+    }
+
+    public function show($type, $id)
+    {
+        if ($type === 'franchisee') {
+            $account = Franchisee::findOrFail($id);
+        } else {
+            $account = FranchisorStaff::findOrFail($id);
+        }
+
+        return view('admin.accounts.show', compact('account', 'type'));
     }
 
     //Show Franchisee Account Creation Form

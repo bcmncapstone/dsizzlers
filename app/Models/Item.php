@@ -13,20 +13,27 @@ class Item extends Model
 
     public function getItemImagesAttribute()
     {
+        $cloudName = config('services.cloudinary.cloud_name');
+        $useCloudinary = !empty($cloudName)
+            && config('services.cloudinary.api_key')
+            && config('services.cloudinary.api_secret');
+
+        $resolve = function (string $path) use ($cloudName, $useCloudinary): string {
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                return $path; // already a full URL (legacy data)
+            }
+            if ($useCloudinary) {
+                $publicId = strpos($path, 'item_images/') === 0 ? $path : 'item_images/' . $path;
+                return "https://res.cloudinary.com/{$cloudName}/image/upload/{$publicId}";
+            }
+            return strpos($path, 'item_images/') === 0 ? $path : 'item_images/' . $path;
+        };
+
         $data = json_decode($this->item_image, true);
         if (is_array($data)) {
-            return array_map(function($path) {
-                if (str_starts_with((string) $path, 'http://') || str_starts_with((string) $path, 'https://')) {
-                    return $path;
-                }
-                return strpos($path, 'item_images/') === 0 ? $path : 'item_images/' . $path;
-            }, $data);
+            return array_map($resolve, $data);
         } elseif (is_string($this->item_image) && !empty($this->item_image)) {
-            $path = $this->item_image;
-            if (str_starts_with((string) $path, 'http://') || str_starts_with((string) $path, 'https://')) {
-                return [$path];
-            }
-            return [strpos($path, 'item_images/') === 0 ? $path : 'item_images/' . $path];
+            return [$resolve($this->item_image)];
         } else {
             return [];
         }

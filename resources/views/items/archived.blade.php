@@ -32,16 +32,25 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Item Name</th>
+                            <th>Image</th>
+                            <th>Name</th>
                             <th>Description</th>
                             <th>Price</th>
                             <th>Quantity</th>
+                            <th>Category</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($items as $item)
                             <tr>
+                                <td>
+                                    @forelse ($item->item_images as $img)
+                                        <img src="{{ media_url($img) }}" class="table-image" alt="{{ $item->item_name }}">
+                                    @empty
+                                        <span class="table-image-placeholder">No image</span>
+                                    @endforelse
+                                </td>
                                 <td>
                                     <div class="table-item-name">{{ $item->item_name }}</div>
                                 </td>
@@ -51,13 +60,18 @@
                                 <td>
                                     <div class="table-price">₱{{ number_format($item->price, 2) }}</div>
                                 </td>
-                                <td>
+                                 <td>
                                     <div class="table-quantity">{{ $item->stock_quantity }}</div>
                                 </td>
                                 <td>
-                                    <form action="{{ route($prefix . '.items.restore', $item->item_id) }}" method="POST" style="display:inline-block;">
-                                        @csrf
-                                        <button type="submit" class="btn btn-secondary">Restore</button>
+                                    <div class="table-category">{{ $item->item_category }}</div>
+                                </td>
+                                <td>
+                                    <form method="POST" action="{{ route($prefix . '.items.restore', $item->item_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to restore this item?');">
+                                    @csrf
+                                    <button type="submit" style="background-color:green; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                                    Restore
+                                    </button>
                                     </form>
                                 </td>
                             </tr>

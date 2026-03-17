@@ -12,10 +12,10 @@
 
         {{-- Alerts --}}
         @if(session('success'))
-            <div class="orders-success-alert">✓ {{ session('success') }}</div>
+            <div class="orders-success-alert js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">✓ {{ session('success') }}</div>
         @endif
         @if(session('error'))
-            <div class="orders-error-alert">✕ {{ session('error') }}</div>
+            <div class="orders-error-alert js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">✕ {{ session('error') }}</div>
         @endif
 
         {{-- Orders Table or Empty Message --}}
@@ -63,7 +63,7 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('franchisee_staff.orders.show', $order->order_id) }}" class="orders-view-btn">
-                                        👁️ View
+                                        View
                                     </a>
                                 </td>
                             </tr>
@@ -78,4 +78,19 @@
         @endif
     </div>
 </div>
+
+<script>
+    document.querySelectorAll('.js-flash-alert').forEach(function(alertEl) {
+        const timeout = parseInt(alertEl.dataset.timeout || '3000', 10);
+
+        setTimeout(function() {
+            alertEl.style.transition = 'opacity 0.4s ease';
+            alertEl.style.opacity = '0';
+
+            setTimeout(function() {
+                alertEl.remove();
+            }, 400);
+        }, Number.isFinite(timeout) ? timeout : 3000);
+    });
+</script>
 @endsection

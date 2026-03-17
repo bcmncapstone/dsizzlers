@@ -3,48 +3,84 @@
 namespace App\Http\Controllers\Franchisee;
 
 use App\Http\Controllers\Controller;
+use App\Support\MediaStorage;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Branch;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class FranchiseeController extends Controller
 {
     /**
-     * Show the logged-in franchisee's branch details.
+     * Show all active contracts for the logged-in franchisee.
      */
     public function account()
     {
         $franchisee = Auth::user();
 
-        // Find branch assigned to this franchisee (by email match)
-        $branch = Branch::where('email', $franchisee->franchisee_email)
-                        ->where('branch_status', '=', DB::raw('true'))
-                        ->first();
+        $archivedBranchIds = $this->getArchivedBranchIds();
 
-        return view('franchisee.account.index', compact('branch'));
+        $branches = Branch::query()
+            ->where('email', $franchisee->franchisee_email)
+            ->whereRaw('branch_status = true')
+            ->when(! empty($archivedBranchIds), function ($query) use ($archivedBranchIds) {
+                return $query->whereNotIn('branch_id', $archivedBranchIds);
+            })
+            ->orderByDesc('contract_expiration')
+            ->orderByDesc('branch_id')
+            ->get();
+
+        return view('franchisee.account.index', compact('branches'));
     }
-//Download and Preview Contract
+
+    protected function getArchivedBranchIds(): array
+    {
+        if (! Storage::disk('local')->exists('archived_branches.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_branches.json');
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $decoded)));
+    }
+
+    // Download and Preview Contract
     public function downloadContract($id)
-{
-    $franchisee = Auth::user();
+    {
+        $franchisee = Auth::user();
 
-    // Find the branch that matches the logged-in franchisee's email
-    $branch = Branch::where('email', $franchisee->franchisee_email)
-                    ->where('branch_id', $id)
-                    ->firstOrFail();
+        $branch = Branch::where('email', $franchisee->franchisee_email)
+                        ->where('branch_id', $id)
+                        ->firstOrFail();
 
-    $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
+        if (! $branch->contract_file) {
+            return back()->with('error', 'Contract file not found.');
+        }
 
-    if (!file_exists($filePath)) {
-        return back()->with('error', 'Contract file not found.');
+        if (MediaStorage::isRemote($branch->contract_file)) {
+            $downloadName = basename(parse_url($branch->contract_file, PHP_URL_PATH) ?: 'contract');
+
+            if (request()->query('mode') === 'download') {
+                return MediaStorage::downloadResponse($branch->contract_file, null, $downloadName);
+            }
+
+            return MediaStorage::previewResponse($branch->contract_file);
+        }
+
+        $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
+
+        if (! file_exists($filePath)) {
+            return back()->with('error', 'Contract file not found.');
+        }
+
+        if (request()->query('mode') === 'download') {
+            return MediaStorage::downloadResponse($branch->contract_file, $filePath, basename($branch->contract_file));
+        }
+
+        return MediaStorage::previewResponse($branch->contract_file, $filePath);
     }
-
-    // If mode=download → force download
-    if (request()->query('mode') === 'download') {
-        return response()->download($filePath);
-    }
-
-    // Otherwise → preview if supported (PDF/image)
-    return response()->file($filePath);
-}
 }

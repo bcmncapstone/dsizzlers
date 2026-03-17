@@ -11,7 +11,7 @@
 
         <!-- Error Alert -->
         @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">
                 <p class="text-red-700 font-semibold">{{ session('error') }}</p>
             </div>
         @endif
@@ -70,13 +70,13 @@
             <!-- Full Name -->
             <div class="mb-6">
                 <label for="name" class="block text-sm font-semibold text-gray-900 mb-2">Full Name <span class="text-red-500">*</span></label>
-                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="name" id="name" required>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="name" id="name" value="{{ old('name', $checkoutPrefill['name'] ?? '') }}" required>
             </div>
 
             <!-- Contact Number -->
             <div class="mb-6">
                 <label for="contact" class="block text-sm font-semibold text-gray-900 mb-2">Contact Number <span class="text-red-500">*</span></label>
-                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="contact" id="contact" required>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="contact" id="contact" value="{{ old('contact', $checkoutPrefill['contact'] ?? '') }}" required>
             </div>
 
             <!-- Delivery Address -->
@@ -119,7 +119,11 @@
                 </div>
 
                 {{-- Hidden field that stores the full formatted address --}}
-                <input type="hidden" name="address" id="fullAddress">
+                <input type="hidden" name="address" id="fullAddress" value="{{ old('address', $checkoutPrefill['address'] ?? '') }}">
+
+                @if(!empty($checkoutPrefill['address']))
+                    <p class="mt-2 text-xs text-gray-600">Suggested address from your branch: {{ $checkoutPrefill['address'] }}</p>
+                @endif
             </div>
 
             <!-- Payment Receipt -->
@@ -148,6 +152,21 @@
 </div>
 
 <script>
+const prefilledAddress = @json(old('address', $checkoutPrefill['address'] ?? ''));
+
+document.querySelectorAll('.js-flash-alert').forEach(function(alertEl) {
+    const timeout = parseInt(alertEl.dataset.timeout || '3000', 10);
+
+    setTimeout(function() {
+        alertEl.style.transition = 'opacity 0.4s ease';
+        alertEl.style.opacity = '0';
+
+        setTimeout(function() {
+            alertEl.remove();
+        }, 400);
+    }, Number.isFinite(timeout) ? timeout : 3000);
+});
+
 // Image preview
 function previewReceipt(event) {
     const preview = document.getElementById('receiptPreview');
@@ -245,6 +264,22 @@ function updateFullAddress() {
     if (region) full += region;
 
     document.getElementById("fullAddress").value = full;
+}
+
+if (prefilledAddress) {
+    document.getElementById('fullAddress').value = prefilledAddress;
+
+    ['region', 'province', 'city', 'barangay', 'street'].forEach((fieldId) => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.required = false;
+        }
+    });
+
+    const streetInput = document.getElementById('street');
+    if (streetInput) {
+        streetInput.value = prefilledAddress;
+    }
 }
 </script>
 @endsection

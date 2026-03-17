@@ -46,7 +46,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">🍽️</div>
                 </div>
-                <h3>Items</h3>
+                <h3>Item</h3>
                 <p>Manage menu items and products</p>
                 <div class="card-arrow">View →</div>
             </a>
@@ -66,7 +66,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">📦</div>
                 </div>
-                <h3>Orders</h3>
+                <h3>Order</h3>
                 <p>Check orders</p>
                 <div class="card-arrow">View →</div>
             </a>
@@ -84,10 +84,10 @@
             <!-- User Accounts Card -->
             <a href="{{ route('franchisee.account.index') }}" class="card card-purple">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">👥</div>
+                    <div class="card-icon">📝</div>
                 </div>
-                <h3>User Accounts</h3>
-                <p>Manage all staff and user accounts</p>
+                <h3>View Contract</h3>
+                <p>Manage Contract</p>
                 <div class="card-arrow">View →</div>
             </a>
 
@@ -96,7 +96,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">📈</div>
                 </div>
-                <h3>Reports</h3>
+                <h3>Report</h3>
                 <p>View detailed analytics and business reports</p>
                 <div class="card-arrow">View →</div>
             </a>
@@ -106,7 +106,7 @@
                 <div class="card-icon-wrapper">
                     <div class="card-icon">💬</div>
                 </div>
-                <h3>Messages</h3>
+                <h3>Message</h3>
                 <p>Communicate with franchisor and team members</p>
                 <div class="card-arrow">View →</div>
             </a>

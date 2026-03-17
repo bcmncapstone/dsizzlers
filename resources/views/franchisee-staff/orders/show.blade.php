@@ -53,6 +53,23 @@
             </div>
         </div>
 
+        <!-- Payment Proof -->
+        <div class="bg-white shadow-sm p-8 rounded-lg mt-6">
+            <h2>Payment Proof</h2>
+
+            @if($order->payment_receipt)
+                <div class="mt-4">
+                    <img
+                        src="{{ media_url($order->payment_receipt) }}"
+                        alt="Payment Receipt"
+                        class="max-w-full rounded-lg border border-gray-200 shadow-sm"
+                    >
+                </div>
+            @else
+                <p class="mt-4 text-sm text-gray-500">No payment receipt uploaded.</p>
+            @endif
+        </div>
+
         <!-- Order Notes -->
         @if($order->order_notes)
         <div class="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mt-6">

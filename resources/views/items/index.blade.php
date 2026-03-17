@@ -22,7 +22,7 @@
         <!-- Page Header -->
         <div class="page-header">
             <h1>Manage Item</h1>
-            <p>View, edit, and organize your menu items and products</p>
+            <p>View, edit, and organize your menu items</p>
         </div>
 
         <!-- Search Form -->
@@ -38,7 +38,7 @@
         <!-- Items Table -->
         <div class="table-section">
             <div class="table-section-header">
-                <h2>Inventory List</h2>
+                <h2>Item List</h2>
             </div>
 
             <div class="table-responsive">

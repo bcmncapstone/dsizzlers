@@ -98,7 +98,7 @@
 
                 {{-- Submit Button --}}
                 <button type="submit" class="account-submit-btn">
-                    ✓ Create Account
+                    Create Account
                 </button>
             </form>
         </div>

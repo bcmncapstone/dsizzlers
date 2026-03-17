@@ -46,24 +46,14 @@
             <!-- Create Account Card -->
             <a href="{{ route('accounts.create') }}" class="card card-orange">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon"></div>
+                    <div class="card-icon">👥</div>
                 </div>
                 <h3>Account</h3>
                 <p>Add new user accounts and manage permissions</p>
                 <div class="card-arrow">View →</div>
             </a>
 
-             <!-- Update Password Card -->
-            <a href="{{ route('admin.password.update') }}" class="card card-orange">
-                <div class="card-icon-wrapper">
-                    <div class="card-icon">🔑</div>
-                </div>
-                <h3>Update Password</h3>
-                <p>Secure your account with a new password</p>
-                <div class="card-arrow">View →</div>
-            </a>
-
-            <!-- Manage Branches Card -->
+            <!-- Manage Contract Card -->
             <a href="{{ route('admin.branches.index') }}" class="card card-red">
                 <div class="card-icon-wrapper">
                     <div class="card-icon">📝</div>
@@ -73,13 +63,23 @@
                 <div class="card-arrow">View →</div>
             </a>
 
+              <!-- Update Password Card -->
+            <a href="{{ route('admin.password.update') }}" class="card card-orange">
+                <div class="card-icon-wrapper">
+                    <div class="card-icon">🔑</div>
+                </div>
+                <h3>Update Password</h3>
+                <p>Secure your account with a new password</p>
+                <div class="card-arrow">View →</div>
+            </a>
+
             <!-- Add Item Card -->
-            <a href="{{ route('admin.items.create') }}" class="card card-yellow">
+            <a href="{{ route('admin.items.index') }}" class="card card-yellow">
                 <div class="card-icon-wrapper">
                     <div class="card-icon">🍽️</div>
                 </div>
-                <h3>Add Item</h3>
-                <p>Create new menu items and products</p>
+                <h3>Item</h3>
+                <p>View and manage items</p>
                 <div class="card-arrow">View →</div>
             </a>
 

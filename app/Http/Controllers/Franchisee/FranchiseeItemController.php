@@ -49,17 +49,26 @@ class FranchiseeItemController extends Controller
         // Get items
         $items = $query->get();
 
-        // Get all unique categories
-        $categories = Item::query()
+        // Keep create-form categories visible even if no item exists yet.
+        $defaultCategories = collect(['food', 'supplies', 'package']);
+
+        // Get all unique categories from items
+        $storedCategories = Item::query()
             ->when(!empty($archivedIds), function ($q) use ($archivedIds) {
                 $q->whereNotIn('item_id', $archivedIds);
             })
             ->whereNotNull('item_category')
             ->where('item_category', '!=', '')
+            ->where('item_category', '!=', 'none')
             ->select('item_category')
             ->distinct()
             ->orderBy('item_category', 'asc')
             ->pluck('item_category');
+
+        $categories = $defaultCategories
+            ->merge($storedCategories)
+            ->unique()
+            ->values();
 
         return view('franchisee.item.index', compact(
             'categories',

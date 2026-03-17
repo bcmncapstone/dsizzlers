@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\Item;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Models\Branch;
+use App\Models\Franchisee;
 use App\Services\CloudinaryService;
+use Illuminate\Support\Facades\Storage;
 
 class CartController extends Controller
 {
@@ -30,6 +33,89 @@ class CartController extends Controller
         }
 
         return 'franchisee';
+    }
+
+    private function getArchivedBranchIds(): array
+    {
+        if (! Storage::disk('local')->exists('archived_branches.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_branches.json');
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $decoded)));
+    }
+
+    private function resolveCheckoutPrefill(): array
+    {
+        $franchiseeEmail = null;
+        $fallbackName = '';
+        $fallbackContact = '';
+        $fallbackAddress = '';
+
+        if (auth()->guard('franchisee')->check()) {
+            $franchisee = auth()->guard('franchisee')->user();
+            $franchiseeEmail = $franchisee?->franchisee_email;
+            $fallbackName = (string) ($franchisee?->franchisee_name ?? '');
+            $fallbackContact = (string) ($franchisee?->franchisee_contactNo ?? '');
+            $fallbackAddress = (string) ($franchisee?->franchisee_address ?? '');
+        } elseif (auth()->guard('franchisee_staff')->check()) {
+            $staff = auth()->guard('franchisee_staff')->user();
+            $fallbackName = trim(($staff->fstaff_fname ?? '') . ' ' . ($staff->fstaff_lname ?? ''));
+            $fallbackContact = (string) ($staff->fstaff_contactNo ?? '');
+
+            if (! empty($staff->franchisee_id)) {
+                $franchisee = Franchisee::query()
+                    ->select('franchisee_email', 'franchisee_address')
+                    ->find($staff->franchisee_id);
+
+                $franchiseeEmail = $franchisee?->franchisee_email;
+                $fallbackAddress = (string) ($franchisee?->franchisee_address ?? '');
+            }
+        }
+
+        if (empty($franchiseeEmail)) {
+            return [
+                'name' => $fallbackName,
+                'contact' => $fallbackContact,
+                'address' => $fallbackAddress,
+            ];
+        }
+
+        $archivedBranchIds = $this->getArchivedBranchIds();
+
+        $branch = Branch::query()
+            ->whereRaw('LOWER(TRIM(email)) = LOWER(TRIM(?))', [$franchiseeEmail])
+            ->whereRaw('branch_status = true')
+            ->when(! empty($archivedBranchIds), function ($query) use ($archivedBranchIds) {
+                return $query->whereNotIn('branch_id', $archivedBranchIds);
+            })
+            ->orderByDesc('contract_expiration')
+            ->orderByDesc('branch_id')
+            ->first();
+
+        if (! $branch) {
+            return [
+                'name' => $fallbackName,
+                'contact' => $fallbackContact,
+                'address' => $fallbackAddress,
+            ];
+        }
+
+        $branchName = trim(($branch->first_name ?? '') . ' ' . ($branch->last_name ?? ''));
+        $branchContact = (string) ($branch->contact_number ?? '');
+        $branchAddress = (string) ($branch->location ?? '');
+
+        return [
+            'name' => $branchName !== '' ? $branchName : $fallbackName,
+            'contact' => $branchContact !== '' ? $branchContact : $fallbackContact,
+            'address' => $branchAddress !== '' ? $branchAddress : $fallbackAddress,
+        ];
     }
 
     /**
@@ -80,14 +166,14 @@ class CartController extends Controller
             // Item already exists, just add the quantity
             $newQuantity = $cart[$id]['quantity'] + $quantity;
             if ($newQuantity > $item->stock_quantity) {
-                return redirect()->back()->with('error', 'Quantity exceeds available stock!');
+                return redirect()->back()->with('error', 'Quantity exceeds available stock!')->with('flash_timeout', 3000);
             }
             $cart[$id]['quantity'] = $newQuantity;
             $cart[$id]['stock_quantity'] = $item->stock_quantity;
         } else {
             // Add new item to cart
             if ($quantity > $item->stock_quantity) {
-                return redirect()->back()->with('error', 'Quantity exceeds available stock!');
+                return redirect()->back()->with('error', 'Quantity exceeds available stock!')->with('flash_timeout', 3000);
             }
             $cart[$id] = [
                 "name" => $item->item_name,
@@ -104,7 +190,7 @@ class CartController extends Controller
         $prefix = $this->getCartKey();
 
         return redirect()->route($prefix . '.cart.index')
-            ->with('success', 'Item added to cart successfully!');
+            ->with('success', 'Item added to cart successfully!')->with('flash_timeout', 3000);
     }
 
     /**
@@ -119,11 +205,11 @@ class CartController extends Controller
         $cart = session()->get($cartKey, []);
 
         if (!isset($cart[$id])) {
-            return redirect()->back()->with('error', 'Item not found in cart!');
+            return redirect()->back()->with('error', 'Item not found in cart!')->with('flash_timeout', 3000);
         }
 
         if ($quantity > $item->stock_quantity) {
-            return redirect()->back()->with('error', 'Quantity exceeds available stock!');
+            return redirect()->back()->with('error', 'Quantity exceeds available stock!')->with('flash_timeout', 3000);
         }
 
         $cart[$id]['quantity'] = $quantity;
@@ -135,7 +221,7 @@ class CartController extends Controller
         $prefix = $this->getCartKey();
 
         return redirect()->route($prefix . '.cart.index')
-            ->with('success', 'Cart updated successfully!');
+            ->with('success', 'Cart updated successfully!')->with('flash_timeout', 3000);
     }
 
     /**
@@ -156,7 +242,7 @@ class CartController extends Controller
             session()->forget('cart_owner');
         }
 
-        return redirect()->back()->with('success', 'Item removed from cart!');
+        return redirect()->back()->with('success', 'Item removed from cart!')->with('flash_timeout', 3000);
     }
 
     /**
@@ -179,7 +265,7 @@ class CartController extends Controller
             $item = Item::find($itemId);
             if ($item) {
                 if ($quantity > $item->stock_quantity) {
-                    return redirect()->back()->with('error', 'Quantity exceeds available stock!');
+                    return redirect()->back()->with('error', 'Quantity exceeds available stock!')->with('flash_timeout', 3000);
                 }
                 
                 $tempCart[$itemId] = [
@@ -197,7 +283,7 @@ class CartController extends Controller
     }
 
     if (empty($cart)) {
-        return redirect()->back()->with('error', 'Your cart is empty.');
+        return redirect()->back()->with('error', 'Your cart is empty.')->with('flash_timeout', 3000);
     }
 
     // Ensure item_images are up to date
@@ -211,12 +297,14 @@ class CartController extends Controller
     }
 
     $layout = $cartKey === 'franchisee_staff' ? 'layouts.franchisee-staff' : 'layouts.franchisee';
+    $checkoutPrefill = $this->resolveCheckoutPrefill();
 
     return view('cart.checkout', [
         'cart' => $cart,
         'total' => collect($cart)->sum(fn($item) => $item['price'] * $item['quantity']),
         'cartKey' => $cartKey,
         'layout' => $layout,
+        'checkoutPrefill' => $checkoutPrefill,
     ]);
 }
 
@@ -252,7 +340,7 @@ class CartController extends Controller
 
     if (empty($cart)) {
         return redirect()->route($this->getCartKey() . '.cart.index')
-            ->with('error', 'Your cart is empty.');
+            ->with('error', 'Your cart is empty.')->with('flash_timeout', 3000);
     }
 
     // Validate order details and payment receipt
@@ -312,7 +400,7 @@ class CartController extends Controller
     }
 
     return redirect()->route($prefix . '.orders.index')
-        ->with('success', 'Order placed successfully! Pending verification.');
+        ->with('success', 'Order placed successfully! Pending verification.')->with('flash_timeout', 3000);
 }
 
 }

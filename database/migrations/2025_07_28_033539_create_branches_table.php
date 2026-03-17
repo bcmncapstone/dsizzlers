@@ -15,7 +15,7 @@ return new class extends Migration {
     $table->string('location');
     $table->string('first_name');
     $table->string('last_name');
-    $table->string('email')->unique();
+    $table->string('email');
     $table->string('contact_number');
     $table->string('contract_file')->nullable(); // Path to uploaded contract file
     $table->date('contract_expiration');

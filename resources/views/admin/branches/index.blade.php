@@ -14,7 +14,7 @@
         <!-- Search Form -->
         <div class="card" style="margin-bottom: var(--spacing-lg); border-top: none; box-shadow: none;">
             <form method="GET" action="{{ route('admin.branches.index') }}" style="display: flex; gap: 10px; margin-bottom: 10px;">
-                <input type="text" name="search" class="form-control" value="{{ $search ?? '' }}" placeholder="Search branches..." style="flex: 1;">
+                <input type="text" name="search" class="form-control" value="{{ $search ?? '' }}" placeholder="Search contract..." style="flex: 1;">
                 <button type="submit" class="btn btn-primary">Search</button>
             </form>
             
@@ -45,11 +45,12 @@
                         <td>{{ $branch->email }}</td>
                         <td>
                             @if($branch->contract_file)
-                                <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">View</a>                            @else
+                                <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">View</a>
+                            @else
                                 <span style="color: var(--dsizzlers-gray-dark);">No file</span>
                             @endif
                         </td>
-                        <td>{{ $branch->contract_expiration }}</td>
+                        <td>{{ optional($branch->contract_expiration)->format('Y-m-d') }}</td>
                         <td>
                             <a href="{{ route('admin.branches.edit', $branch->branch_id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">Edit</a>
                             <form method="POST" action="{{ route('admin.branches.archive', $branch->branch_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to archive this contract?');">
@@ -61,7 +62,7 @@
                     @empty
                     <tr>
                         <td colspan="6" style="text-align: center; padding: 30px; color: var(--dsizzlers-gray-dark);">
-                            No active branches found.
+                            No active contract found.
                         </td>
                     </tr>
                     @endforelse

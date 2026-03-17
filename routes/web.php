@@ -41,8 +41,10 @@ Route::get('/admin/dashboard', function () {
 
 // ACCOUNT CREATION (Admin only)
 Route::middleware('auth:admin')->group(function () {
+    Route::get('/admin/accounts', [AccountController::class, 'index'])->name('accounts.index');
     Route::get('/admin/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
     Route::post('/admin/accounts/store', [AccountController::class, 'store'])->name('accounts.store');
+    Route::get('/admin/accounts/{type}/{id}', [AccountController::class, 'show'])->name('accounts.show');
 });
 
 //Account Creation for Franchisee Staff (Franchisee)
@@ -345,6 +347,9 @@ Route::prefix('admin')
         // Stock Management
         Route::get('/stock', [\App\Http\Controllers\Admin\StockController::class, 'index'])
             ->name('stock.index');
+        Route::post('/stock/{itemId}/adjust', [\App\Http\Controllers\Admin\StockController::class, 'adjustQuantity'])
+            ->whereNumber('itemId')
+            ->name('stock.adjust');
         Route::get('/stock/franchisee-inventory', [\App\Http\Controllers\Admin\StockController::class, 'franchiseeInventory'])
             ->name('stock.franchisee-inventory');
         Route::get('/stock/{franchiseeId}', [\App\Http\Controllers\Admin\StockController::class, 'show'])

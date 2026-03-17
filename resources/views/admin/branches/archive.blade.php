@@ -23,11 +23,13 @@
             <td>{{ $branch->email }}</td>
              <td>
                             @if($branch->contract_file)
-                                <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">View</a>                            @else
+                                <a href="{{ route('admin.branches.downloadContract', $branch->branch_id) }}" target="_blank" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">View</a>
+                                <a href="{{ route('admin.branches.downloadContract', ['id' => $branch->branch_id, 'mode' => 'download']) }}" class="btn btn-secondary" style="padding: 5px 10px; font-size: 12px;">Download</a>
+                            @else
                                 <span style="color: var(--dsizzlers-gray-dark);">No file</span>
                             @endif
                         </td>
-            <td>{{ $branch->contract_expiration }}</td>
+            <td>{{ optional($branch->contract_expiration)->format('Y-m-d') }}</td>
             <td>
                 <form method="POST" action="{{ route('admin.branches.restore', $branch->branch_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to restore this contract?');">
                     @csrf
