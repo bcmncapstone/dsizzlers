@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Item;
+use App\Models\StockIn;
 use App\Services\CloudinaryService;
 
 class ItemController extends Controller
@@ -73,7 +74,7 @@ class ItemController extends Controller
     }
 
     // Now create the item properly
-    Item::create([
+    $item = Item::create([
         'item_name'        => $request->item_name,
         'item_description' => $request->item_description,
         'price'            => $request->price,
@@ -81,6 +82,18 @@ class ItemController extends Controller
         'item_category'    => $request->item_category,
         'item_image'       => json_encode($imagePaths),
     ]);
+
+    if ((int) $item->stock_quantity > 0) {
+        $restockedBy = auth('admin')->id() ?? auth('franchisor_staff')->id() ?? 0;
+
+        StockIn::create([
+            'item_id' => $item->item_id,
+            'quantity_received' => (int) $item->stock_quantity,
+            'received_date' => now(),
+            'supplier_name' => 'Initial stock',
+            'restocked_by' => $restockedBy,
+        ]);
+    }
 
     return redirect()->route('admin.items.index')->with('success', 'Item added successfully!');
 }
@@ -106,6 +119,7 @@ class ItemController extends Controller
         ]);
 
     $item = Item::findOrFail($id);
+    $oldStockQuantity = (int) $item->stock_quantity;
 
     $imagePaths = $item->item_images; // existing images
 
@@ -132,12 +146,32 @@ class ItemController extends Controller
 
     $item->save();
 
+    $newStockQuantity = (int) $item->stock_quantity;
+    if ($newStockQuantity > $oldStockQuantity) {
+        $restockedBy = auth('admin')->id() ?? auth('franchisor_staff')->id() ?? 0;
+
+        StockIn::create([
+            'item_id' => $item->item_id,
+            'quantity_received' => $newStockQuantity - $oldStockQuantity,
+            'received_date' => now(),
+            'supplier_name' => 'Manual increase',
+            'restocked_by' => $restockedBy,
+        ]);
+    }
+
     return redirect()->route('admin.items.index')->with('success', 'Item updated successfully!');
 }
 
     public function archive($id)
     {
         $item = Item::findOrFail($id);
+
+        if ((int) $item->stock_quantity > 0) {
+            return redirect()
+                ->back()
+                ->with('error', 'Cannot archive this item while stock is still available. ')
+                ->with('flash_timeout', 3000);
+        }
 
         // Mark as archived in a JSON file (do NOT delete from DB)
         $archivedIds = $this->getArchivedItemIds();

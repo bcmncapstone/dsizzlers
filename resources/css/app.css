@@ -1367,6 +1367,13 @@ table td {
     font-weight: 600;
 }
 
+.table-action-btn:disabled,
+.table-action-btn[disabled] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .table-action-edit {
     background-color: #3B82F6;
     color: var(--dsizzlers-white);

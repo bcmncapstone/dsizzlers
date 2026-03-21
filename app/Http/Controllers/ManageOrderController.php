@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Item;
 use App\Models\Order;
 use App\Models\FranchiseeStock;
 use App\Models\StockTransaction;
@@ -12,14 +13,30 @@ use Illuminate\Support\Facades\Log;
 class ManageOrderController extends Controller
 {
     // Display all orders
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::all();
+        // Keep status choices consistent with the update dropdown in show.blade.
+        $availableStatuses = collect(['Pending', 'Preparing', 'Shipped', 'Delivered']);
+
+        $selectedStatus = trim((string) $request->query('order_status', ''));
+        if ($selectedStatus !== '') {
+            $selectedStatus = ucfirst(strtolower($selectedStatus));
+        }
+
+        if ($selectedStatus !== '' && ! $availableStatuses->contains($selectedStatus)) {
+            $selectedStatus = '';
+        }
+
+        $orders = Order::query()
+            ->when($selectedStatus !== '', function ($query) use ($selectedStatus) {
+                $query->whereRaw('LOWER(order_status) = ?', [strtolower($selectedStatus)]);
+            })
+            ->get();
 
         if (auth('admin')->check()) {
-            return view('admin.manageOrder.index', compact('orders'));
+            return view('admin.manageOrder.index', compact('orders', 'availableStatuses', 'selectedStatus'));
         } elseif (auth('franchisor_staff')->check()) {
-            return view('franchisor-staff.manageOrder.index', compact('orders'));
+            return view('franchisor-staff.manageOrder.index', compact('orders', 'availableStatuses', 'selectedStatus'));
         }
 
         abort(403, 'Unauthorized action.');
@@ -52,6 +69,20 @@ class ManageOrderController extends Controller
     public function confirmPayment($id)
     {
         $order = Order::with('orderDetails.item')->findOrFail($id);
+
+        if (strcasecmp((string) ($order->order_status ?? ''), 'Cancelled') === 0) {
+            if (auth('admin')->check()) {
+                return redirect()->route('admin.manageOrder.show', $id)
+                    ->with('error', 'Cancelled orders cannot be confirmed for payment.')
+                    ->with('flash_timeout', 3000);
+            } elseif (auth('franchisor_staff')->check()) {
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                    ->with('error', 'Cancelled orders cannot be confirmed for payment.')
+                    ->with('flash_timeout', 3000);
+            }
+        }
+
+        $stockAlreadyDeducted = strcasecmp((string) ($order->delivery_status ?? ''), 'Stock Deducted') === 0;
         
         // Check if payment is already confirmed to prevent duplicate stock reduction
         if ($order->payment_status === 'confirmed') {
@@ -66,40 +97,48 @@ class ManageOrderController extends Controller
             }
         }
         
-        // Reduce stock quantity for each item in the order
-        foreach ($order->orderDetails as $detail) {
-            if ($detail->item) {
-                $item = $detail->item;
-                
-                // Check if there's enough stock
-                if ($item->stock_quantity < $detail->quantity) {
-                    if (auth('admin')->check()) {
-                        return redirect()->route('admin.manageOrder.show', $id)
-                            ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}")
-                            ->with('flash_timeout', 3000);
-                    } elseif (auth('franchisor_staff')->check()) {
-                        return redirect()->route('franchisor-staff.manageOrder.show', $id)
-                            ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}")
-                            ->with('flash_timeout', 3000);
+        if (! $stockAlreadyDeducted) {
+            // Backward compatibility for orders created before checkout-time deduction.
+            foreach ($order->orderDetails as $detail) {
+                if ($detail->item) {
+                    $item = $detail->item;
+
+                    // Check if there's enough stock
+                    if ($item->stock_quantity < $detail->quantity) {
+                        if (auth('admin')->check()) {
+                            return redirect()->route('admin.manageOrder.show', $id)
+                                ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}")
+                                ->with('flash_timeout', 3000);
+                        } elseif (auth('franchisor_staff')->check()) {
+                            return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                                ->with('error', "Insufficient stock for {$item->item_name}. Available: {$item->stock_quantity}, Required: {$detail->quantity}")
+                                ->with('flash_timeout', 3000);
+                        }
                     }
+
+                    // Reduce the stock
+                    $item->stock_quantity -= $detail->quantity;
+                    $item->save();
                 }
-                
-                // Reduce the stock
-                $item->stock_quantity -= $detail->quantity;
-                $item->save();
             }
+
+            $order->delivery_status = 'Stock Deducted';
         }
         
         $order->payment_status = 'confirmed';
         $order->save();
 
+        $successMessage = $stockAlreadyDeducted
+            ? 'Payment confirmed.'
+            : 'Payment confirmed and stock updated.';
+
         if (auth('admin')->check()) {
             return redirect()->route('admin.manageOrder.show', $id)
-                ->with('success', 'Payment confirmed and stock updated.')
+                ->with('success', $successMessage)
                 ->with('flash_timeout', 3000);
         } elseif (auth('franchisor_staff')->check()) {
             return redirect()->route('franchisor-staff.manageOrder.show', $id)
-                ->with('success', 'Payment confirmed and stock updated.')
+                ->with('success', $successMessage)
                 ->with('flash_timeout', 3000);
         }
 
@@ -110,8 +149,37 @@ class ManageOrderController extends Controller
     public function updateOrderStatus(Request $request, $id)
     {
         $order = Order::with('orderDetails')->findOrFail($id);
+
+        if (strcasecmp((string) ($order->order_status ?? ''), 'Cancelled') === 0) {
+            if (auth('admin')->check()) {
+                return redirect()->route('admin.manageOrder.show', $id)
+                    ->with('error', 'Cancelled orders can no longer be updated.')
+                    ->with('flash_timeout', 3000);
+            } elseif (auth('franchisor_staff')->check()) {
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                    ->with('error', 'Cancelled orders can no longer be updated.')
+                    ->with('flash_timeout', 3000);
+            }
+        }
+
+        if (! in_array(strtolower((string) ($order->payment_status ?? '')), ['confirmed', 'paid'], true)) {
+            if (auth('admin')->check()) {
+                return redirect()->route('admin.manageOrder.show', $id)
+                    ->with('error', 'Confirm payment before updating the order status.')
+                    ->with('flash_timeout', 3000);
+            } elseif (auth('franchisor_staff')->check()) {
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                    ->with('error', 'Confirm payment before updating the order status.')
+                    ->with('flash_timeout', 3000);
+            }
+        }
+
         $oldStatus = $order->order_status;
         $newStatus = $request->input('order_status');
+
+        if ($newStatus === 'Cancelled') {
+            return $this->cancelOrder($id);
+        }
         
         DB::beginTransaction();
         try {
@@ -250,17 +318,78 @@ class ManageOrderController extends Controller
     // Cancel order
     public function cancelOrder($id)
     {
-        $order = Order::findOrFail($id);
-        $order->order_status = 'Cancelled';
-        $order->save();
+        DB::beginTransaction();
+
+        try {
+            $order = Order::with('orderDetails')->lockForUpdate()->findOrFail($id);
+
+            $paymentStatus = strtolower((string) ($order->payment_status ?? ''));
+            $orderStatus = strtolower((string) ($order->order_status ?? ''));
+            $canCancelOrder = ! in_array($paymentStatus, ['confirmed', 'paid'], true)
+                && ! in_array($orderStatus, ['preparing', 'shipped', 'delivered', 'completed', 'cancelled'], true);
+
+            if (! $canCancelOrder) {
+                DB::rollBack();
+
+                if (auth('admin')->check()) {
+                    return redirect()->route('admin.manageOrder.show', $id)
+                        ->with('error', 'Order cannot be cancelled in its current state.')
+                        ->with('flash_timeout', 3000);
+                } elseif (auth('franchisor_staff')->check()) {
+                    return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                        ->with('error', 'Order cannot be cancelled in its current state.')
+                        ->with('flash_timeout', 3000);
+                }
+
+                abort(403, 'Unauthorized action.');
+            }
+
+            $stockRestored = false;
+            if (strcasecmp((string) ($order->delivery_status ?? ''), 'Stock Deducted') === 0) {
+                foreach ($order->orderDetails as $detail) {
+                    $item = Item::query()->lockForUpdate()->find($detail->item_id);
+                    if (! $item) {
+                        continue;
+                    }
+
+                    $item->stock_quantity += (int) $detail->quantity;
+                    $item->save();
+                }
+
+                $order->delivery_status = 'Pending';
+                $stockRestored = true;
+            }
+
+            $order->order_status = 'Cancelled';
+            $order->save();
+
+            DB::commit();
+
+            $message = $stockRestored ? 'Order cancelled and stock restored.' : 'Order cancelled.';
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to cancel order: ' . $e->getMessage());
+
+            if (auth('admin')->check()) {
+                return redirect()->route('admin.manageOrder.show', $id)
+                    ->with('error', 'Failed to cancel order.')
+                    ->with('flash_timeout', 3000);
+            } elseif (auth('franchisor_staff')->check()) {
+                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                    ->with('error', 'Failed to cancel order.')
+                    ->with('flash_timeout', 3000);
+            }
+
+            abort(403, 'Unauthorized action.');
+        }
 
         if (auth('admin')->check()) {
             return redirect()->route('admin.manageOrder.show', $id)
-                ->with('success', 'Order cancelled.')
+                ->with('success', $message)
                 ->with('flash_timeout', 3000);
         } elseif (auth('franchisor_staff')->check()) {
             return redirect()->route('franchisor-staff.manageOrder.show', $id)
-                ->with('success', 'Order cancelled.')
+                ->with('success', $message)
                 ->with('flash_timeout', 3000);
         }
 

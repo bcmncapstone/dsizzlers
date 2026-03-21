@@ -32,7 +32,10 @@
                         $orderStatus = $order->order_status ?? 'pending';
                         $statusClass = in_array(strtolower($orderStatus), ['delivered', 'completed']) ? 'status-delivered' : (strtolower($orderStatus) === 'shipped' || strtolower($orderStatus) === 'preparing' ? 'status-shipped' : 'status-pending');
                         $paymentStatus = $order->payment_status ?? 'pending';
-                        $paymentClass = strtolower($paymentStatus) === 'paid' ? 'status-paid' : (strtolower($paymentStatus) === 'pending' ? 'status-pending-payment' : 'status-failed');
+                        $paymentClass = in_array(strtolower($paymentStatus), ['confirmed', 'paid'], true) ? 'status-paid' : (strtolower($paymentStatus) === 'pending' ? 'status-pending-payment' : 'status-failed');
+                        $isPaymentConfirmed = in_array(strtolower($paymentStatus), ['confirmed', 'paid'], true);
+                        $isCancelledOrder = strtolower($orderStatus) === 'cancelled';
+                        $canUpdateOrderStatus = $isPaymentConfirmed && ! $isCancelledOrder;
                         $canCancelOrder = $canCancelOrder ?? (
                             ! in_array(strtolower($paymentStatus), ['confirmed', 'paid'], true)
                             && ! in_array(strtolower($orderStatus), ['preparing', 'shipped', 'delivered', 'completed', 'cancelled'], true)
@@ -118,21 +121,29 @@
                 <!-- Confirm Payment -->
                 <form action="{{ route('admin.manageOrder.confirmPayment', $order->order_id) }}" method="POST" class="action-form">
                     @csrf
-                    <button type="submit" class="action-button confirm-payment">
-                        ✓ Confirm Payment
+                    <button type="submit" class="action-button confirm-payment {{ $isCancelledOrder ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $isCancelledOrder ? 'disabled' : '' }}>
+                        Confirm Payment
                     </button>
+                    @if($isCancelledOrder)
+                        <p class="mt-2 text-xs text-gray-500">Payment cannot be confirmed for a cancelled order.</p>
+                    @endif
                 </form>
 
                 <!-- Update Status -->
                 <form action="{{ route('admin.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST" class="action-form">
                     @csrf
-                    <select name="order_status" onchange="this.form.submit()" class="status-select">
+                    <select name="order_status" onchange="this.form.submit()" class="status-select {{ ! $canUpdateOrderStatus ? 'opacity-50 cursor-not-allowed bg-gray-100' : '' }}" {{ ! $canUpdateOrderStatus ? 'disabled' : '' }}>
                         <option value="">Update Order Status</option>
                         <option value="Pending" {{ ($order->order_status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
                         <option value="Preparing" {{ ($order->order_status ?? '') == 'Preparing' ? 'selected' : '' }}>Preparing</option>
                         <option value="Shipped" {{ ($order->order_status ?? '') == 'Shipped' ? 'selected' : '' }}>Shipped</option>
                         <option value="Delivered" {{ ($order->order_status ?? '') == 'Delivered' ? 'selected' : '' }}>Delivered</option>
                     </select>
+                    @if(! $isPaymentConfirmed)
+                        <p class="mt-2 text-xs text-gray-500">Confirm payment first before updating the order status.</p>
+                    @elseif($isCancelledOrder)
+                        <p class="mt-2 text-xs text-gray-500">Order status cannot be changed after cancellation.</p>
+                    @endif
                 </form>
 
                 <!-- Cancel Order -->
@@ -140,7 +151,7 @@
                     <form action="{{ route('admin.manageOrder.cancel', $order->order_id) }}" method="POST" class="action-form">
                         @csrf
                         <button type="submit" class="action-button cancel-order" onclick="return confirm('Are you sure you want to cancel this order?');">
-                            ✕ Cancel Order
+                            Cancel Order
                         </button>
                     </form>
                 @else

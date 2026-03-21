@@ -4,6 +4,7 @@ namespace App\Http\Controllers\FranchisorStaff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Item;
+use App\Models\StockIn;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +50,21 @@ class StockController extends Controller
             // Update item quantity
             $item->stock_quantity = $newQuantity;
             $item->save();
+
+            if ($newQuantity > $oldQuantity) {
+                $source = trim((string) $request->input('notes', ''));
+                if ($source === '') {
+                    $source = 'Franchisor staff adjustment';
+                }
+
+                StockIn::create([
+                    'item_id' => $item->item_id,
+                    'quantity_received' => (int) $newQuantity - (int) $oldQuantity,
+                    'received_date' => now(),
+                    'supplier_name' => mb_substr($source, 0, 50),
+                    'restocked_by' => Auth::guard('franchisor_staff')->id() ?? 0,
+                ]);
+            }
 
             DB::commit();
 

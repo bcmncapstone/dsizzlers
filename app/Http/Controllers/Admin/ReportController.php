@@ -7,12 +7,18 @@ use App\Models\Franchisee;
 use App\Models\Order;
 use App\Models\Item;
 use App\Models\StockTransaction;
+use App\Services\FifoStockService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
+    public function __construct(private FifoStockService $fifoStockService)
+    {
+    }
+
     public function index()
     {
         return view('admin.reports.index');
@@ -37,6 +43,7 @@ class ReportController extends Controller
                 'order_details.price',
                 'orders.order_date'
             )
+            ->where('orders.order_status', 'Delivered')
             ->when($request->start_date, function ($q) use ($request) {
                 $q->whereDate('orders.order_date', '>=', $request->start_date);
             })
@@ -50,12 +57,13 @@ class ReportController extends Controller
 
         $orderDetails = $query->orderBy('orders.order_date', 'desc')->paginate(50);
         $noData = $orderDetails->isEmpty();
-        $availableRange = $noData ? $this->getOrderDateRangeAll() : null;
+        $availableRange = $noData ? $this->getOrderDateRangeAll(true) : null;
 
         // Get data for charts (use full query without pagination)
         $chartQuery = DB::table('order_details')
             ->join('items', 'order_details.item_id', '=', 'items.item_id')
             ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
+            ->where('orders.order_status', 'Delivered')
             ->select(
                 'order_details.item_id',
                 'items.item_name',
@@ -148,6 +156,7 @@ class ReportController extends Controller
                 'order_details.price',
                 'orders.order_date'
             )
+            ->where('orders.order_status', 'Delivered')
             ->when($request->start_date, function ($q) use ($request) {
                 $q->whereDate('orders.order_date', '>=', $request->start_date);
             })
@@ -209,8 +218,11 @@ class ReportController extends Controller
 
     public function inventory(Request $request)
     {
-        // Get all items with their current stock levels
-        $items = Item::all();
+        // Get non-archived items with their current stock levels
+        $archivedIds = $this->getArchivedItemIds();
+        $items = Item::query()
+            ->when(!empty($archivedIds), fn ($query) => $query->whereNotIn('item_id', $archivedIds))
+            ->get();
 
         // Categorize items by stock status
         $inStock = $items->filter(function($item) { return $item->stock_quantity > 10; });
@@ -233,6 +245,24 @@ class ReportController extends Controller
         $topItems = $items->sortByDesc('stock_quantity')->take(10);
         $lowStockItems = $lowStock->sortBy('stock_quantity')->take(10);
 
+        // FIFO visibility (selected item)
+        $fifoFilterItems = $items->sortBy('item_name')->values();
+        $selectedFifoItemId = (int) $request->integer('fifo_item_id');
+
+        if ($selectedFifoItemId <= 0 && $fifoFilterItems->isNotEmpty()) {
+            $selectedFifoItemId = (int) $fifoFilterItems->first()->item_id;
+        }
+
+        $selectedFifoItem = $fifoFilterItems->firstWhere('item_id', $selectedFifoItemId);
+        if (!$selectedFifoItem && $fifoFilterItems->isNotEmpty()) {
+            $selectedFifoItem = $fifoFilterItems->first();
+            $selectedFifoItemId = (int) $selectedFifoItem->item_id;
+        }
+
+        $fifoSnapshot = $selectedFifoItem
+            ? $this->fifoStockService->getRemainingLots($selectedFifoItem)
+            : null;
+
         return view('admin.reports.inventory', compact(
             'items',
             'inStock',
@@ -243,14 +273,21 @@ class ReportController extends Controller
             'totalValue',
             'averagePrice',
             'topItems',
-            'lowStockItems'
+            'lowStockItems',
+            'fifoFilterItems',
+            'selectedFifoItemId',
+            'fifoSnapshot'
         ));
     }
 
     public function inventoryPdf(Request $request)
     {
-        // Get all items with their current stock levels
-        $items = Item::all();
+        // Get non-archived items with their current stock levels
+        $archivedIds = $this->getArchivedItemIds();
+        $items = Item::query()
+            ->when(!empty($archivedIds), fn ($query) => $query->whereNotIn('item_id', $archivedIds))
+            ->orderBy('item_name')
+            ->get();
 
         // Categorize items by stock status
         $inStock = $items->filter(function($item) { return $item->stock_quantity > 10; });
@@ -261,6 +298,13 @@ class ReportController extends Controller
         $totalQuantity = $items->sum('stock_quantity');
         $totalValue = $items->sum(function($item) { return $item->stock_quantity * $item->price; });
 
+        // Build FIFO lot snapshots for all items (non-empty lots only)
+        $fifoSnapshots = $items->map(function (Item $item) {
+            return $this->fifoStockService->getRemainingLots($item);
+        })->filter(function (array $snap) {
+            return count($snap['lots']) > 0;
+        })->values()->toArray();
+
         $pdf = Pdf::loadView('admin.reports.pdf.inventory', [
             'items' => $items,
             'inStock' => $inStock,
@@ -268,6 +312,7 @@ class ReportController extends Controller
             'outOfStock' => $outOfStock,
             'totalQuantity' => $totalQuantity,
             'totalValue' => $totalValue,
+            'fifoSnapshots' => $fifoSnapshots,
         ])->setPaper('A4', 'landscape');
 
         return $pdf->download('inventory-report.pdf');
@@ -284,6 +329,7 @@ class ReportController extends Controller
         $query = Order::query()
             ->select('franchisee_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total_amount) as total_sales'))
             ->whereNotNull('franchisee_id')
+            ->where('order_status', 'Delivered')
             ->when($request->franchisee_id, function ($q) use ($request) {
                 $q->where('franchisee_id', $request->franchisee_id);
             })
@@ -297,7 +343,7 @@ class ReportController extends Controller
 
         $rows = $query->get();
         $noData = $rows->isEmpty();
-        $availableRange = $noData ? $this->getOrderDateRange($request->franchisee_id) : null;
+        $availableRange = $noData ? $this->getOrderDateRange($request->franchisee_id, true) : null;
 
         $franchiseeMap = $franchisees->keyBy('franchisee_id');
 
@@ -342,6 +388,7 @@ class ReportController extends Controller
         $query = Order::query()
             ->select('franchisee_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total_amount) as total_sales'))
             ->whereNotNull('franchisee_id')
+            ->where('order_status', 'Delivered')
             ->when($request->franchisee_id, function ($q) use ($request) {
                 $q->where('franchisee_id', $request->franchisee_id);
             })
@@ -394,19 +441,41 @@ class ReportController extends Controller
         return $request->start_date && $request->end_date && $request->end_date < $request->start_date;
     }
 
-    private function getOrderDateRange(?int $franchiseeId)
+    private function getArchivedItemIds(): array
+    {
+        if (!Storage::disk('local')->exists('archived_items.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_items.json');
+        $data = json_decode($raw, true);
+
+        if (!is_array($data)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $data)));
+    }
+
+    private function getOrderDateRange(?int $franchiseeId, bool $deliveredOnly = false)
     {
         return Order::query()
             ->when($franchiseeId, function ($q) use ($franchiseeId) {
                 $q->where('franchisee_id', $franchiseeId);
             })
+            ->when($deliveredOnly, function ($q) {
+                $q->where('order_status', 'Delivered');
+            })
             ->selectRaw('MIN(order_date) as min_date, MAX(order_date) as max_date')
             ->first();
     }
 
-    private function getOrderDateRangeAll()
+    private function getOrderDateRangeAll(bool $deliveredOnly = false)
     {
         return Order::query()
+            ->when($deliveredOnly, function ($q) {
+                $q->where('order_status', 'Delivered');
+            })
             ->selectRaw('MIN(order_date) as min_date, MAX(order_date) as max_date')
             ->first();
     }

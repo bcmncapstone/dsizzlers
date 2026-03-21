@@ -8,7 +8,7 @@
         <div class="inventory-header">
             <div>
                 <h1>Inventory Report</h1>
-                <p>Admin/Franchisor current inventory levels and stock status.</p>
+                <p>Check current inventory levels and stock status.</p>
             </div>
             <a href="{{ route('admin.reports.index') }}" class="inventory-back-link">← Back to Reports</a>
         </div>
@@ -20,7 +20,6 @@
                     <div class="inventory-stat-label">Total Items</div>
                     <div class="inventory-stat-value">{{ $items->count() }}</div>
                 </div>
-                <div class="inventory-stat-icon">📦</div>
             </div>
 
             <div class="inventory-stat-card">
@@ -28,7 +27,6 @@
                     <div class="inventory-stat-label">Total Quantity</div>
                     <div class="inventory-stat-value">{{ number_format($totalQuantity) }}</div>
                 </div>
-                <div class="inventory-stat-icon">✓</div>
             </div>
 
             <div class="inventory-stat-card">
@@ -36,7 +34,6 @@
                     <div class="inventory-stat-label">Inventory Value</div>
                     <div class="inventory-stat-value">₱{{ number_format($totalValue, 2) }}</div>
                 </div>
-                <div class="inventory-stat-icon">💰</div>
             </div>
 
             <div class="inventory-stat-card">
@@ -44,7 +41,6 @@
                     <div class="inventory-stat-label">Low/Out Stock</div>
                     <div class="inventory-stat-value" style="color: var(--danger-color);">{{ $lowStock->count() + $outOfStock->count() }}</div>
                 </div>
-                <div class="inventory-stat-icon">⚠️</div>
             </div>
         </div>
 
@@ -88,6 +84,77 @@
             <p>You have <strong>{{ $lowStock->count() }}</strong> item(s) with low stock and <strong>{{ $outOfStock->count() }}</strong> item(s) out of stock.</p>
         </div>
         @endif
+
+        <!-- Stock Batch Visibility -->
+        <div class="inventory-table-section">
+            <div class="inventory-table-header">
+                <h2 class="inventory-table-title">Stock Batch Breakdown</h2>
+            </div>
+
+            <form method="GET" action="{{ route('admin.reports.inventory') }}" style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px;">
+                <label for="fifo_item_id" style="font-weight: 600; color: #111827;">Select Item</label>
+                <select id="fifo_item_id" name="fifo_item_id" onchange="this.form.submit()" style="min-width: 280px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px;">
+                    @forelse($fifoFilterItems as $filterItem)
+                        <option value="{{ $filterItem->item_id }}" {{ (int) $selectedFifoItemId === (int) $filterItem->item_id ? 'selected' : '' }}>
+                            {{ $filterItem->item_name }} (Current: {{ $filterItem->stock_quantity }})
+                        </option>
+                    @empty
+                        <option value="">No items available</option>
+                    @endforelse
+                </select>
+                <noscript>
+                    <button type="submit" class="inventory-pdf-btn">Apply</button>
+                </noscript>
+            </form>
+
+            @if($fifoSnapshot)
+                @php $hasFifoMismatch = $fifoSnapshot['stock_quantity'] !== $fifoSnapshot['fifo_available']; @endphp
+
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 14px; font-size: 14px;">
+                    <div><strong>Item:</strong> {{ $fifoSnapshot['item_name'] }}</div>
+                    <div><strong>Current Stock:</strong> {{ $fifoSnapshot['stock_quantity'] }}</div>
+                    <div><strong>Tracked Available:</strong> {{ $fifoSnapshot['fifo_available'] }}</div>
+                    @if($hasFifoMismatch)
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; border-radius: 6px; padding: 5px 10px; font-size: 12px; font-weight: 600;">
+                            ⚠ Mismatch — current stock ({{ $fifoSnapshot['stock_quantity'] }}) does not match tracked total ({{ $fifoSnapshot['fifo_available'] }}). Some batches may not be recorded yet.
+                        </div>
+                    @endif
+                </div>
+
+                <div class="inventory-overflow">
+                    <table class="inventory-table">
+                        <thead>
+                            <tr>
+                                <th>Batch Type</th>
+                                <th>Batch #</th>
+                                <th>Date Received</th>
+                                <th>Remaining Quantity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($fifoSnapshot['lots'] as $lot)
+                                <tr>
+                                    <td>{{ ($lot['source'] ?? 'stock_in') === 'legacy_balance' ? 'Opening Stock' : 'Restocked' }}</td>
+                                    <td>{{ $lot['stock_in_id'] ?? '-' }}</td>
+                                    <td>
+                                        @if($lot['received_date'])
+                                            {{ \Illuminate\Support\Carbon::parse($lot['received_date'])->format('M d, Y H:i') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td style="font-weight: 600;">{{ $lot['quantity_remaining'] }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="inventory-table-empty">No batch records found for this item.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
 
         <!-- All Items Table -->
         <div class="inventory-table-section">

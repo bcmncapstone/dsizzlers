@@ -74,21 +74,18 @@
                     <div class="inventory-stat-label">Total Items</div>
                     <div class="inventory-stat-value">{{ $totalItems }}</div>
                 </div>
-                <div class="inventory-stat-icon">📦</div>
             </div>
             <div class="inventory-stat-card">
                 <div class="inventory-stat-content">
                     <div class="inventory-stat-label">In Stock</div>
                     <div class="inventory-stat-value">{{ $inStockCount }}</div>
                 </div>
-                <div class="inventory-stat-icon">✅</div>
             </div>
             <div class="inventory-stat-card">
                 <div class="inventory-stat-content">
                     <div class="inventory-stat-label">Low Stock</div>
                     <div class="inventory-stat-value">{{ $lowStockCount }}</div>
                 </div>
-                <div class="inventory-stat-icon">⚠️</div>
             </div>
         </div>
 
@@ -109,6 +106,13 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
+                    <colgroup>
+                        <col style="width: 28%">
+                        <col style="width: 26%">
+                        <col style="width: 10%">
+                        <col style="width: 12%">
+                        <col style="width: 24%">
+                    </colgroup>
                     <tbody>
                         @forelse($items as $item)
                             @php
@@ -179,14 +183,79 @@
                                 <td>
                                     <div class="admin-stock-actions-col">
                                         <a href="{{ route('admin.items.edit', $item->item_id) }}" class="table-action-btn table-action-edit">
-                                            Edit 
+                                            Edit
                                         </a>
-                                        <form action="{{ route('admin.items.archive', $item->item_id) }}" method="POST" onsubmit="return confirm('Archive this item from active stock view?');">
-                                            @csrf
-                                            <button type="submit" class="table-action-btn table-action-archive">
-                                            Archive
+                                        <button type="button"
+                                            onclick="toggleFifo({{ $item->item_id }})"
+                                            id="fifo-btn-{{ $item->item_id }}"
+                                            class="table-action-btn"
+                                            style="background:#f0fdf4; color:#14532d; border:1px solid #86efac;">
+                                            Stock Batches
+                                        </button>
+                                        @if((int) $item->stock_quantity > 0)
+                                            <button
+                                                type="button"
+                                                class="table-action-btn table-action-archive"
+                                                disabled
+                                                title="Set stock to 0 before archiving"
+                                            >
+                                                Archive
                                             </button>
-                                        </form>
+                                        @else
+                                            <form action="{{ route('admin.items.archive', $item->item_id) }}" method="POST" onsubmit="return confirm('Archive this item from active stock view?');">
+                                                @csrf
+                                                <button type="submit" class="table-action-btn table-action-archive">
+                                                    Archive
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                            {{-- Stock batches collapsible row --}}
+                            @php $snap = $fifoSnapshots[(int) $item->item_id] ?? null; @endphp
+                            <tr id="fifo-row-{{ $item->item_id }}" style="display:none; background:#f9fafb;">
+                                <td colspan="5" style="padding: 0;">
+                                    <div style="padding: 12px 16px;">
+                                        <div style="display:flex; flex-wrap:wrap; gap:16px; font-size:13px; margin-bottom:10px;">
+                                            <span><strong>Current Stock:</strong> {{ $snap['stock_quantity'] ?? '-' }}</span>
+                                            <span><strong>Tracked Available:</strong> {{ $snap['fifo_available'] ?? '-' }}</span>
+                                            @if($snap && $snap['stock_quantity'] !== $snap['fifo_available'])
+                                                <span style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:5px; padding:2px 8px; font-size:12px; font-weight:600;">
+                                                    &#9888; Mismatch &mdash; some stock may not have a batch record yet
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if($snap && count($snap['lots']) > 0)
+                                            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                                                <thead>
+                                                    <tr style="background:#e5e7eb;">
+                                                        <th style="padding:5px 8px; text-align:left; border:1px solid #d1d5db;">Batch Type</th>
+                                                        <th style="padding:5px 8px; text-align:left; border:1px solid #d1d5db;">Batch #</th>
+                                                        <th style="padding:5px 8px; text-align:left; border:1px solid #d1d5db;">Date Received</th>
+                                                        <th style="padding:5px 8px; text-align:right; border:1px solid #d1d5db;">Remaining Qty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($snap['lots'] as $lot)
+                                                        <tr>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">{{ ($lot['source'] ?? 'stock_in') === 'legacy_balance' ? 'Opening Stock' : 'Restocked' }}</td>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">{{ $lot['stock_in_id'] ?? '-' }}</td>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">
+                                                                @if($lot['received_date'])
+                                                                    {{ \Illuminate\Support\Carbon::parse($lot['received_date'])->format('M d, Y H:i') }}
+                                                                @else
+                                                                    -
+                                                                @endif
+                                                            </td>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db; text-align:right; font-weight:700;">{{ $lot['quantity_remaining'] }}</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        @else
+                                            <p style="font-size:12px; color:#6b7280;">No batch records found for this item yet.</p>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -205,3 +274,14 @@
 </div>
 
 @endsection
+
+<script>
+function toggleFifo(itemId) {
+    var row = document.getElementById('fifo-row-' + itemId);
+    var btn = document.getElementById('fifo-btn-' + itemId);
+    if (!row) return;
+    var isHidden = row.style.display === 'none';
+    row.style.display = isHidden ? 'table-row' : 'none';
+    btn.textContent = isHidden ? 'Hide Batches' : 'Stock Batches';
+}
+</script>

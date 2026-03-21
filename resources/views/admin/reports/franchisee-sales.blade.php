@@ -63,7 +63,6 @@
                         <div class="franchisee-stat-label">Total Franchisees</div>
                         <div class="franchisee-stat-value">{{ $rows->count() }}</div>
                     </div>
-                    <div class="franchisee-stat-icon">🏪</div>
                 </div>
 
                 <div class="franchisee-stat-card">
@@ -71,7 +70,6 @@
                         <div class="franchisee-stat-label">Total Orders</div>
                         <div class="franchisee-stat-value">{{ $totalOrders }}</div>
                     </div>
-                    <div class="franchisee-stat-icon">📦</div>
                 </div>
 
                 <div class="franchisee-stat-card">
@@ -79,7 +77,6 @@
                         <div class="franchisee-stat-label">Total Revenue</div>
                         <div class="franchisee-stat-value">₱{{ number_format($totalSales, 2) }}</div>
                     </div>
-                    <div class="franchisee-stat-icon">💰</div>
                 </div>
             </div>
 
@@ -87,7 +84,7 @@
             <div class="franchisee-charts-grid">
                 <!-- Top Franchisees by Revenue -->
                 <div class="franchisee-chart-section">
-                    <h3 class="franchisee-chart-title">🏆 Top Franchisees by Sales</h3>
+                    <h3 class="franchisee-chart-title">Top Franchisees by Sales</h3>
                     <div class="franchisee-chart-container">
                         <canvas id="topFranchiseesChart"></canvas>
                     </div>

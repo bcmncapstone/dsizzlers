@@ -73,7 +73,7 @@
                                 </td>
                                 <td>
                                     <a href="{{ route('franchisee.orders.show', $order->order_id) }}" class="orders-view-btn">
-                                        👁️ View
+                                        View
                                     </a>
                                 </td>
                             </tr>

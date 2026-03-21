@@ -8,7 +8,7 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <a href="{{ route('admin.stock.reports') }}" class="btn btn-primary">
-                📊 View Reports
+                View Reports
             </a>
             <a href="{{ route('admin.stock.index') }}" class="btn btn-gray">
                 ← Back to Manage Stock
@@ -43,9 +43,6 @@
         <!-- Statistics Cards -->
         <div class="stats-cards">
             <div class="stat-card">
-                <div class="stat-icon stat-icon-blue">
-                    🏢
-                </div>
                 <div class="stat-content">
                     <dl>
                         <dt class="stat-label">Total Franchisees</dt>
@@ -55,9 +52,6 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon stat-icon-yellow">
-                    ⚠️
-                </div>
                 <div class="stat-content">
                     <dl>
                         <dt class="stat-label">Low Stock Items</dt>
@@ -67,9 +61,6 @@
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon stat-icon-red">
-                    ❌
-                </div>
                 <div class="stat-content">
                     <dl>
                         <dt class="stat-label">Out of Stock Items</dt>

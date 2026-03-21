@@ -5,14 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\FranchiseeStock;
 use App\Models\StockTransaction;
+use App\Models\StockIn;
 use App\Models\Franchisee;
 use App\Models\Item;
+use App\Services\FifoStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class StockController extends Controller
 {
+    public function __construct(private FifoStockService $fifoStockService)
+    {
+    }
+
     /**
      * Display all items in stock management (master catalog)
      */
@@ -67,6 +73,13 @@ class StockController extends Controller
         })->count();
         $outOfStockCount = $items->where('stock_quantity', '<=', 0)->count();
 
+        // Build FIFO lot snapshots keyed by item_id for inline display
+        $fifoSnapshots = [];
+        foreach ($items as $item) {
+            /** @var Item $item */
+            $fifoSnapshots[(int) $item->item_id] = $this->fifoStockService->getRemainingLots($item);
+        }
+
         return view('admin.stock.index', compact(
             'items',
             'categories',
@@ -76,7 +89,8 @@ class StockController extends Controller
             'totalItems',
             'inStockCount',
             'lowStockCount',
-            'outOfStockCount'
+            'outOfStockCount',
+            'fifoSnapshots'
         ));
     }
 
@@ -112,6 +126,18 @@ class StockController extends Controller
 
         $item->stock_quantity = $newQuantity;
         $item->save();
+
+        if ($validated['direction'] === 'add' && $adjustBy > 0) {
+            $restockedBy = auth('admin')->id() ?? 0;
+
+            StockIn::create([
+                'item_id' => $item->item_id,
+                'quantity_received' => $adjustBy,
+                'received_date' => now(),
+                'supplier_name' => 'Admin adjustment',
+                'restocked_by' => $restockedBy,
+            ]);
+        }
 
         $query = $request->only(['search', 'category', 'stock_status']);
 

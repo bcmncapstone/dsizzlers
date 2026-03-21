@@ -38,4 +38,9 @@ class Item extends Model
             return [];
         }
     }
+
+    public function stockIns()
+    {
+        return $this->hasMany(StockIn::class, 'item_id', 'item_id');
+    }
 }

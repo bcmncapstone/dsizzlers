@@ -115,7 +115,7 @@
         <tbody>
             @foreach($orderDetails as $detail)
                 <tr>
-                    <td>#{{ $detail->order_id }}</td>
+                    <td>{{ $loop->iteration }}</td>
                     <td>{{ $detail->item_name }}</td>
                     <td class="right">{{ $detail->quantity }}</td>
                     <td class="right">₱{{ number_format($detail->price, 2) }}</td>

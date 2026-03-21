@@ -5,7 +5,6 @@
     <div class="account-create-container">
         {{-- Header --}}
         <div class="account-create-header">
-            <span class="account-create-icon">👤</span>
             <h2 class="account-create-title">Create Staff Account</h2>
             <p class="account-create-subtitle">Add a new staff member to your team</p>
         </div>

@@ -24,7 +24,6 @@
             <!-- Update Password Card -->
             <a href="{{ route('franchisee.password.update') }}" class="card card-orange">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">🔑</div>
                 </div>
                 <h3>Update Profile</h3>
                 <p>Secure your account with a new password and username</p>
@@ -34,7 +33,6 @@
             <!-- Manage Branch Card -->
             <a href="{{ route('franchisee.branch.dashboard') }}" class="card card-red">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">🏢</div>
                 </div>
                 <h3>Manage Branch</h3>
                 <p>View and manage your branch information</p>
@@ -44,7 +42,6 @@
             <!-- Items Card -->
             <a href="{{ route('franchisee.item.index') }}" class="card card-yellow">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">🍽️</div>
                 </div>
                 <h3>Item</h3>
                 <p>Manage menu items and products</p>
@@ -54,7 +51,6 @@
             <!-- Cart Card -->
             <a href="{{ route('franchisee.cart.index') }}" class="card card-blue">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">🛒</div>
                 </div>
                 <h3>Cart</h3>
                 <p>Check cart</p>
@@ -64,7 +60,6 @@
                <!-- Orders Card -->
             <a href="{{ route('franchisee.orders.index') }}" class="card card-green">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">📦</div>
                 </div>
                 <h3>Order</h3>
                 <p>Check orders</p>
@@ -74,7 +69,6 @@
             <!-- Add Staff Card -->
             <a href="{{ route('account.create') }}" class="card card-red">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">➕</div>
                 </div>
                 <h3>Add Staff</h3>
                 <p>Create new staff accounts and manage permissions</p>
@@ -84,7 +78,6 @@
             <!-- User Accounts Card -->
             <a href="{{ route('franchisee.account.index') }}" class="card card-purple">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">📝</div>
                 </div>
                 <h3>View Contract</h3>
                 <p>Manage Contract</p>
@@ -94,7 +87,6 @@
             <!-- Reports Card -->
             <a href="{{ route('franchisee.reports.index') }}" class="card card-blue">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">📈</div>
                 </div>
                 <h3>Report</h3>
                 <p>View detailed analytics and business reports</p>
@@ -104,7 +96,6 @@
             <!-- Messages Card -->
             <a href="{{ route('communication.index') }}" class="card card-green">
                 <div class="card-icon-wrapper">
-                    <div class="card-icon">💬</div>
                 </div>
                 <h3>Message</h3>
                 <p>Communicate with franchisor and team members</p>

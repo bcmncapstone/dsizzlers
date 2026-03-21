@@ -15,7 +15,6 @@
         <div class="reports-grid">
             {{-- Sales Report Card --}}
             <a href="{{ route('franchisee.reports.sales') }}" class="reports-card">
-                <span class="reports-card-icon">📊</span>
                 <h2 class="reports-card-title">Sales Report</h2>
                 <p class="reports-card-description">Filter sales by date range and franchisee</p>
                 <div class="reports-card-link">View Report →</div>
@@ -23,7 +22,6 @@
 
             {{-- Inventory Report Card --}}
             <a href="{{ route('franchisee.reports.inventory') }}" class="reports-card">
-                <span class="reports-card-icon">📦</span>
                 <h2 class="reports-card-title">Inventory Report</h2>
                 <p class="reports-card-description">Track stock movements by date range</p>
                 <div class="reports-card-link">View Report →</div>
@@ -31,7 +29,6 @@
 
             {{-- Franchisee Sales Card --}}
             <a href="{{ route('franchisee.reports.staff') }}" class="reports-card">
-                <span class="reports-card-icon">🏪</span>
                 <h2 class="reports-card-title">Staff Report Sales</h2>
                 <p class="reports-card-description">Compare sales performance per franchisee</p>
                 <div class="reports-card-link">View Report →</div>

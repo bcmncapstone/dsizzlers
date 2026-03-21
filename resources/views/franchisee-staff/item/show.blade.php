@@ -115,7 +115,7 @@
                 </div>
             @else
                 <div class="item-out-of-stock">
-                    ❌ Out of Stock - This item is currently unavailable.
+                    Out of Stock - This item is currently unavailable.
                 </div>
             @endif
 

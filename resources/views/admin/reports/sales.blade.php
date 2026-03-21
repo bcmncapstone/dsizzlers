@@ -8,7 +8,7 @@
         <div class="sales-header">
             <div>
                 <h1>Sales Report</h1>
-                <p>Admin item sales to franchisees</p>
+                <p>Item sales to franchisees</p>
             </div>
             <a href="{{ route('admin.reports.index') }}">← Back to Reports</a>
         </div>
@@ -51,14 +51,12 @@
                     <div class="sales-stat-label">Total Items Sold</div>
                     <div class="sales-stat-value">{{ intval($totalQuantity ?? 0) }}</div>
                 </div>
-                <div class="sales-stat-icon">📦</div>
             </div>
             <div class="sales-stat-card">
                 <div class="sales-stat-content">
                     <div class="sales-stat-label">Total Sales</div>
                     <div class="sales-stat-value">₱{{ number_format($totalSales, 2) }}</div>
                 </div>
-                <div class="sales-stat-icon">💰</div>
             </div>
         </div>
 
@@ -116,7 +114,7 @@
                     <tbody>
                         @forelse($orderDetails as $detail)
                             <tr>
-                                <td class="table-item-name">#{{ $detail->order_id }}</td>
+                                <td class="table-item-name">{{ $orderDetails->firstItem() + $loop->index }}</td>
                                 <td>{{ $detail->item_name }}</td>
                                 <td>{{ $detail->quantity }}</td>
                                 <td>₱{{ number_format($detail->price, 2) }}</td>

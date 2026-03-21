@@ -63,13 +63,13 @@
             <!-- Franchisee Only Fields -->
             <div id="franchisee_fields" style="display:none;">
                 <div class="form-group">
-                    <label class="form-label">Email:</label>
-                    <input type="email" name="email" class="form-control">
+                    <label class="form-label">Email: *</label>
+                    <input type="email" name="email" class="form-control" required>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Address:</label>
-                    <input type="text" name="address" class="form-control">
+                    <label class="form-label">Address: *</label>
+                    <input type="text" name="address" class="form-control" required>
                 </div>
             </div>
 

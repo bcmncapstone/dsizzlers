@@ -5,7 +5,6 @@
     <div class="password-wrapper">
         {{-- Header Section --}}
         <div class="password-header">
-            <div class="password-header-icon">🔐</div>
             <h1>Update Profile</h1>
             <p>Secure your account with a new password and username</p>
         </div>

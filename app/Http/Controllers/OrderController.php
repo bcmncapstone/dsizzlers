@@ -5,10 +5,16 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\Order;
 use App\Models\OrderDetail;
+use App\Services\FifoStockService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
+    public function __construct(private FifoStockService $fifoStockService)
+    {
+    }
+
     // Display list of orders
     public function index()
     {
@@ -64,32 +70,58 @@ class OrderController extends Controller
             $orderData['franchisee_id'] = auth()->guard('franchisee')->id();
             $redirectRoute = 'franchisee.orders.index';
         } elseif (auth()->guard('franchisee_staff')->check()) {
-    $staff = auth()->guard('franchisee_staff')->user();
-    $orderData['fstaff_id'] = $staff->fstaff_id;
-    $orderData['franchisee_id'] = $staff->franchisee_id;
-    $redirectRoute = 'franchisee_staff.orders.index';
+            $staff = auth()->guard('franchisee_staff')->user();
+            $orderData['fstaff_id'] = $staff->fstaff_id;
+            $orderData['franchisee_id'] = $staff->franchisee_id;
+            $redirectRoute = 'franchisee_staff.orders.index';
         } else {
             abort(403, 'Unauthorized');
         }
 
-        $order = Order::create($orderData);
+        try {
+            DB::transaction(function () use ($request, $orderData) {
+                $order = Order::create(array_merge($orderData, [
+                    'delivery_status' => 'Stock Deducted',
+                ]));
 
-        $total = 0;
-        foreach ($request->items as $item) {
-            $product = Item::findOrFail($item['item_id']);
-            $subtotal = $product->price * $item['quantity'];
-            $total += $subtotal;
+                $total = 0;
+                foreach ($request->items as $item) {
+                    $itemId = (int) ($item['item_id'] ?? 0);
+                    $quantity = (int) ($item['quantity'] ?? 0);
 
-            OrderDetail::create([
-                'order_id' => $order->order_id,
-                'item_id'  => $item['item_id'],
-                'quantity' => $item['quantity'],
-                'price'    => $product->price,
-                'subtotal' => $subtotal,
-            ]);
+                    $product = Item::query()->lockForUpdate()->find($itemId);
+                    if (! $product) {
+                        throw new \RuntimeException('One or more items are no longer available.');
+                    }
+
+                    if ($quantity <= 0) {
+                        throw new \RuntimeException('Invalid quantity detected in checkout.');
+                    }
+
+                    $this->fifoStockService->allocateForCheckout($product, $quantity);
+
+                    $product->stock_quantity -= $quantity;
+                    $product->save();
+
+                    $subtotal = (float) $product->price * $quantity;
+                    $total += $subtotal;
+
+                    OrderDetail::create([
+                        'order_id' => $order->order_id,
+                        'item_id'  => $itemId,
+                        'quantity' => $quantity,
+                        'price'    => $product->price,
+                        'subtotal' => $subtotal,
+                    ]);
+                }
+
+                $order->update(['total_amount' => $total]);
+            });
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->withInput()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return redirect()->back()->withInput()->with('error', 'Unable to place order right now. Please try again.');
         }
-
-        $order->update(['total_amount' => $total]);
 
         return redirect()->route($redirectRoute)->with('success', 'Order placed successfully!');
     }
@@ -115,33 +147,63 @@ class OrderController extends Controller
             $orderData['franchisee_id'] = auth()->guard('franchisee')->id();
             $redirectRoute = 'franchisee.orders.index';
         } elseif (auth()->guard('franchisee_staff')->check()) {
-    $staff = auth()->guard('franchisee_staff')->user();
-    $orderData['fstaff_id'] = $staff->fstaff_id;
-    $orderData['franchisee_id'] = $staff->franchisee_id;
-    $redirectRoute = 'franchisee_staff.orders.index';
+            $staff = auth()->guard('franchisee_staff')->user();
+            $orderData['fstaff_id'] = $staff->fstaff_id;
+            $orderData['franchisee_id'] = $staff->franchisee_id;
+            $redirectRoute = 'franchisee_staff.orders.index';
         } else {
             abort(403, 'Unauthorized');
         }
 
-        $order = Order::create($orderData);
-        $total = 0;
+        try {
+            DB::transaction(function () use ($cart, $orderData) {
+                $order = Order::create(array_merge($orderData, [
+                    'delivery_status' => 'Stock Deducted',
+                ]));
 
-        foreach ($cart as $itemId => $details) {
-            $subtotal = $details['price'] * $details['quantity'];
-            $total += $subtotal;
+                $total = 0;
 
-            OrderDetail::create([
-                'order_id' => $order->order_id,
-                'item_id'  => $itemId,
-                'quantity' => $details['quantity'],
-                'price'    => $details['price'],
-                'subtotal' => $subtotal,
-            ]);
+                foreach ($cart as $itemId => $details) {
+                    $quantity = (int) ($details['quantity'] ?? 0);
+                    $price = (float) ($details['price'] ?? 0);
+
+                    $product = Item::query()->lockForUpdate()->find($itemId);
+                    if (! $product) {
+                        throw new \RuntimeException('One or more items are no longer available.');
+                    }
+
+                    if ($quantity <= 0) {
+                        throw new \RuntimeException('Invalid quantity detected in checkout.');
+                    }
+
+                    $this->fifoStockService->allocateForCheckout($product, $quantity);
+
+                    $product->stock_quantity -= $quantity;
+                    $product->save();
+
+                    $subtotal = $price * $quantity;
+                    $total += $subtotal;
+
+                    OrderDetail::create([
+                        'order_id' => $order->order_id,
+                        'item_id'  => $itemId,
+                        'quantity' => $quantity,
+                        'price'    => $price,
+                        'subtotal' => $subtotal,
+                    ]);
+                }
+
+                $order->update(['total_amount' => $total]);
+            });
+        } catch (\RuntimeException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        } catch (\Throwable $e) {
+            return redirect()->back()->with('error', 'Unable to place order right now. Please try again.');
         }
 
-        $order->update(['total_amount' => $total]);
-    // Clear the correct cart key
-    session()->forget($cartKey);
+        // Clear the correct cart key
+        session()->forget($cartKey);
+        session()->forget('cart_owner');
 
         return redirect()->route($redirectRoute)->with('success', 'Order placed successfully!');
     }

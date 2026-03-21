@@ -17,6 +17,24 @@
             </div>
         @endif
 
+        <div class="filter-section">
+            <form method="GET" action="{{ route('franchisor-staff.manageOrder.index') }}" class="filter-form">
+                <div class="filter-group">
+                    <label for="order_status" class="filter-label">Filter by Order Status</label>
+                    <select name="order_status" id="order_status" class="filter-select">
+                        <option value="">All Statuses</option>
+                        @foreach($availableStatuses as $statusOption)
+                            <option value="{{ $statusOption }}" {{ $selectedStatus === $statusOption ? 'selected' : '' }}>
+                                {{ $statusOption }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div style="grid-column: 2;"></div>
+                <button type="submit" class="btn btn-info">Apply Filter</button>
+            </form>
+        </div>
+
         <!-- Orders Table -->
         <div class="table-section">
             <div class="table-section-header">
@@ -53,10 +71,14 @@
                                 </td>
                                 <td>
                                     @php
-                                        $status = $order->order_status ?? 'pending';
-                                        $statusClass = $status === 'completed' ? 'badge-success' : ($status === 'cancelled' ? 'badge-danger' : 'badge-warning');
+                                        $status = trim((string) ($order->order_status ?? 'Pending'));
+                                        $statusLower = strtolower($status);
+                                        $statusLower = $statusLower !== '' ? $statusLower : 'pending';
+                                        $statusClass = in_array($statusLower, ['delivered', 'completed'], true)
+                                            ? 'badge-success'
+                                            : ($statusLower === 'cancelled' ? 'badge-danger' : 'badge-warning');
                                     @endphp
-                                    <span class="badge {{ $statusClass }}">{{ ucfirst($status) }}</span>
+                                    <span class="badge {{ $statusClass }}">{{ ucfirst($statusLower) }}</span>
                                 </td>
                                 <td>
                                     @php
@@ -76,7 +98,7 @@
                         @empty
                             <tr>
                                 <td colspan="7" class="table-empty">
-                                    No orders found.
+                                    No orders found{{ $selectedStatus !== '' ? ' for the selected status.' : '.' }}
                                 </td>
                             </tr>
                         @endforelse

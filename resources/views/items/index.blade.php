@@ -9,6 +9,18 @@
             $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
         @endphp
 
+        @if(session('success'))
+            <div class="alert alert-success" style="margin-bottom: 16px;">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-error" style="margin-bottom: 16px;">
+                {{ session('error') }}
+            </div>
+        @endif
+
         <!-- Action Buttons -->
         <div class="action-buttons">
             <a href="{{ route($prefix . '.items.create') }}" class="btn btn-primary">
@@ -84,12 +96,23 @@
                                         <a href="{{ route($prefix . '.items.edit', $item->item_id) }}" class="table-action-btn table-action-edit">
                                             Edit
                                         </a>
-                                        <form action="{{ route($prefix . '.items.archive', $item->item_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to archive this item?');">
-                                            @csrf
-                                            <button type="submit" class="table-action-btn table-action-archive">
+                                        @if((int) $item->stock_quantity > 0)
+                                            <button
+                                                type="button"
+                                                class="table-action-btn table-action-archive"
+                                                disabled
+                                                title="Set stock to 0 before archiving"
+                                            >
                                                 Archive
                                             </button>
-                                        </form>
+                                        @else
+                                            <form action="{{ route($prefix . '.items.archive', $item->item_id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to archive this item?');">
+                                                @csrf
+                                                <button type="submit" class="table-action-btn table-action-archive">
+                                                    Archive
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

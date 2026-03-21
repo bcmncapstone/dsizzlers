@@ -22,7 +22,9 @@ use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\BranchManagementController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Franchisee\ReportController as FranchiseeReportController;
+use App\Models\Franchisee;
 use App\Models\Item;
+use App\Models\Order;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -30,13 +32,95 @@ Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 Route::get('/admin/dashboard', function () {
-    $totalItemsSold = (int) DB::table('order_details')->sum('quantity');
+    $totalItemsSold = (int) DB::table('order_details')
+        ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
+        ->whereRaw('LOWER(orders.order_status) = ?', ['delivered'])
+        ->sum('order_details.quantity');
+
     $lowStockCount = Item::where('stock_quantity', '>', 0)
         ->where('stock_quantity', '<=', 10)
         ->count();
+
     $outOfStockCount = Item::where('stock_quantity', '<=', 0)->count();
 
-    return view('admin.dashboard', compact('totalItemsSold', 'lowStockCount', 'outOfStockCount'));
+    $totalFranchisees = Franchisee::count();
+    $activeFranchisees = Franchisee::where('franchisee_status', 'Active')->count();
+
+    $totalOrders = Order::count();
+    $pendingOrders = Order::whereRaw('LOWER(order_status) = ?', ['pending'])->count();
+    $preparingOrders = Order::whereRaw('LOWER(order_status) = ?', ['preparing'])->count();
+    $shippedOrders = Order::whereRaw('LOWER(order_status) = ?', ['shipped'])->count();
+    $deliveredOrders = Order::whereRaw('LOWER(order_status) = ?', ['delivered'])->count();
+    $cancelledOrders = Order::whereRaw('LOWER(order_status) = ?', ['cancelled'])->count();
+
+    $totalSales = (float) Order::query()
+        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
+        ->sum('total_amount');
+
+    $salesThisMonth = (float) Order::query()
+        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
+        ->whereMonth('order_date', now()->month)
+        ->whereYear('order_date', now()->year)
+        ->sum('total_amount');
+
+    $today = now()->startOfDay();
+    $fromDate = $today->copy()->subDays(13);
+
+    $trendRows = DB::table('orders')
+        ->selectRaw('DATE(order_date) as chart_date, SUM(total_amount) as total_sales, COUNT(*) as order_count')
+        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
+        ->whereDate('order_date', '>=', $fromDate->toDateString())
+        ->groupByRaw('DATE(order_date)')
+        ->orderByRaw('DATE(order_date)')
+        ->get();
+
+    $salesByDate = [];
+    $ordersByDate = [];
+
+    foreach ($trendRows as $row) {
+        $key = (string) $row->chart_date;
+        $salesByDate[$key] = (float) $row->total_sales;
+        $ordersByDate[$key] = (int) $row->order_count;
+    }
+
+    $salesTrendLabels = [];
+    $salesTrendValues = [];
+    $salesTrendOrderCounts = [];
+
+    for ($offset = 13; $offset >= 0; $offset--) {
+        $day = $today->copy()->subDays($offset);
+        $key = $day->toDateString();
+
+        $salesTrendLabels[] = $day->format('M d');
+        $salesTrendValues[] = round($salesByDate[$key] ?? 0, 2);
+        $salesTrendOrderCounts[] = $ordersByDate[$key] ?? 0;
+    }
+
+    $recentOrders = Order::query()
+        ->select('order_id', 'name', 'order_status', 'payment_status', 'total_amount', 'order_date')
+        ->orderByDesc('order_date')
+        ->limit(8)
+        ->get();
+
+    return view('admin.dashboard', compact(
+        'totalItemsSold',
+        'lowStockCount',
+        'outOfStockCount',
+        'totalFranchisees',
+        'activeFranchisees',
+        'totalOrders',
+        'pendingOrders',
+        'preparingOrders',
+        'shippedOrders',
+        'deliveredOrders',
+        'cancelledOrders',
+        'totalSales',
+        'salesThisMonth',
+        'salesTrendLabels',
+        'salesTrendValues',
+        'salesTrendOrderCounts',
+        'recentOrders'
+    ));
 })->name('admin.dashboard');
 
 // ACCOUNT CREATION (Admin only)

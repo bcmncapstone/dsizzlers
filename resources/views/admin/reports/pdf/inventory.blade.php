@@ -114,6 +114,60 @@
         </tbody>
     </table>
 
+    <!-- Stock Batch Breakdown -->
+    @if(!empty($fifoSnapshots))
+        <div style="page-break-before: always;">
+            <h2 style="margin-bottom: 8px;">Stock Batch Breakdown (Remaining Stock by Batch)</h2>
+            <p style="font-size: 10px; color: #555; margin-bottom: 10px;">Each section shows remaining stock per batch for an item, listed from oldest to newest.</p>
+
+            @foreach($fifoSnapshots as $snap)
+                @php $hasMismatch = $snap['stock_quantity'] !== $snap['fifo_available']; @endphp
+                <div style="margin-bottom: 14px;">
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 0;">
+                        <thead>
+                            <tr style="background: #f3f4f6;">
+                                <th colspan="4" style="padding: 6px 8px; text-align: left; font-size: 11px; border: 1px solid #ddd;">
+                                    {{ $snap['item_name'] }}
+                                    — Current Stock: {{ $snap['stock_quantity'] }}
+                                    | Tracked Available: {{ $snap['fifo_available'] }}
+                                    @if($hasMismatch)
+                                        <span style="color: #92400e; font-size: 9px; margin-left: 6px;">⚠ Mismatch</span>
+                                    @endif
+                                </th>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 5px; font-size: 10px;">Batch Type</th>
+                                <th style="border: 1px solid #ddd; padding: 5px; font-size: 10px;">Stock In ID</th>
+                                <th style="border: 1px solid #ddd; padding: 5px; font-size: 10px;">Received Date</th>
+                                <th style="border: 1px solid #ddd; padding: 5px; font-size: 10px; text-align: right;">Remaining Qty</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($snap['lots'] as $lot)
+                                <tr>
+                                    <td style="border: 1px solid #ddd; padding: 5px; font-size: 10px;">{{ ($lot['source'] ?? 'stock_in') === 'legacy_balance' ? 'Opening Stock' : 'Restocked' }}</td>
+                                    <td style="border: 1px solid #ddd; padding: 5px; font-size: 10px;">{{ $lot['stock_in_id'] ?? '-' }}</td>
+                                    <td style="border: 1px solid #ddd; padding: 5px; font-size: 10px;">
+                                        @if($lot['received_date'])
+                                            {{ \Illuminate\Support\Carbon::parse($lot['received_date'])->format('M d, Y H:i') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </td>
+                                    <td style="border: 1px solid #ddd; padding: 5px; font-size: 10px; text-align: right; font-weight: bold;">{{ $lot['quantity_remaining'] }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" style="border: 1px solid #ddd; padding: 5px; font-size: 10px; color: #888;">No remaining lots.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @endforeach
+        </div>
+    @endif
+
     <!-- Footer -->
     <div class="footer">
         <p><strong>Report generated:</strong> {{ now()->format('F d, Y') }} at {{ now()->format('h:i A') }} | D-Sizzlers Admin System | Confidential</p>
