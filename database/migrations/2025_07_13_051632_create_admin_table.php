@@ -19,6 +19,8 @@ return new class extends Migration
     $table->string('admin_email', 40)->unique();
     $table->string('admin_username', 30)->unique();
     $table->string('admin_pass', 255); // hash password
+    $table->text('reset_password_token')->nullable();
+    $table->timestamp('reset_password_expires_at')->nullable();
     $table->enum('admin_status', ['Active', 'Inactive'])->default('Active');
     $table->timestamps();
 });

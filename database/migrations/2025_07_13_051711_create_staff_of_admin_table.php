@@ -19,8 +19,11 @@ return new class extends Migration
             $table->string('astaff_fname', 30);
             $table->string('astaff_lname', 30);
             $table->string('astaff_contactNo', 11);
+            $table->string('astaff_email', 120)->nullable()->unique();
             $table->string('astaff_username', 30)->unique();
             $table->string('astaff_pass', 255);
+            $table->text('reset_password_token')->nullable();
+            $table->timestamp('reset_password_expires_at')->nullable();
             $table->enum('astaff_status', ['Active', 'Inactive'])->default('Active');
             $table->timestamps();
         });

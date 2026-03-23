@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class FranchisorStaff extends Authenticatable
 {
+    use Notifiable;
+
     protected $table = 'admin_staff'; 
     protected $primaryKey = 'astaff_id'; 
 
@@ -13,7 +16,7 @@ class FranchisorStaff extends Authenticatable
 
     protected $fillable = [
         'admin_id', 'astaff_fname', 'astaff_lname', 'astaff_contactNo',
-        'astaff_username', 'astaff_pass', 'astaff_status'
+        'astaff_email', 'astaff_username', 'astaff_pass', 'astaff_status'
     ];
 
     protected $hidden = [
@@ -27,5 +30,10 @@ class FranchisorStaff extends Authenticatable
     public function getAuthPassword()
     {
         return $this->astaff_pass;
+    }
+
+    public function getEmailForPasswordReset(): string
+    {
+        return (string) $this->astaff_email;
     }
 }

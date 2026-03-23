@@ -59,6 +59,10 @@
                         <input type="password" id="password" name="password" class="login-input" placeholder="Enter your password" required>
                     </div>
 
+                    <div style="text-align: right; margin-bottom: 16px;">
+                        <a href="#" id="forgot-link" class="login-back-link" style="margin: 0; display: none;">Forgot Password?</a>
+                    </div>
+
                     <button type="submit" class="login-button">LOGIN</button>
                 </form>
             </div>
@@ -66,15 +70,36 @@
     </div>
 
     <script>
+        const forgotRoutes = {
+            'franchisor':       '{{ route('password.request', ['role' => 'admin']) }}',
+            'franchisee':       '{{ route('password.request', ['role' => 'franchisee']) }}',
+            'franchisor-staff': '{{ route('password.request', ['role' => 'franchisor-staff']) }}',
+            'franchisee-staff': '{{ route('password.request', ['role' => 'franchisee-staff']) }}',
+        };
+
         function updateFormForRole(role) {
             const roleTypeInput = document.getElementById('role_type');
             roleTypeInput.value = role;
-            
+
+            const forgotLink = document.getElementById('forgot-link');
+            if (role && forgotRoutes[role]) {
+                forgotLink.href = forgotRoutes[role];
+                forgotLink.style.display = 'inline';
+            } else {
+                forgotLink.style.display = 'none';
+            }
+
             if (role) {
-                // Focus on username field
                 document.getElementById('username').focus();
             }
         }
+
+        document.getElementById('forgot-link').addEventListener('click', function (e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const base = this.getAttribute('href');
+            window.location.href = username ? `${base}?username=${encodeURIComponent(username)}` : base;
+        });
 
         // Prevent submission if role is not selected
         document.getElementById('loginForm').addEventListener('submit', function(e) {

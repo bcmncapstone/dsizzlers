@@ -13,7 +13,7 @@
         <div class="account-create-form">
             {{-- Success Alert --}}
             @if(session('success'))
-                <div class="account-success-alert">
+                <div class="account-success-alert js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">
                     ✓ {{ session('success') }}
                 </div>
             @endif
@@ -35,7 +35,7 @@
 
                 {{-- First Name --}}
                 <div class="account-form-group">
-                    <label class="account-form-label">First Name</label>
+                    <label class="account-form-label">First Name *</label>
                     <input
                         type="text"
                         name="fname"
@@ -48,7 +48,7 @@
 
                 {{-- Last Name --}}
                 <div class="account-form-group">
-                    <label class="account-form-label">Last Name</label>
+                    <label class="account-form-label">Last Name *</label>
                     <input
                         type="text"
                         name="lname"
@@ -61,7 +61,7 @@
 
                 {{-- Contact Number --}}
                 <div class="account-form-group">
-                    <label class="account-form-label">Contact Number</label>
+                    <label class="account-form-label">Contact Number *</label>
                     <input
                         type="text"
                         name="contact"
@@ -72,9 +72,22 @@
                     >
                 </div>
 
+                {{-- Email --}}
+                <div class="account-form-group">
+                    <label class="account-form-label">Email *</label>
+                    <input
+                        type="email"
+                        name="email"
+                        value="{{ old('email') }}"
+                        required
+                        class="account-form-input"
+                        placeholder="Enter email address"
+                    >
+                </div>
+
                 {{-- Username --}}
                 <div class="account-form-group">
-                    <label class="account-form-label">Username</label>
+                    <label class="account-form-label">Username *</label>
                     <input
                         type="text"
                         name="username"
@@ -87,7 +100,7 @@
 
                 {{-- Password --}}
                 <div class="account-form-group">
-                    <label class="account-form-label">Password</label>
+                    <label class="account-form-label">Password *</label>
                     <input
                         type="password"
                         name="password"
@@ -105,4 +118,19 @@
         </div>
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.js-flash-alert').forEach(function (el) {
+    const timeout = parseInt(el.dataset.timeout || '3000', 10);
+
+    setTimeout(function () {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '0';
+
+        setTimeout(function () {
+            el.remove();
+        }, 400);
+    }, Number.isFinite(timeout) ? timeout : 3000);
+});
+</script>
 @endsection

@@ -22,10 +22,10 @@
             <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" for="login_role">Switch Role:</label>
                 <select name="login_role" id="login_role" class="form-control" onchange="switchLoginRole(this.value)">
-                    <option value="{{ url('/admin/login') }}">Franchisor Login</option>
-                    <option value="{{ url('/login/franchisee') }}">Franchisee Login</option>
-                    <option value="{{ url('/login/franchisor-staff') }}" selected>Franchisor Staff Login</option>
-                    <option value="{{ url('/login/franchisee-staff') }}">Franchisee Staff Login</option>
+                    <option value="{{ url('/admin/login') }}">Franchisor </option>
+                    <option value="{{ url('/login/franchisee') }}">Franchisee </option>
+                    <option value="{{ url('/login/franchisor-staff') }}" selected>Franchisor Staff </option>
+                    <option value="{{ url('/login/franchisee-staff') }}">Franchisee Staff </option>
                 </select>
             </div>
 
@@ -50,6 +50,10 @@
                     <input type="password" id="password" name="password" class="login-input" required>
                 </div>
 
+                <div style="text-align: right; margin-bottom: 16px;">
+                    <a href="{{ route('password.request', ['role' => 'franchisor-staff']) }}" id="forgot-link-franchisor-staff" class="login-back-link" style="margin: 0;">Forgot Password?</a>
+                </div>
+
                 <button type="submit" class="login-button">Login</button>
             </form>
 
@@ -63,6 +67,13 @@
                 window.location.href = loginUrl;
             }
         }
+
+        document.getElementById('forgot-link-franchisor-staff')?.addEventListener('click', function (event) {
+            event.preventDefault();
+            const username = document.getElementById('username')?.value || '';
+            const base = this.getAttribute('href');
+            window.location.href = username ? `${base}?username=${encodeURIComponent(username)}` : base;
+        });
     </script>
 </body>
 </html>

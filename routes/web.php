@@ -19,6 +19,7 @@ use App\Http\Controllers\ManageOrderController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\DigitalMarketingController;
 use App\Http\Controllers\CommunicationController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\BranchManagementController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Franchisee\ReportController as FranchiseeReportController;
@@ -153,6 +154,20 @@ Route::post('/login/franchisor-staff', [LoginController::class, 'loginFranchisor
 // Franchisee Staff Login
 Route::get('/login/franchisee-staff', [LoginController::class, 'showFranchiseeStaffLogin'])->name('login.franchiseeStaff');
 Route::post('/login/franchisee-staff', [LoginController::class, 'loginFranchiseeStaff']);
+
+// Password reset routes (all login roles)
+Route::get('/password/forgot/{role}', [PasswordResetController::class, 'showForgotForm'])
+    ->whereIn('role', ['admin', 'franchisee', 'franchisor-staff', 'franchisee-staff'])
+    ->name('password.request');
+Route::post('/password/forgot/{role}', [PasswordResetController::class, 'sendResetLink'])
+    ->whereIn('role', ['admin', 'franchisee', 'franchisor-staff', 'franchisee-staff'])
+    ->name('password.email');
+Route::get('/password/reset/{role}/{token}', [PasswordResetController::class, 'showResetForm'])
+    ->whereIn('role', ['admin', 'franchisee', 'franchisor-staff', 'franchisee-staff'])
+    ->name('password.reset.form');
+Route::post('/password/reset/{role}', [PasswordResetController::class, 'reset'])
+    ->whereIn('role', ['admin', 'franchisee', 'franchisor-staff', 'franchisee-staff'])
+    ->name('password.update');
 
 // Franchisee Dashboard
 Route::middleware(['auth:franchisee'])->get('/franchisee/dashboard', function () {

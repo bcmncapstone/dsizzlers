@@ -2,9 +2,12 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class Franchisee extends Authenticatable
 {
+    use Notifiable;
+
     protected $table = 'franchisees';
     protected $primaryKey = 'franchisee_id';
     public $timestamps = false;
@@ -32,6 +35,12 @@ class Franchisee extends Authenticatable
     {
         return $this->franchisee_pass;
     }
+
+    public function getEmailForPasswordReset(): string
+    {
+        return (string) $this->franchisee_email;
+    }
+
      public function branch()
     {
         return $this->hasOne(Branch::class, 'email', 'franchisee_email');

@@ -2,15 +2,15 @@
 
 @section('content')
 <div class="communication-page">
-    <h2>📩 Communication Management</h2>
+    <h2>Communication Management</h2>
 
     <hr>
 
     <section class="conversation-section">
-        <h3>💬 Conversations</h3>
+        <h3>Conversations</h3>
 
         <div class="new-conversation-container">
-            <h4>➕ Start a New Conversation</h4>
+            <h4>Start a New Conversation</h4>
 
             <form method="POST" action="{{ route('communication.start') }}">
                 @csrf
@@ -34,10 +34,7 @@
                     <select name="partner_id" id="partner_id" required>
                         <option value="" disabled selected>— Choose a Franchisor —</option>
                         @foreach(\App\Models\Admin::all() as $admin)
-                            <option value="{{ $admin->admin_id }}">{{ $admin->admin_fname }} {{ $admin->admin_lname }} (Admin)</option>
-                        @endforeach
-                        @foreach(\App\Models\FranchisorStaff::all() as $astaff)
-                            <option value="{{ $astaff->astaff_id }}">{{ $astaff->astaff_fname }} {{ $astaff->astaff_lname }} (Staff)</option>
+                            <option value="{{ $admin->admin_id }}">{{ $admin->admin_fname }} {{ $admin->admin_lname }}</option>
                         @endforeach
                     </select>
                 @else
@@ -57,7 +54,7 @@
 
         <hr>
 
-        <h4>📨 Existing Conversations</h4>
+        <h4>Existing Conversations</h4>
 
         <ul class="conversations-list">
             @forelse($conversations as $conversation)
@@ -84,7 +81,7 @@
                 @endphp
                 <li>
                     <a href="{{ url('/communication/' . $conversation->id) }}">
-                        💬 {{ $displayName }}
+                         {{ $displayName }}
                     </a>
                 </li>
             @empty
@@ -98,18 +95,18 @@
     {{-- ADMIN ONLY: Upload Digital Marketing --}}
     @if(auth()->guard('admin')->check())
         <section class="marketing-section">
-            <h3>📢 Digital Marketing Management</h3>
+            <h3>Digital Marketing Management</h3>
 
             {{-- Success/Error Messages --}}
             @if(session('success'))
                 <div class="alert alert-success">
-                    ✅ {{ session('success') }}
+                    {{ session('success') }}
                 </div>
             @endif
 
             @if(session('error'))
                 <div class="alert alert-error">
-                    ❌ {{ session('error') }}
+                     {{ session('error') }}
                 </div>
             @endif
 
@@ -124,7 +121,7 @@
             @endif
 
             <div class="marketing-upload-container">
-                <h4>📤 Upload Digital Marketing</h4>
+                <h4> Upload Digital Marketing</h4>
                 
                 <form method="POST" action="{{ route('digital-marketing.store') }}" enctype="multipart/form-data" id="digitalMarketingForm">
                     @csrf
@@ -149,14 +146,14 @@
                                 type="button" 
                                 onclick="document.getElementById('marketing_image').click()"
                                 class="btn btn-gallery">
-                                📁 Choose from Gallery
+                                Choose from Gallery
                             </button>
                             
                             <button 
                                 type="button" 
                                 onclick="openCameraModal()"
                                 class="btn btn-camera">
-                                📷 Take Photo
+                                Take Photo
                             </button>
                         </div>
                         
@@ -168,7 +165,7 @@
                                 type="button" 
                                 onclick="removeImage()"
                                 class="btn btn-remove">
-                                ✕ Remove Image
+                                Remove Image
                             </button>
                         </div>
                     </div>
@@ -187,7 +184,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-submit">
-                        🚀 Upload Post
+                        Upload Post
                     </button>
                 </form>
             </div>
@@ -195,7 +192,7 @@
             {{-- Camera Modal --}}
             <div id="camera-modal" class="camera-modal">
                 <div class="camera-modal-content">
-                    <h3>📷 Take Photo</h3>
+                    <h3>Take Photo</h3>
                     <video id="camera-stream" autoplay playsinline class="camera-stream"></video>
                     <canvas id="camera-canvas" class="camera-canvas"></canvas>
                     <div class="modal-button-group">
@@ -203,13 +200,13 @@
                             type="button" 
                             onclick="capturePhoto()"
                             class="btn btn-camera">
-                            📸 Capture
+                             Capture
                         </button>
                         <button 
                             type="button" 
                             onclick="closeCameraModal()"
                             class="btn btn-close">
-                            ✕ Close
+                            Close
                         </button>
                     </div>
                 </div>
@@ -217,7 +214,7 @@
 
             <hr>
 
-            <h4>📋 Uploaded Marketing Materials</h4>
+            <h4>Uploaded Marketing Materials</h4>
 
             <div class="marketing-posts-container">
                 @forelse($digitalMarketing as $post)
@@ -261,25 +258,25 @@
                             <button 
                                 onclick="viewFullImage({{ $post->id }}, 'admin')"
                                 class="btn btn-gallery">
-                                👁️ View
+                                View
                             </button>
                             <button 
                                 onclick="editPost({{ $post->id }})"
                                 class="btn btn-edit">
-                                ✏️ Edit
+                                Edit
                             </button>
                             <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" class="form-inline" onsubmit="return confirm('Are you sure you want to delete this post?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-remove">
-                                    🗑️ Delete
+                                    Delete
                                 </button>
                             </form>
                             <a 
                                 href="{{ media_url($post->image_path) }}" 
                                 download="marketing-{{ $post->id }}.jpg"
                                 class="btn btn-camera">
-                                ⬇️ Download
+                                Download
                             </a>
                         </div>
                     </div>
@@ -293,7 +290,7 @@
     {{-- FRANCHISEE ONLY: View Digital Marketing --}}
     @if(auth()->guard('franchisee')->check() || auth()->guard('franchisee_staff')->check())
         <section class="marketing-section">
-            <h3>📢 Digital Marketing Posts</h3>
+            <h3>Digital Marketing Posts</h3>
 
             <div class="marketing-posts-container">
                 @forelse($digitalMarketing as $post)

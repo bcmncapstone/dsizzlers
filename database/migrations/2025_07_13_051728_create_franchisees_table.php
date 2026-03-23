@@ -21,6 +21,8 @@ return new class extends Migration
             $table->string('franchisee_email', 40)->unique();
             $table->string('franchisee_username', 30)->unique();
             $table->string('franchisee_pass', 255);
+            $table->text('reset_password_token')->nullable();
+            $table->timestamp('reset_password_expires_at')->nullable();
             $table->string('franchisee_address');
             $table->enum('franchisee_status', ['Active', 'Inactive'])->default('Active');
             $table->timestamps();

@@ -15,7 +15,7 @@
         <div class="account-create-form">
             {{-- Success Alert --}}
             @if(session('success'))
-                <div class="account-success-alert">
+                <div class="account-success-alert js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">
                     ✓ {{ session('success') }}
                 </div>
             @endif
@@ -104,4 +104,19 @@
         </div>
     </div>
 </div>
+
+<script>
+document.querySelectorAll('.js-flash-alert').forEach(function (el) {
+    const timeout = parseInt(el.dataset.timeout || '3000', 10);
+
+    setTimeout(function () {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '0';
+
+        setTimeout(function () {
+            el.remove();
+        }, 400);
+    }, Number.isFinite(timeout) ? timeout : 3000);
+});
+</script>
 @endsection

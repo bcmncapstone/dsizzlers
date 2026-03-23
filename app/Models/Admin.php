@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable
 {
+    use Notifiable;
+
     // Specify table name
     protected $table = 'admins';
 
@@ -32,5 +35,10 @@ class Admin extends Authenticatable
     public function getAuthPassword()
     {
         return $this->admin_pass; 
+    }
+
+    public function getEmailForPasswordReset(): string
+    {
+        return (string) $this->admin_email;
     }
 }

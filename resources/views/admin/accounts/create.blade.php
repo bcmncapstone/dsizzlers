@@ -7,7 +7,7 @@
         <h2>Create Account</h2>
 
         @if(session('success'))
-            <div class="alert alert-success">
+            <div class="alert alert-success js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">
                 <strong>✓</strong> {{ session('success') }}
             </div>
         @endif
@@ -51,6 +51,11 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label">Email: *</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Username: *</label>
                 <input type="text" name="username" class="form-control" required>
             </div>
@@ -63,13 +68,8 @@
             <!-- Franchisee Only Fields -->
             <div id="franchisee_fields" style="display:none;">
                 <div class="form-group">
-                    <label class="form-label">Email: *</label>
-                    <input type="email" name="email" class="form-control" required>
-                </div>
-
-                <div class="form-group">
                     <label class="form-label">Address: *</label>
-                    <input type="text" name="address" class="form-control" required>
+                    <input type="text" name="address" class="form-control">
                 </div>
             </div>
 
@@ -88,12 +88,28 @@
 <script>
 function toggleFields(role) {
     const franchiseeFields = document.getElementById('franchisee_fields');
+    const addressInput = document.querySelector('input[name="address"]');
     if (role === 'franchisee') {
         franchiseeFields.style.display = 'block';
+        if (addressInput) addressInput.required = true;
     } else {
         franchiseeFields.style.display = 'none';
+        if (addressInput) addressInput.required = false;
     }
 }
+
+document.querySelectorAll('.js-flash-alert').forEach(function (el) {
+    const timeout = parseInt(el.dataset.timeout || '3000', 10);
+
+    setTimeout(function () {
+        el.style.transition = 'opacity 0.4s ease';
+        el.style.opacity = '0';
+
+        setTimeout(function () {
+            el.remove();
+        }, 400);
+    }, Number.isFinite(timeout) ? timeout : 3000);
+});
 </script>
 
 @endsection

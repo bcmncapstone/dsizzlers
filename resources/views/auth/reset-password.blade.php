@@ -1,39 +1,62 @@
-<x-guest-layout>
-    <form method="POST" action="{{ route('password.store') }}">
-        @csrf
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password - D Sizzlers</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body>
+    <div class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <h2 class="login-title">Reset Password</h2>
+                <p>Create a new password for {{ $roleLabel }}</p>
+            </div>
 
-        <!-- Password Reset Token -->
-        <input type="hidden" name="token" value="{{ $request->route('token') }}">
+            @if($errors->any())
+                <div class="login-error">
+                    <ul style="margin: 0; padding-left: 20px;">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email', $request->email)" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+            <form method="POST" action="{{ route('password.update', ['role' => $role]) }}" class="login-form">
+                @csrf
+
+                <input type="hidden" name="token" value="{{ $token }}">
+
+                <div class="login-form-group">
+                    <label for="email" class="login-label">Email Address:</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        class="login-input"
+                        value="{{ old('email', $email) }}"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="login-form-group">
+                    <label for="password" class="login-label">New Password:</label>
+                    <input type="password" id="password" name="password" class="login-input" required>
+                </div>
+
+                <div class="login-form-group">
+                    <label for="password_confirmation" class="login-label">Confirm Password:</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation" class="login-input" required>
+                </div>
+
+                <button type="submit" class="login-button">Reset Password</button>
+            </form>
+
+            <a href="{{ route($loginRoute) }}" class="login-back-link">← Back to Login</a>
         </div>
-
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" class="block mt-1 w-full" type="password" name="password" required autocomplete="new-password" />
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
-
-        <!-- Confirm Password -->
-        <div class="mt-4">
-            <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
-
-            <x-text-input id="password_confirmation" class="block mt-1 w-full"
-                                type="password"
-                                name="password_confirmation" required autocomplete="new-password" />
-
-            <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
-        </div>
-
-        <div class="flex items-center justify-end mt-4">
-            <x-primary-button>
-                {{ __('Reset Password') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+    </div>
+</body>
+</html>

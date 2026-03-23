@@ -68,7 +68,7 @@ class SendBranchContractExpiryReminders extends Command
             }
 
             try {
-                Mail::to($branch->email)->send(new BranchContractExpiryReminder($branch, $days));
+                Mail::to($branch->email)->queue(new BranchContractExpiryReminder($branch, $days));
 
                 // Keep reminder marker beyond expiration date to avoid duplicate sends.
                 $reminderTtl = Carbon::parse($expirationDate)->endOfDay()->addDays(7);
@@ -133,7 +133,7 @@ class SendBranchContractExpiryReminders extends Command
             }
 
             try {
-                Mail::to($branch->email)->send(new BranchContractExpiredNotification($branch));
+                Mail::to($branch->email)->queue(new BranchContractExpiredNotification($branch));
 
                 // Keep a marker for 30 days to avoid duplicate notices.
                 Cache::put($notificationKey, now()->toDateTimeString(), now()->addDays(30));

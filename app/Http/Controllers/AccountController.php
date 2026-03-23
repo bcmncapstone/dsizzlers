@@ -52,6 +52,7 @@ class AccountController extends Controller
         } elseif ($role === 'franchisor_staff') {
             $request->validate([
                 'username' => 'required|string|unique:admin_staff,astaff_username',
+                'email' => 'required|email|unique:admin_staff,astaff_email',
             ]);
 
             $created = FranchisorStaff::create([
@@ -59,6 +60,7 @@ class AccountController extends Controller
                 'astaff_fname' => $request->fname,
                 'astaff_lname' => $request->lname,
                 'astaff_contactNo' => $request->contact,
+                'astaff_email' => $request->email,
                 'astaff_username' => $request->username,
                 'astaff_pass' => Hash::make($request->password),
                 'astaff_status' => 'Active',
@@ -108,7 +110,9 @@ class AccountController extends Controller
             'fname'   => 'required|string|max:255',
             'lname'   => 'required|string|max:255',
             'contact' => 'required|string|max:20',
+            'email'   => 'required|email|unique:franchisee_staff,fstaff_email',
             'username'=> 'required|string|unique:franchisee_staff,fstaff_username',
+            'password'=> 'required|string|min:6',
         ]);
 
         FranchiseeStaff::create([
@@ -116,6 +120,7 @@ class AccountController extends Controller
             'fstaff_fname'     => $request->fname,
             'fstaff_lname'     => $request->lname,
             'fstaff_contactNo' => $request->contact,
+            'fstaff_email'     => $request->email,
             'fstaff_username'  => $request->username,
             'fstaff_pass'      => Hash::make($request->password),
             'fstaff_status'    => 'Active',
