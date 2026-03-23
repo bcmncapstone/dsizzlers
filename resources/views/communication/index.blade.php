@@ -2,15 +2,21 @@
 
 @section('content')
 <div class="communication-page">
-    <h2>📩 Communication Management</h2>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" xmlns="http://www.w3.org/2000/svg" style="color: var(--dsizzlers-orange);">
+            <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+            <path d="m22 7-10 5L2 7"></path>
+        </svg>
+        <h2 style="margin: 0;">Communication Management</h2>
+    </div>
 
     <hr>
 
     <section class="conversation-section">
-        <h3>💬 Conversations</h3>
+        <h3>Conversations</h3>
 
         <div class="new-conversation-container">
-            <h4>➕ Start a New Conversation</h4>
+            <h4>Start a New Conversation</h4>
 
             <form method="POST" action="{{ route('communication.start') }}">
                 @csrf
@@ -57,7 +63,7 @@
 
         <hr>
 
-        <h4>📨 Existing Conversations</h4>
+        <h4>Existing Conversations</h4>
 
         <ul class="conversations-list">
             @forelse($conversations as $conversation)
@@ -84,7 +90,7 @@
                 @endphp
                 <li>
                     <a href="{{ url('/communication/' . $conversation->id) }}">
-                        💬 {{ $displayName }}
+                        {{ $displayName }}
                     </a>
                 </li>
             @empty
@@ -98,18 +104,18 @@
     {{-- ADMIN ONLY: Upload Digital Marketing --}}
     @if(auth()->guard('admin')->check())
         <section class="marketing-section">
-            <h3>📢 Digital Marketing Management</h3>
+            <h3>Digital Marketing Management</h3>
 
             {{-- Success/Error Messages --}}
             @if(session('success'))
                 <div class="alert alert-success">
-                    ✅ {{ session('success') }}
+                    {{ session('success') }}
                 </div>
             @endif
 
             @if(session('error'))
                 <div class="alert alert-error">
-                    ❌ {{ session('error') }}
+                    {{ session('error') }}
                 </div>
             @endif
 
@@ -124,7 +130,7 @@
             @endif
 
             <div class="marketing-upload-container">
-                <h4>📤 Upload Digital Marketing</h4>
+                <h4>Upload Digital Marketing</h4>
                 
                 <form method="POST" action="{{ route('digital-marketing.store') }}" enctype="multipart/form-data" id="digitalMarketingForm">
                     @csrf
@@ -149,14 +155,14 @@
                                 type="button" 
                                 onclick="document.getElementById('marketing_image').click()"
                                 class="btn btn-gallery">
-                                📁 Choose from Gallery
+                                Choose from Gallery
                             </button>
                             
                             <button 
                                 type="button" 
                                 onclick="openCameraModal()"
                                 class="btn btn-camera">
-                                📷 Take Photo
+                                Take Photo
                             </button>
                         </div>
                         
@@ -168,7 +174,7 @@
                                 type="button" 
                                 onclick="removeImage()"
                                 class="btn btn-remove">
-                                ✕ Remove Image
+                                Remove Image
                             </button>
                         </div>
                     </div>
@@ -187,7 +193,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-submit">
-                        🚀 Upload Post
+                        Upload Post
                     </button>
                 </form>
             </div>
@@ -195,7 +201,7 @@
             {{-- Camera Modal --}}
             <div id="camera-modal" class="camera-modal">
                 <div class="camera-modal-content">
-                    <h3>📷 Take Photo</h3>
+                    <h3>Take Photo</h3>
                     <video id="camera-stream" autoplay playsinline class="camera-stream"></video>
                     <canvas id="camera-canvas" class="camera-canvas"></canvas>
                     <div class="modal-button-group">
@@ -203,13 +209,13 @@
                             type="button" 
                             onclick="capturePhoto()"
                             class="btn btn-camera">
-                            📸 Capture
+                            Capture
                         </button>
                         <button 
                             type="button" 
                             onclick="closeCameraModal()"
                             class="btn btn-close">
-                            ✕ Close
+                            Close
                         </button>
                     </div>
                 </div>
@@ -217,7 +223,7 @@
 
             <hr>
 
-            <h4>📋 Uploaded Marketing Materials</h4>
+            <h4>Uploaded Marketing Materials</h4>
 
             <div class="marketing-posts-container">
                 @forelse($digitalMarketing as $post)
@@ -241,10 +247,10 @@
                                 class="form-textarea">{{ $post->description }}</textarea>
                             <div class="button-group">
                                 <button type="submit" class="btn btn-camera">
-                                    ✓ Save
+                                    Save
                                 </button>
                                 <button type="button" onclick="cancelEdit({{ $post->id }})" class="btn btn-submit">
-                                    ✕ Cancel
+                                    Cancel
                                 </button>
                             </div>
                         </form>
@@ -261,25 +267,25 @@
                             <button 
                                 onclick="viewFullImage({{ $post->id }}, 'admin')"
                                 class="btn btn-gallery">
-                                👁️ View
+                                View
                             </button>
                             <button 
                                 onclick="editPost({{ $post->id }})"
                                 class="btn btn-edit">
-                                ✏️ Edit
+                                Edit
                             </button>
                             <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" class="form-inline" onsubmit="return confirm('Are you sure you want to delete this post?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-remove">
-                                    🗑️ Delete
+                                    Delete
                                 </button>
                             </form>
                             <a 
                                 href="{{ media_url($post->image_path) }}" 
                                 download="marketing-{{ $post->id }}.jpg"
                                 class="btn btn-camera">
-                                ⬇️ Download
+                                Download
                             </a>
                         </div>
                     </div>
@@ -293,7 +299,7 @@
     {{-- FRANCHISEE ONLY: View Digital Marketing --}}
     @if(auth()->guard('franchisee')->check() || auth()->guard('franchisee_staff')->check())
         <section class="marketing-section">
-            <h3>📢 Digital Marketing Posts</h3>
+            <h3>Digital Marketing Posts</h3>
 
             <div class="marketing-posts-container">
                 @forelse($digitalMarketing as $post)
@@ -316,13 +322,13 @@
                             <button 
                                 onclick="viewFullImage({{ $post->id }}, 'franchisee')"
                                 class="btn btn-gallery">
-                                👁️ View
+                                View
                             </button>
                             <a 
                                 href="{{ media_url($post->image_path) }}" 
                                 download="marketing-{{ $post->id }}.jpg"
                                 class="btn btn-camera">
-                                ⬇️ Download
+                                Download
                             </a>
                         </div>
                     </div>
@@ -339,7 +345,7 @@
             <button 
                 onclick="closeImageModal()"
                 class="btn btn-close">
-                ✕
+                Close
             </button>
             <img id="modal-image" src="" alt="Full Size" class="modal-image">
             <div class="modal-download-container">
@@ -348,7 +354,7 @@
                     href="" 
                     download
                     class="btn btn-camera">
-                    ⬇️ Download Image
+                    Download Image
                 </a>
             </div>
         </div>
@@ -365,7 +371,7 @@
             reader.onload = function(e) {
                 document.getElementById('preview-img').src = e.target.result;
                 document.getElementById('image-preview').classList.add('show');
-                document.getElementById('file-name').textContent = '✓ ' + file.name;
+                document.getElementById('file-name').textContent = file.name;
             };
             reader.readAsDataURL(file);
         }
@@ -407,7 +413,7 @@
             reader.onload = function(e) {
                 document.getElementById('preview-img').src = e.target.result;
                 document.getElementById('image-preview').classList.add('show');
-                document.getElementById('file-name').textContent = '✓ camera-photo.jpg';
+                document.getElementById('file-name').textContent = 'camera-photo.jpg';
             };
             reader.readAsDataURL(file);
             closeCameraModal();

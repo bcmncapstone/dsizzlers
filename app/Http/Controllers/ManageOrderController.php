@@ -12,14 +12,22 @@ use Illuminate\Support\Facades\Log;
 class ManageOrderController extends Controller
 {
     // Display all orders
-    public function index()
+    public function index(Request $request)
     {
-        $orders = Order::all();
+        $selectedStatus = trim((string) $request->query('status', ''));
+
+        $ordersQuery = Order::query();
+
+        if ($selectedStatus !== '') {
+            $ordersQuery->where('order_status', $selectedStatus);
+        }
+
+        $orders = $ordersQuery->latest('created_at')->get();
 
         if (auth('admin')->check()) {
-            return view('admin.manageOrder.index', compact('orders'));
+            return view('admin.manageOrder.index', compact('orders', 'selectedStatus'));
         } elseif (auth('franchisor_staff')->check()) {
-            return view('franchisor-staff.manageOrder.index', compact('orders'));
+            return view('franchisor-staff.manageOrder.index', compact('orders', 'selectedStatus'));
         }
 
         abort(403, 'Unauthorized action.');

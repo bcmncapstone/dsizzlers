@@ -88,6 +88,33 @@ body {
     background-color: var(--dsizzlers-gray-lightest);
     color: var(--dsizzlers-gray-darkest);
     line-height: 1.6;
+    min-width: 320px;
+    overflow-x: hidden;
+}
+
+main {
+    width: 100%;
+}
+
+img,
+svg,
+video,
+canvas,
+iframe {
+    max-width: 100%;
+}
+
+img,
+video,
+canvas {
+    height: auto;
+}
+
+input,
+select,
+textarea,
+button {
+    max-width: 100%;
 }
 
 /* ====================================
@@ -261,36 +288,6 @@ body {
     outline: none;
     border-color: var(--dsizzlers-orange);
     box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
-}
-
-.conversations-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.conversations-list li {
-    margin-bottom: var(--spacing-sm);
-}
-
-.conversations-list a {
-    display: block;
-    padding: var(--spacing-md);
-    background-color: var(--dsizzlers-white);
-    border: 2px solid var(--dsizzlers-gray);
-    border-radius: var(--radius-md);
-    color: var(--dsizzlers-black);
-    text-decoration: none;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.conversations-list a:hover {
-    border-color: var(--dsizzlers-orange);
-    background-color: var(--dsizzlers-orange);
-    color: var(--dsizzlers-white);
-    transform: translateX(5px);
-    box-shadow: var(--shadow-orange);
 }
 
 .empty-state {
@@ -699,6 +696,22 @@ body {
     margin: 0;
 }
 
+.login-logo-circle {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto var(--spacing-md);
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.login-logo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center;
+}
+
 .login-form {
     margin-top: var(--spacing-lg);
 }
@@ -790,6 +803,16 @@ body {
     
     .login-title {
         font-size: 20px;
+    }
+
+    .login-logo-circle {
+        width: 90px;
+        height: 90px;
+    }
+
+    .login-logo {
+        width: 100%;
+        height: 100%;
     }
     
     .login-icon {
@@ -1678,6 +1701,16 @@ table td {
     z-index: 1000;
 }
 
+.navbar-shell {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
 .navbar-brand {
     display: flex;
     align-items: center;
@@ -1688,17 +1721,55 @@ table td {
     font-size: 18px;
 }
 
+.navbar-brand > div:last-child {
+    min-width: 0;
+}
+
 .navbar-logo {
     width: 50px;
     height: 50px;
-    background-color: var(--dsizzlers-white);
     border-radius: 50%;
-    display: flex;
+    display: block;
+    object-fit: cover;
+    background-color: var(--dsizzlers-white);
+    padding: 3px;
+    box-shadow: var(--shadow-md);
+    flex-shrink: 0;
+}
+
+.navbar-toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: var(--radius-md);
     align-items: center;
     justify-content: center;
-    box-shadow: var(--shadow-md);
-    font-weight: 900;
-    color: var(--dsizzlers-orange);
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.navbar-toggle span {
+    width: 18px;
+    height: 2px;
+    background-color: var(--dsizzlers-white);
+    border-radius: 999px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.navbar-toggle.is-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.navbar-toggle.is-open span:nth-child(2) {
+    opacity: 0;
+}
+
+.navbar-toggle.is-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
 }
 
 .navbar-nav {
@@ -1772,6 +1843,15 @@ table td {
 .dashboard-header .emoji {
     font-size: 48px;
 }
+
+.dashboard-header-split {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--spacing-lg);
+}
+
+
 
 /* ====================================
    CARD GRID LAYOUT
@@ -2130,14 +2210,91 @@ table tbody tr:last-child td {
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
-    .navbar-nav {
-        gap: var(--spacing-sm);
+
+    .page-header,
+    .stats-section,
+    .table-section,
+    .table-responsive,
+    .form-container,
+    .marketing-section,
+    .marketing-upload-container,
+    .communication-page {
+        padding-left: var(--spacing-md);
+        padding-right: var(--spacing-md);
     }
-    
-    .navbar-nav a {
-        padding: var(--spacing-xs) var(--spacing-sm);
-        font-size: 13px;
+
+    .chat-header {
+        padding: var(--spacing-md);
+        font-size: 18px;
+    }
+
+    .chat-messages {
+        padding: var(--spacing-md);
+    }
+
+    .chat-message-content {
+        max-width: calc(100% - 52px);
+    }
+
+    .chat-form {
+        align-items: flex-end;
+    }
+
+    .chat-input-wrapper {
+        min-width: 0;
+    }
+
+    .chat-image {
+        max-width: min(100%, 220px) !important;
+    }
+
+    .floating-messages-btn {
+        width: 52px;
+        height: 52px;
+        right: 16px;
+        bottom: 16px;
+    }
+
+}
+
+@media (max-width: 900px) {
+    .navbar {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .navbar-shell {
+        flex-wrap: wrap;
+    }
+
+    .navbar-toggle {
+        display: inline-flex;
+    }
+
+    .navbar-nav {
+        display: none;
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding-top: var(--spacing-md);
+    }
+
+    .navbar-nav.is-open {
+        display: flex;
+    }
+
+    .navbar-nav li,
+    .navbar-nav li form {
+        width: 100%;
+    }
+
+    .navbar-nav a,
+    .navbar-logout {
+        display: block;
+        width: 100%;
+        margin-left: 0;
+        text-align: center;
+        padding: 12px var(--spacing-md);
     }
 }
 
@@ -2153,12 +2310,57 @@ table tbody tr:last-child td {
     .navbar-brand {
         gap: var(--spacing-sm);
         font-size: 14px;
+        max-width: calc(100% - 60px);
     }
     
     .navbar-logo {
         width: 40px;
         height: 40px;
         font-size: 18px;
+    }
+
+    .order-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-header h1,
+    .dashboard-header h1 {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 640px) {
+    .p-8 {
+        padding: 1rem !important;
+    }
+
+    .px-6 {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .py-6 {
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .max-w-7xl,
+    .max-w-6xl,
+    .max-w-5xl,
+    .max-w-4xl,
+    .max-w-3xl,
+    .max-w-2xl,
+    .max-w-xl,
+    .max-w-lg {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .overflow-x-auto,
+    .table-responsive,
+    .table-wrapper {
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -3325,6 +3527,21 @@ table tbody tr:last-child td {
     align-items: center;
 }
 
+.sales-stat-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.sales-stat-link .sales-stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sales-stat-link:hover .sales-stat-card {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+}
+
 .sales-stat-content {
     flex: 1;
 }
@@ -3393,6 +3610,31 @@ table tbody tr:last-child td {
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     margin-bottom: var(--spacing-lg);
+}
+
+/* Compact desktop layout for Product Performance cards */
+@media (min-width: 1024px) {
+    .product-performance-grid {
+        gap: 14px;
+    }
+
+    .product-performance-card {
+        padding: 14px !important;
+    }
+
+    .product-performance-card h4 {
+        margin-bottom: 8px !important;
+        font-size: 15px;
+        line-height: 1.25;
+    }
+
+    .product-performance-card table th,
+    .product-performance-card table td {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        font-size: 13px;
+        line-height: 1.25;
+    }
 }
 
 .sales-alert-range {
@@ -3999,7 +4241,7 @@ table tbody tr:last-child td {
     box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.1);
 }
 
-.conversations-list {
+.communication-page .conversations-list {
     list-style: none;
     padding: 0;
     margin: 0;
@@ -4008,30 +4250,41 @@ table tbody tr:last-child td {
     gap: 10px;
 }
 
-.conversations-list li {
+/* List item */
+.communication-page .conversations-list li {
     background: white;
     border: 1px solid #e0e0e0;
     border-radius: 6px;
+    transition: all 0.2s;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+/* Link (full clickable area) */
+.communication-page .conversations-list a {
+    display: block;
     padding: 12px 15px;
+    color: #1a1a1a;
+    text-decoration: none;
     transition: all 0.2s;
 }
 
-.conversations-list li:hover {
-    border-color: #FF5722;
+/* Hover effect (SUBTLE only) */
+.communication-page .conversations-list li:hover {
+    border-color: var(--dsizzlers-orange);
     box-shadow: 0 2px 8px rgba(255, 87, 34, 0.15);
 }
 
-.conversations-list a {
-    color: #1a1a1a;
-    text-decoration: none;
-    font-size: 15px;
-    transition: color 0.2s;
+.communication-page .conversations-list a:hover {
+    color: var(--dsizzlers-white);
+    background-color: var(--dsizzlers-orange);
 }
 
-.conversations-list a:hover {
-    color: #FF5722;
+/* Active / selected conversation */
+.communication-page .conversations-list a.active {
+    background-color: var(--dsizzlers-orange);
+    color: var(--dsizzlers-white);
 }
-
 .empty-state {
     text-align: center;
     color: #999;
@@ -10657,4 +10910,35 @@ table tbody tr:last-child td {
         opacity: 0;
         pointer-events: none;
     }
+}
+
+/* Floating Messages Button */
+.floating-messages-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9999;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #E86A2E;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.22);
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+}
+
+.floating-messages-btn svg {
+    width: 26px;
+    height: 26px;
+    pointer-events: none;
+}
+
+.floating-messages-btn:hover {
+    background-color: #c95820;
+    transform: scale(1.1);
+    box-shadow: 0 6px 22px rgba(0,0,0,0.28);
 }

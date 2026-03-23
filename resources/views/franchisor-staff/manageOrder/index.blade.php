@@ -17,6 +17,13 @@
             </div>
         @endif
 
+        @if(!empty($selectedStatus))
+            <div class="alert alert-info">
+                <strong>Filter:</strong> Showing <strong>{{ $selectedStatus }}</strong> orders.
+                <a href="{{ route('franchisor-staff.manageOrder.index') }}" style="margin-left: 8px;">Clear</a>
+            </div>
+        @endif
+
         <!-- Orders Table -->
         <div class="table-section">
             <div class="table-section-header">

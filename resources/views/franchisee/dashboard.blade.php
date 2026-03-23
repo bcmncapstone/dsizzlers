@@ -18,6 +18,46 @@
             @endif
         </div>
 
+        <!-- Digital Marketing Posts -->
+        <section class="marketing-section" style="margin-top: 24px;">
+            <h3>📢 Digital Marketing Posts</h3>
+            <div class="marketing-posts-container">
+                @forelse($digitalMarketing ?? [] as $post)
+                    <div class="marketing-post">
+                        <img
+                            src="{{ media_url($post->image_path) }}"
+                            alt="Marketing Image"
+                            id="dash-franchisee-marketing-img-{{ $post->id }}"
+                            class="marketing-post-image"
+                            onclick="dashFranchiseeViewImage({{ $post->id }})"
+                            title="Click to view full size"
+                        >
+                        @if($post->description)
+                            <p class="marketing-post-description">{{ $post->description }}</p>
+                        @endif
+                        <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
+                        <div class="button-group">
+                            <button onclick="dashFranchiseeViewImage({{ $post->id }})" class="btn btn-gallery">👁️ View</button>
+                            <a href="{{ media_url($post->image_path) }}" download="marketing-{{ $post->id }}.jpg" class="btn btn-camera">⬇️ Download</a>
+                        </div>
+                    </div>
+                @empty
+                    <p class="empty-state">No digital marketing posts available yet.</p>
+                @endforelse
+            </div>
+        </section>
+
+        <!-- Full Image Modal -->
+        <div id="dash-franchisee-image-modal" class="camera-modal" onclick="dashFranchiseeCloseModal()">
+            <div class="camera-modal-content" onclick="event.stopPropagation()">
+                <button onclick="dashFranchiseeCloseModal()" class="btn btn-close">✕</button>
+                <img id="dash-franchisee-modal-img" src="" alt="Full Size" class="modal-image">
+                <div class="modal-download-container">
+                    <a id="dash-franchisee-download-btn" href="" download class="btn btn-camera">⬇️ Download Image</a>
+                </div>
+            </div>
+        </div>
+
         <!-- Dashboard Cards Grid -->
         <div class="card-grid">
             
@@ -116,3 +156,22 @@
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+    function dashFranchiseeViewImage(postId) {
+        const img = document.getElementById('dash-franchisee-marketing-img-' + postId);
+        const modal = document.getElementById('dash-franchisee-image-modal');
+        const modalImg = document.getElementById('dash-franchisee-modal-img');
+        const downloadBtn = document.getElementById('dash-franchisee-download-btn');
+        modalImg.src = img.src;
+        downloadBtn.href = img.src;
+        downloadBtn.download = 'marketing-' + postId + '.jpg';
+        modal.classList.add('show');
+    }
+
+    function dashFranchiseeCloseModal() {
+        document.getElementById('dash-franchisee-image-modal').classList.remove('show');
+    }
+</script>
+@endpush

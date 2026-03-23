@@ -30,13 +30,198 @@ Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 Route::get('/admin/dashboard', function () {
+    $today = now();
+    $startOfWeek = now()->copy()->startOfWeek();
+    $startOfMonth = now()->copy()->startOfMonth();
+    $startOf30Days = now()->copy()->subDays(30);
+    $startOf7Days = now()->copy()->subDays(6)->startOfDay();
+
     $totalItemsSold = (int) DB::table('order_details')->sum('quantity');
     $lowStockCount = Item::where('stock_quantity', '>', 0)
         ->where('stock_quantity', '<=', 10)
         ->count();
     $outOfStockCount = Item::where('stock_quantity', '<=', 0)->count();
 
-    return view('admin.dashboard', compact('totalItemsSold', 'lowStockCount', 'outOfStockCount'));
+    $todayRevenue = (float) DB::table('orders')
+        ->where('order_status', 'Delivered')
+        ->whereDate('order_date', $today->toDateString())
+        ->sum('total_amount');
+
+    $weekRevenue = (float) DB::table('orders')
+        ->where('order_status', 'Delivered')
+        ->whereDate('order_date', '>=', $startOfWeek->toDateString())
+        ->sum('total_amount');
+
+    $monthRevenue = (float) DB::table('orders')
+        ->where('order_status', 'Delivered')
+        ->whereDate('order_date', '>=', $startOfMonth->toDateString())
+        ->sum('total_amount');
+
+    $statusOrder = ['Pending', 'Preparing', 'Shipped', 'Delivered', 'Cancelled'];
+    $ordersByStatusRaw = DB::table('orders')
+        ->select('order_status', DB::raw('COUNT(*) as total'))
+        ->groupBy('order_status')
+        ->pluck('total', 'order_status')
+        ->toArray();
+
+    $ordersByStatus = [];
+    foreach ($statusOrder as $status) {
+        $ordersByStatus[$status] = (int) ($ordersByStatusRaw[$status] ?? 0);
+    }
+
+    $deliveredOrdersCount = (int) DB::table('orders')
+        ->where('order_status', 'Delivered')
+        ->count();
+
+    $deliveredRevenueTotal = (float) DB::table('orders')
+        ->where('order_status', 'Delivered')
+        ->sum('total_amount');
+
+    $averageOrderValue = $deliveredOrdersCount > 0
+        ? $deliveredRevenueTotal / $deliveredOrdersCount
+        : 0;
+
+    $topSellingItems = DB::table('order_details')
+        ->join('orders', 'orders.order_id', '=', 'order_details.order_id')
+        ->join('items', 'items.item_id', '=', 'order_details.item_id')
+        ->where('orders.order_status', 'Delivered')
+        ->select(
+            'items.item_id',
+            'items.item_name',
+            DB::raw('SUM(order_details.quantity) as total_quantity'),
+            DB::raw('SUM(order_details.subtotal) as total_sales')
+        )
+        ->groupBy('items.item_id', 'items.item_name')
+        ->orderByDesc('total_quantity')
+        ->limit(5)
+        ->get();
+
+    $itemSales30d = DB::table('order_details')
+        ->join('orders', 'orders.order_id', '=', 'order_details.order_id')
+        ->where('orders.order_status', 'Delivered')
+        ->whereDate('orders.order_date', '>=', $startOf30Days->toDateString())
+        ->select(
+            'order_details.item_id',
+            DB::raw('SUM(order_details.quantity) as sold_30d')
+        )
+        ->groupBy('order_details.item_id');
+
+    $slowMovingItems = DB::table('items')
+        ->leftJoinSub($itemSales30d, 'sales_30d', function ($join) {
+            $join->on('sales_30d.item_id', '=', 'items.item_id');
+        })
+        ->select(
+            'items.item_id',
+            'items.item_name',
+            'items.stock_quantity',
+            DB::raw('COALESCE(sales_30d.sold_30d, 0) as sold_30d')
+        )
+        ->orderBy('sold_30d')
+        ->orderByDesc('items.stock_quantity')
+        ->limit(5)
+        ->get();
+
+    $stockRiskForecast = DB::table('items')
+        ->leftJoinSub($itemSales30d, 'sales_30d', function ($join) {
+            $join->on('sales_30d.item_id', '=', 'items.item_id');
+        })
+        ->select(
+            'items.item_id',
+            'items.item_name',
+            'items.stock_quantity',
+            DB::raw('COALESCE(sales_30d.sold_30d, 0) as sold_30d')
+        )
+        ->get()
+        ->map(function ($item) {
+            $avgDaily = ((float) $item->sold_30d) / 30;
+            $daysLeft = $avgDaily > 0 ? ((float) $item->stock_quantity) / $avgDaily : null;
+
+            $item->avg_daily_sales = $avgDaily;
+            $item->days_left = $daysLeft;
+
+            return $item;
+        })
+        ->filter(function ($item) {
+            return $item->avg_daily_sales > 0;
+        })
+        ->sortBy('days_left')
+        ->take(5)
+        ->values();
+
+    $branchPerformance = DB::table('orders')
+        ->leftJoin('franchisees', 'franchisees.franchisee_id', '=', 'orders.franchisee_id')
+        ->where('orders.order_status', 'Delivered')
+        ->whereNotNull('orders.franchisee_id')
+        ->select(
+            'orders.franchisee_id',
+            DB::raw("COALESCE(franchisees.franchisee_name, 'Unknown Franchisee') as franchisee_name"),
+            DB::raw('COUNT(*) as orders_count'),
+            DB::raw('SUM(orders.total_amount) as total_sales'),
+            DB::raw('AVG(orders.total_amount) as average_order_value')
+        )
+        ->groupBy('orders.franchisee_id', 'franchisees.franchisee_name')
+        ->orderByDesc('total_sales')
+        ->get();
+
+    $topBranches = $branchPerformance->take(3)->values();
+    $bottomBranches = $branchPerformance->sortBy('total_sales')->take(3)->values();
+
+    $orderTrendRaw = DB::table('orders')
+        ->where('order_status', 'Delivered')
+        ->whereDate('order_date', '>=', $startOf7Days->toDateString())
+        ->select(
+            DB::raw('DATE(order_date) as trend_date'),
+            DB::raw('SUM(total_amount) as revenue'),
+            DB::raw('COUNT(*) as orders_count')
+        )
+        ->groupBy(DB::raw('DATE(order_date)'))
+        ->orderBy('trend_date')
+        ->get()
+        ->keyBy('trend_date');
+
+    $stockoutsTrendRaw = DB::table('stock_transactions')
+        ->whereDate('created_at', '>=', $startOf7Days->toDateString())
+        ->where('balance_after', '<=', 0)
+        ->select(
+            DB::raw('DATE(created_at) as trend_date'),
+            DB::raw('COUNT(DISTINCT item_id) as stockout_items')
+        )
+        ->groupBy(DB::raw('DATE(created_at)'))
+        ->orderBy('trend_date')
+        ->get()
+        ->keyBy('trend_date');
+
+    $trendData = collect(range(0, 6))->map(function ($offset) use ($startOf7Days, $orderTrendRaw, $stockoutsTrendRaw) {
+        $date = $startOf7Days->copy()->addDays($offset);
+        $key = $date->toDateString();
+
+        return [
+            'label' => $date->format('M d'),
+            'revenue' => (float) ($orderTrendRaw[$key]->revenue ?? 0),
+            'orders_count' => (int) ($orderTrendRaw[$key]->orders_count ?? 0),
+            'stockout_items' => (int) ($stockoutsTrendRaw[$key]->stockout_items ?? 0),
+        ];
+    });
+
+    $digitalMarketing = \App\Models\DigitalMarketingUpload::latest()->get();
+
+    return view('admin.dashboard', compact(
+        'totalItemsSold',
+        'lowStockCount',
+        'outOfStockCount',
+        'todayRevenue',
+        'weekRevenue',
+        'monthRevenue',
+        'ordersByStatus',
+        'averageOrderValue',
+        'topSellingItems',
+        'slowMovingItems',
+        'stockRiskForecast',
+        'topBranches',
+        'bottomBranches',
+        'trendData',
+        'digitalMarketing'
+    ));
 })->name('admin.dashboard');
 
 // ACCOUNT CREATION (Admin only)
@@ -70,7 +255,8 @@ Route::post('/login/franchisee-staff', [LoginController::class, 'loginFranchisee
 
 // Franchisee Dashboard
 Route::middleware(['auth:franchisee'])->get('/franchisee/dashboard', function () {
-    return view('franchisee.dashboard');
+    $digitalMarketing = \App\Models\DigitalMarketingUpload::latest()->get();
+    return view('franchisee.dashboard', compact('digitalMarketing'));
 })->name('franchisee.dashboard');
 
 // Franchisee Staff Dashboard
