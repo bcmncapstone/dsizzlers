@@ -8,6 +8,7 @@ use App\Models\Franchisee;
 use App\Models\FranchisorStaff;
 use App\Models\FranchiseeStaff;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 
 class AccountController extends Controller
@@ -102,6 +103,20 @@ class AccountController extends Controller
         ]);
     }
 
+    //Show Franchisee Staff List (for franchisee to view their staff)
+    public function indexFranchiseeStaff()
+    {
+        $franchiseeId = auth('franchisee')->id();
+        $staff = FranchiseeStaff::where('franchisee_id', $franchiseeId)
+            ->orderByRaw("fstaff_fname || ' ' || fstaff_lname")
+            ->get();
+
+        $activeStaff = $staff->filter(fn ($member) => $member->fstaff_status === 'Active')->values();
+        $archivedStaff = $staff->filter(fn ($member) => $member->fstaff_status !== 'Active')->values();
+
+        return view('franchisee.staff.index', compact('staff', 'activeStaff', 'archivedStaff'));
+    }
+
     //Handle Franchisee Staff Account Creation
     public function storeFranchiseeStaff(Request $request)
     {
@@ -126,8 +141,137 @@ class AccountController extends Controller
             'fstaff_status'    => 'Active',
         ]);
 
-        return redirect()->route('account.create')
+        return redirect()->route('franchisee.staff.index')
             ->with('success', 'Franchisee Staff account created successfully!')
+            ->with('flash_timeout', 3000);
+    }
+
+    /**
+     * Archive a franchisee staff account.
+     */
+    public function archiveFranchiseeStaff(Request $request, int $staffId)
+    {
+        $franchisee = Auth::guard('franchisee')->user();
+
+        $staff = FranchiseeStaff::where('fstaff_id', $staffId)
+            ->where('franchisee_id', $franchisee->franchisee_id)
+            ->firstOrFail();
+
+        if ($staff->fstaff_status !== 'Active') {
+            return redirect()->route('franchisee.staff.index')
+                ->with('error', 'Staff account is already archived.')
+                ->with('flash_timeout', 3000);
+        }
+
+        $staff->fstaff_status = 'Inactive';
+        $staff->save();
+
+        if (!empty($staff->fstaff_email)) {
+            try {
+                Mail::raw(
+                    "Hi {$staff->fstaff_fname},\n\n" .
+                    "Your D Sizzlers staff account has been archived by your franchisee admin.\n" .
+                    "You can no longer access the staff portal using this account.\n\n" .
+                    "If this was unexpected, please contact your franchisee admin.",
+                    function ($message) use ($staff) {
+                        $message->to($staff->fstaff_email)
+                            ->subject('D Sizzlers Staff Account Archived');
+                    }
+                );
+            } catch (\Throwable $e) {
+                return redirect()->route('franchisee.staff.index')
+                    ->with('success', 'Staff account archived successfully, but email notification could not be sent.')
+                    ->with('flash_timeout', 5000);
+            }
+
+            return redirect()->route('franchisee.staff.index')
+                ->with('success', 'Staff account archived and notified successfully.')
+                ->with('flash_timeout', 3000);
+        }
+
+        return redirect()->route('franchisee.staff.index')
+            ->with('success', 'Staff account archived successfully. No email is set for this staff account.')
+            ->with('flash_timeout', 3000);
+    }
+
+    /**
+     * Restore an archived franchisee staff account.
+     */
+    public function restoreFranchiseeStaff(Request $request, int $staffId)
+    {
+        $franchisee = Auth::guard('franchisee')->user();
+
+        $staff = FranchiseeStaff::where('fstaff_id', $staffId)
+            ->where('franchisee_id', $franchisee->franchisee_id)
+            ->firstOrFail();
+
+        if ($staff->fstaff_status === 'Active') {
+            return redirect()->route('franchisee.staff.index')
+                ->with('error', 'Staff account is already active.')
+                ->with('flash_timeout', 3000);
+        }
+
+        $staff->fstaff_status = 'Active';
+        $staff->save();
+
+        return redirect()->route('franchisee.staff.index')
+            ->with('success', 'Staff account restored successfully.')
+            ->with('flash_timeout', 3000);
+    }
+    /**
+     * Archive a franchisor staff account (admin action).
+     */
+    public function archiveFranchisorStaff(Request $request, int $staffId)
+    {
+        $staff = FranchisorStaff::findOrFail($staffId);
+        if ($staff->astaff_status !== 'Active') {
+            return redirect()->route('accounts.index')
+                ->with('error', 'Staff account is already archived.')
+                ->with('flash_timeout', 3000);
+        }
+        $staff->astaff_status = 'Inactive';
+        $staff->save();
+        if (!empty($staff->astaff_email)) {
+            try {
+                Mail::raw(
+                    "Hi {$staff->astaff_fname},\n\n" .
+                    "Your D Sizzlers franchisor staff account has been archived by the admin.\n" .
+                    "You can no longer access the staff portal using this account.\n\n" .
+                    "If this was unexpected, please contact your admin.",
+                    function ($message) use ($staff) {
+                        $message->to($staff->astaff_email)
+                            ->subject('D Sizzlers Staff Account Archived');
+                    }
+                );
+            } catch (\Throwable $e) {
+                return redirect()->route('accounts.index')
+                    ->with('success', 'Staff account archived successfully, but email notification could not be sent.')
+                    ->with('flash_timeout', 5000);
+            }
+            return redirect()->route('accounts.index')
+                ->with('success', 'Staff account archived and notified successfully.')
+                ->with('flash_timeout', 3000);
+        }
+        return redirect()->route('accounts.index')
+            ->with('success', 'Staff account archived successfully. No email is set for this staff account.')
+            ->with('flash_timeout', 3000);
+    }
+
+    /**
+     * Restore an archived franchisor staff account (admin action).
+     */
+    public function restoreFranchisorStaff(Request $request, int $staffId)
+    {
+        $staff = FranchisorStaff::findOrFail($staffId);
+        if ($staff->astaff_status === 'Active') {
+            return redirect()->route('accounts.index')
+                ->with('error', 'Staff account is already active.')
+                ->with('flash_timeout', 3000);
+        }
+        $staff->astaff_status = 'Active';
+        $staff->save();
+        return redirect()->route('accounts.index')
+            ->with('success', 'Staff account restored successfully.')
             ->with('flash_timeout', 3000);
     }
 }

@@ -1,121 +1,228 @@
+
 @extends('layouts.franchisee-staff')
 
 @section('content')
-<div class="py-6">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-4">
-            <div class="p-4 bg-white border-b border-gray-200">
-                <h1 class="text-3xl font-bold text-gray-900">Manage Stock</h1>
-                <p class="mt-2 text-sm text-gray-600">
-                    Update stock levels for sales and adjustments
-                </p>
+<div class="inventory-page-wrapper admin-stock-page">
+    <div class="inventory-page-container">
+        <div class="inventory-header admin-stock-header">
+            <div>
+                <h1>Manage Stock</h1>
+                <p>Update stock levels for sales and adjustments</p>
             </div>
         </div>
 
-        <!-- Success/Error Messages -->
         @if(session('success'))
-            <div class="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-green-700">{{ session('success') }}</p>
-                    </div>
-                </div>
-            </div>
+            <div class="admin-stock-alert admin-stock-alert-success js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">{{ session('success') }}</div>
         @endif
-
         @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <p class="text-sm text-red-700">{{ session('error') }}</p>
-                    </div>
-                </div>
-            </div>
+            <div class="admin-stock-alert admin-stock-alert-error js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">{{ session('error') }}</div>
         @endif
 
-        <!-- Stock Items Table -->
-        @if($stocks->count() > 0)
-            <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-                <div class="p-4">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Available Items</h2>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Quantity</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($stocks as $stock)
-                                <tr class="{{ $stock->current_quantity == 0 ? 'bg-red-50' : ($stock->current_quantity <= $stock->minimum_quantity ? 'bg-yellow-50' : '') }}">
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $stock->item->item_name }}</div>
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="text-sm text-gray-500">{{ $stock->item->item_category }}</div>
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        <div class="text-sm font-semibold text-gray-900">{{ $stock->current_quantity }}</div>
-                                        <div class="text-xs text-gray-500">Min: {{ $stock->minimum_quantity }}</div>
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap">
-                                        @if($stock->current_quantity == 0)
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                                Out of Stock
-                                            </span>
-                                        @elseif($stock->current_quantity <= $stock->minimum_quantity)
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                                Low Stock
-                                            </span>
+        <div class="inventory-stats-grid admin-stock-stats-grid">
+            <div class="inventory-stat-card">
+                <div class="inventory-stat-content">
+                    <div class="inventory-stat-label">Total Items</div>
+                    <div class="inventory-stat-value">{{ $totalItems ?? ($stocks->count() ?? 0) }}</div>
+                </div>
+            </div>
+            <div class="inventory-stat-card">
+                <div class="inventory-stat-content">
+                    <div class="inventory-stat-label">In Stock</div>
+                    <div class="inventory-stat-value">{{ $inStock ?? ($stocks->where('current_quantity', '>', 0)->count() ?? 0) }}</div>
+                </div>
+            </div>
+            <div class="inventory-stat-card">
+                <div class="inventory-stat-content">
+                    <div class="inventory-stat-label">Low Stock</div>
+                    <div class="inventory-stat-value">{{ $lowStock ?? ($stocks->where('current_quantity', '>', 0)->where('current_quantity', '<=', 'minimum_quantity')->count() ?? 0) }}</div>
+                </div>
+            </div>
+            <div class="inventory-stat-card">
+                <div class="inventory-stat-content">
+                    <div class="inventory-stat-label">Out of Stock</div>
+                    <div class="inventory-stat-value">{{ $outOfStock ?? ($stocks->where('current_quantity', '<=', 0)->count() ?? 0) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="inventory-table-section">
+            <div class="inventory-table-header">
+                <h2 class="inventory-table-title">Stock List</h2>
+                <span class="admin-stock-results-text">{{ $stocks->count() }} item(s) matched</span>
+            </div>
+            <div class="inventory-overflow">
+                <table class="inventory-table admin-stock-table">
+                    <thead>
+                        <tr>
+                            <th>Item</th>
+                            <th>Stock Adjustment</th>
+                            <th>Category</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <colgroup>
+                        <col style="width: 30%">
+                        <col style="width: 36%">
+                        <col style="width: 16%">
+                        <col style="width: 18%">
+                    </colgroup>
+                    <tbody>
+                        @forelse($stocks as $stock)
+                            @php
+                                $isOut = $stock->current_quantity <= 0;
+                                $isLow = $stock->current_quantity > 0 && $stock->current_quantity <= $stock->minimum_quantity;
+                            @endphp
+                            <tr class="{{ $isOut ? 'admin-stock-row-out' : ($isLow ? 'admin-stock-row-low' : 'admin-stock-row-ok') }}">
+                                <td>
+                                    <div class="admin-stock-item-cell">
+                                        <div class="admin-stock-thumb-wrap">
+                                            @php $images = $stock->item->item_images ?? []; @endphp
+                                            @if(count($images) > 0)
+                                                <img src="{{ media_url($images[0]) }}" class="admin-stock-thumb" alt="{{ $stock->item->item_name }}">
+                                            @else
+                                                <span class="admin-stock-thumb-fallback">No image</span>
+                                            @endif
+                                        </div>
+                                        <div>
+                                            <div class="admin-stock-item-name">{{ $stock->item->item_name }}</div>
+                                            <div class="admin-stock-item-desc">{{ $stock->item->item_description }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="admin-stock-control-block">
+                                        <div class="admin-stock-current-row">
+                                            <span class="admin-stock-current-label">Current Stock:</span>
+                                            <strong class="admin-stock-current-value">{{ $stock->current_quantity }}</strong>
+                                        </div>
+                                        <span class="inventory-status-badge {{ $isOut ? 'inventory-status-out-stock' : ($isLow ? 'inventory-status-low-stock' : 'inventory-status-in-stock') }}">
+                                            {{ $isOut ? 'Out of Stock' : ($isLow ? 'Low Stock' : 'In Stock') }}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onclick="toggleFifo({{ $stock->stock_id }})"
+                                            id="fifo-btn-{{ $stock->stock_id }}"
+                                            class="inventory-pdf-btn admin-stock-btn-muted"
+                                            style="margin-top:8px; width:max-content;"
+                                        >
+                                            Stock Batches
+                                        </button>
+
+                                        <form action="{{ route('franchisee-staff.stock.update', $stock->stock_id) }}" method="POST" class="admin-stock-adjust-form">
+                                            @csrf
+                                            <label class="admin-stock-adjust-label" for="adjust-{{ $stock->stock_id }}">Need to adjust?</label>
+                                            <input
+                                                type="text"
+                                                name="notes"
+                                                class="admin-stock-adjust-input"
+                                                placeholder="Notes"
+                                                maxlength="255"
+                                                style="margin-bottom:8px;"
+                                            >
+                                            <div class="admin-stock-adjust-controls">
+                                                <input
+                                                    id="adjust-{{ $stock->stock_id }}"
+                                                    type="number"
+                                                    name="adjust_by"
+                                                    min="1"
+                                                    step="1"
+                                                    class="admin-stock-adjust-input"
+                                                    placeholder="Qty"
+                                                    required
+                                                >
+                                                <button type="submit" name="direction" value="add" class="admin-stock-adjust-btn admin-stock-adjust-plus">
+                                                    +
+                                                </button>
+                                                <button type="submit" name="direction" value="deduct" class="admin-stock-adjust-btn admin-stock-adjust-minus">
+                                                    -
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td>
+                                    {{ !empty($stock->item->item_category) ? ucfirst($stock->item->item_category) : 'Uncategorized' }}
+                                </td>
+                                <td>
+                                    {{ $stock->updated_at ? $stock->updated_at->format('M d, Y') : 'N/A' }}
+                                </td>
+                            </tr>
+                            @php $snap = $fifoSnapshots[(int) $stock->stock_id] ?? null; @endphp
+                            <tr id="fifo-row-{{ $stock->stock_id }}" style="display:none; background:#f9fafb;">
+                                <td colspan="4" style="padding:0;">
+                                    <div style="padding:12px 16px;">
+                                        <div style="display:flex; flex-wrap:wrap; gap:16px; font-size:13px; margin-bottom:10px;">
+                                            <span><strong>Current Stock:</strong> {{ $snap['stock_quantity'] ?? '-' }}</span>
+                                            <span><strong>Tracked Available:</strong> {{ $snap['fifo_available'] ?? '-' }}</span>
+                                            @if($snap && $snap['stock_quantity'] !== $snap['fifo_available'])
+                                                <span style="background:#fef3c7; color:#92400e; border:1px solid #fcd34d; border-radius:5px; padding:2px 8px; font-size:12px; font-weight:600;">
+                                                    &#9888; Mismatch - some stock may not have a batch record yet
+                                                </span>
+                                            @endif
+                                        </div>
+                                        @if($snap && count($snap['lots']) > 0)
+                                            <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                                                <thead>
+                                                    <tr style="background:#e5e7eb;">
+                                                        <th style="padding:5px 8px; text-align:left; border:1px solid #d1d5db;">Batch Type</th>
+                                                        <th style="padding:5px 8px; text-align:left; border:1px solid #d1d5db;">Date Received</th>
+                                                        <th style="padding:5px 8px; text-align:right; border:1px solid #d1d5db;">Remaining Qty</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach($snap['lots'] as $lot)
+                                                        <tr>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">
+                                                                @if(($lot['source'] ?? 'stock_in') === 'legacy_balance')
+                                                                    Opening Stock
+                                                                @elseif(($lot['source'] ?? 'stock_in') === 'manual_add')
+                                                                    Manual Add
+                                                                @else
+                                                                    Delivered
+                                                                @endif
+                                                            </td>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">
+                                                                @if(!empty($lot['received_at']))
+                                                                    {{ \Illuminate\Support\Carbon::parse($lot['received_at'])->format('M d, Y H:i') }}
+                                                                @else
+                                                                    -
+                                                                @endif
+                                                            </td>
+                                                            <td style="padding:5px 8px; border:1px solid #d1d5db; text-align:right; font-weight:700;">
+                                                                {{ $lot['quantity_remaining'] }}
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
                                         @else
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                                                In Stock
-                                            </span>
+                                            <p style="font-size:12px; color:#6b7280;">No batch records found for this stock item yet.</p>
                                         @endif
-                                    </td>
-                                    <td class="px-4 py-3 whitespace-nowrap text-sm">
-                                        <a href="{{ route('franchisee-staff.stock.edit', $stock->stock_id) }}" 
-                                           class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                            <svg class="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                            </svg>
-                                            Update Quantity
-                                        </a>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="inventory-table-empty">
+                                    No stock records found. Stock will be created when you receive your first delivery.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
-        @else
-            <div class="bg-white shadow-sm sm:rounded-lg overflow-hidden">
-                <div class="p-8 text-center">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No Stock Items</h3>
-                    <p class="mt-1 text-sm text-gray-500">No stock items found for your franchisee.</p>
-                </div>
-            </div>
-        @endif
+        </div>
     </div>
 </div>
 @endsection
+<script>
+function toggleFifo(stockId) {
+    var row = document.getElementById('fifo-row-' + stockId);
+    var btn = document.getElementById('fifo-btn-' + stockId);
+    if (!row || !btn) return;
+
+    var isHidden = row.style.display === 'none';
+    row.style.display = isHidden ? 'table-row' : 'none';
+    btn.textContent = isHidden ? 'Hide Batches' : 'Stock Batches';
+}
+</script>

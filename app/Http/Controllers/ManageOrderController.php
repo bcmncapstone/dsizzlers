@@ -18,7 +18,7 @@ class ManageOrderController extends Controller
         // Keep status choices consistent with the update dropdown in show.blade.
         $availableStatuses = collect(['Pending', 'Preparing', 'Shipped', 'Delivered']);
 
-        $selectedStatus = trim((string) $request->query('order_status', ''));
+        $selectedStatus = trim((string) $request->query('status', $request->query('order_status', '')));
         if ($selectedStatus !== '') {
             $selectedStatus = ucfirst(strtolower($selectedStatus));
         }
@@ -31,6 +31,7 @@ class ManageOrderController extends Controller
             ->when($selectedStatus !== '', function ($query) use ($selectedStatus) {
                 $query->whereRaw('LOWER(order_status) = ?', [strtolower($selectedStatus)]);
             })
+            ->latest('created_at')
             ->get();
 
         if (auth('admin')->check()) {

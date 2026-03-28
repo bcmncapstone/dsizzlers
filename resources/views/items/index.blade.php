@@ -10,13 +10,13 @@
         @endphp
 
         @if(session('success'))
-            <div class="alert alert-success" style="margin-bottom: 16px;">
+            <div class="alert alert-success js-flash-alert" style="margin-bottom: 16px;" data-timeout="{{ session('flash_timeout', 3000) }}">
                 {{ session('success') }}
             </div>
         @endif
 
         @if(session('error'))
-            <div class="alert alert-error" style="margin-bottom: 16px;">
+            <div class="alert alert-error js-flash-alert" style="margin-bottom: 16px;" data-timeout="{{ session('flash_timeout', 3000) }}">
                 {{ session('error') }}
             </div>
         @endif

@@ -11,12 +11,14 @@
     <div class="login-page">
         <div class="login-container">
             <div class="login-header">
-                <div class="login-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 40px; height: 40px;">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
+                <div class="login-logo-circle">
+                    <img
+                        src="https://res.cloudinary.com/drhw4lbzz/image/upload/v1773841657/Logo1_q5e2hk.jpg"
+                        alt="D-Sizzlers Logo"
+                        class="login-logo"
+                    >
                 </div>
-                <h2 class="login-title">Welcome to D'Sizzlers</h2>
+                <h2 class="login-title">Welcome to D Sizzlers!</h2>
             </div>
 
             <!-- Role Selector -->
@@ -59,7 +61,7 @@
                         <input type="password" id="password" name="password" class="login-input" placeholder="Enter your password" required>
                     </div>
 
-                    <div style="text-align: right; margin-bottom: 16px;">
+                    <div style="text-align: center; margin-bottom: 16px;">
                         <a href="#" id="forgot-link" class="login-back-link" style="margin: 0; display: none;">Forgot Password?</a>
                     </div>
 

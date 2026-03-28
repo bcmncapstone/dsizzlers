@@ -36,19 +36,19 @@ class BranchManagementController extends Controller
         $totalOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
                             ->count();
 
-        $totalRevenue = Order::where('franchisee_id', $franchisee->franchisee_id)
-                             ->sum('total_amount');
+        $totalSales = Order::where('franchisee_id', $franchisee->franchisee_id)
+                          ->sum('total_amount');
 
-        $monthlyRevenue = Order::where('franchisee_id', $franchisee->franchisee_id)
-                               ->whereMonth('order_date', Carbon::now()->month)
-                               ->whereYear('order_date', Carbon::now()->year)
-                               ->sum('total_amount');
+        $salesThisMonth = Order::where('franchisee_id', $franchisee->franchisee_id)
+                              ->whereMonth('order_date', Carbon::now()->month)
+                              ->whereYear('order_date', Carbon::now()->year)
+                              ->sum('total_amount');
 
         return view('franchisee.branch.dashboard', compact(
             'branch',
             'totalOrders',
-            'totalRevenue',
-            'monthlyRevenue'
+            'totalSales',
+            'salesThisMonth'
         ));
     }
 
@@ -60,77 +60,65 @@ class BranchManagementController extends Controller
     public function performance()
     {
         $franchisee = Auth::guard('franchisee')->user();
-
-        // Get date filters from request
         $startDate = request('start_date');
         $endDate = request('end_date');
 
-        // Build base query for stock transactions (manual adjustments only - negative quantities = sales)
-        $baseQuery = StockTransaction::where('franchisee_id', $franchisee->franchisee_id)
-                                    ->where('transaction_type', 'adjustment')
-                                    ->where('quantity', '<', 0); // Only sold items (negative quantity)
-        
+        // Sales: sum of ABS(quantity) * price for adjustment transactions (franchisee only)
+        $salesQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id');
         if ($startDate && $endDate) {
-            $baseQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $salesQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
+        $totalSales = $salesQuery->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')->value('revenue');
 
-        // Get total sales (sum of negative quantities converted to positive)
-        $totalSales = abs((clone $baseQuery)->sum('quantity'));
+        // Total orders: count of unique adjustment transactions (or you may want to count unique days or another logic)
+        $totalOrders = (clone $salesQuery)->count();
 
-        // Get total orders (count of transactions)
-        $totalOrders = (clone $baseQuery)->count();
-
-        // Average order value
+        // Average order value (if you want to show it)
         $averageOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
 
-        // Sales trend grouped by date - from stock transactions
-        $salesQuery = StockTransaction::where('franchisee_id', $franchisee->franchisee_id)
-                                      ->where('transaction_type', 'adjustment')
-                                      ->where('quantity', '<', 0)
-                                      ->selectRaw('DATE(created_at) as date, ABS(SUM(quantity)) as sales')
-                                      ->groupBy('date')
-                                      ->orderBy('date', 'desc');
-        
+        // Sales trend: group by date, sum revenue
+        $trendQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->selectRaw('DATE(stock_transactions.created_at) as date, COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as sales')
+            ->groupBy('date')
+            ->orderBy('date', 'desc');
         if ($startDate && $endDate) {
-            $salesQuery->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $trendQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         } else {
-            // Default to last 30 days if no filter
-            $salesQuery->where('created_at', '>=', Carbon::now()->subDays(30));
+            $trendQuery->where('stock_transactions.created_at', '>=', Carbon::now()->subDays(30));
         }
-        
-        $salesTrend = $salesQuery->get()->map(function($item) {
+        $salesTrend = $trendQuery->get()->map(function($item) {
             return [
                 'date' => Carbon::parse($item->date)->format('M d, Y'),
                 'sales' => $item->sales
             ];
         });
 
-        // Top selling items - from stock transactions (manual reductions)
-        $topSellingQuery = StockTransaction::where('franchisee_id', $franchisee->franchisee_id)
-                                          ->where('transaction_type', 'adjustment')
-                                          ->where('quantity', '<', 0)
-                                          ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
-                                          ->selectRaw('items.item_name, ABS(SUM(stock_transactions.quantity)) as total_quantity, ABS(SUM(stock_transactions.quantity)) as total_revenue')
-                                          ->groupBy('items.item_id', 'items.item_name')
-                                          ->orderBy('total_quantity', 'desc')
-                                          ->limit(10);
-        
+        // Top selling items: sum of ABS(quantity) and revenue by item
+        $topSellingQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id');
         if ($startDate && $endDate) {
             $topSellingQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
-        
-        $topSellingItems = $topSellingQuery->get();
+        $topSellingItems = $topSellingQuery
+            ->selectRaw('items.item_name, SUM(ABS(stock_transactions.quantity)) as total_quantity, SUM(ABS(stock_transactions.quantity) * items.price) as total_revenue')
+            ->groupBy('items.item_id', 'items.item_name')
+            ->orderByDesc('total_quantity')
+            ->limit(10)
+            ->get();
 
-        // Recent orders - show recent stock transactions (sales)
-        $recentOrdersQuery = Order::where('franchisee_id', $franchisee->franchisee_id);
-        
-        if ($startDate && $endDate) {
-            $recentOrdersQuery->whereBetween('order_date', [$startDate, $endDate]);
-        }
-        
-        $recentOrders = $recentOrdersQuery->orderBy('order_date', 'desc')
-                                          ->limit(5)
-                                          ->get();
+        // Recent orders: fetch from Order model for correct fields
+        $recentOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
+            ->orderBy('order_date', 'desc')
+            ->limit(5)
+            ->get();
 
         return view('franchisee.branch.performance', compact(
             'totalSales',
@@ -245,5 +233,59 @@ class BranchManagementController extends Controller
             'currentMonthRevenue',
             'dateRangeLabel'
         ));
+    }
+        /**
+     * Adjust inventory for a specific item (permanent solution)
+     * Handles POST /franchisee/branch/inventory/adjust/{itemId}
+     */
+    public function adjustInventory($itemId)
+    {
+        $franchisee = Auth::guard('franchisee')->user();
+        $stock = \App\Models\FranchiseeStock::where('franchisee_id', $franchisee->franchisee_id)
+            ->where('item_id', $itemId)
+            ->first();
+
+        if (!$stock) {
+            return redirect()->back()->with('error', 'Stock item not found.');
+        }
+
+        $direction = request('direction'); // 'add' or 'deduct'
+        $adjustBy = request('adjust_by');
+        $notes = request('notes');
+
+        if (!in_array($direction, ['add', 'deduct'])) {
+            return redirect()->back()->with('error', 'Invalid adjustment direction.');
+        }
+        if (!is_numeric($adjustBy) || (int)$adjustBy < 1) {
+            return redirect()->back()->with('error', 'Adjustment quantity must be a positive number.');
+        }
+        if (!$notes || strlen($notes) > 255) {
+            return redirect()->back()->with('error', 'Notes are required and must be less than 255 characters.');
+        }
+
+        $qty = (int)$adjustBy;
+        if ($direction === 'deduct') {
+            if ($stock->current_quantity < $qty) {
+                return redirect()->back()->with('error', 'Cannot deduct more than current stock.');
+            }
+            $stock->current_quantity -= $qty;
+        } else {
+            $stock->current_quantity += $qty;
+        }
+        $stock->save();
+
+        // Log the adjustment in StockTransaction table, including balance_after
+        \App\Models\StockTransaction::create([
+            'franchisee_id' => $franchisee->franchisee_id,
+            'item_id' => $itemId,
+            'quantity' => $direction === 'deduct' ? -$qty : $qty,
+            'transaction_type' => 'adjustment',
+            'notes' => $notes,
+            'balance_after' => $stock->current_quantity,
+        ]);
+
+        return redirect()->back()
+            ->with('success', 'Inventory adjusted successfully.')
+            ->with('flash_timeout', 5000);
     }
 }

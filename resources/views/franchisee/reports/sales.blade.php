@@ -7,7 +7,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Sales Report</h1>
-                    <p class="text-sm text-gray-600">Filter sales by date range.</p>
+                    <p class="text-sm text-gray-600">Sales are based on manual stock decreases</p>
                 </div>
                 <a href="{{ route('franchisee.reports.index') }}" class="text-sm text-blue-600 hover:underline">Back to Reports</a>
             </div>
@@ -46,7 +46,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
-                <p class="text-sm text-gray-500">Total Orders</p>
+                <p class="text-sm text-gray-500">Total Sales Entries</p>
                 <p class="text-2xl font-semibold text-gray-900">{{ $totalOrders }}</p>
             </div>
             <div class="bg-white shadow-sm sm:rounded-lg p-4">
@@ -99,33 +99,35 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item(s)</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ordered By</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Transaction ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Decreased By</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Qty Sold</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        @forelse($orders as $order)
+                        @forelse($salesEntries as $entry)
                             <tr>
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ $order->order_id }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ $order->item_names ?: '—' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ $order->ordered_by }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-700">{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-900">₱{{ number_format($order->total_amount, 2) }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">{{ $entry->transaction_id }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ $entry->item_name ?: '—' }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ $entry->decreased_by }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ $entry->quantity_sold }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-700">{{ \Carbon\Carbon::parse($entry->created_at)->format('M d, Y') }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-900">₱{{ number_format($entry->line_total, 2) }}</td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
+                                <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No results.</td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
-            @if($orders->hasPages())
+            @if($salesEntries->hasPages())
                 <div class="p-4">
-                    {{ $orders->appends(request()->query())->links() }}
+                    {{ $salesEntries->appends(request()->query())->links() }}
                 </div>
             @endif
         </div>

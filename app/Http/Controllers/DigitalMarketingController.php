@@ -17,7 +17,7 @@ class DigitalMarketingController extends Controller
     public function index()
     {
         return view('communication.digital', [
-            'uploads' => DigitalMarketingUpload::latest()->get()
+            'uploads' => DigitalMarketingUpload::query()->notArchived()->latest()->get()
         ]);
     }
 
@@ -27,7 +27,9 @@ class DigitalMarketingController extends Controller
             $admin = auth()->guard('admin')->user();
             
             if (!$admin) {
-                return back()->with('error', 'Only administrators can upload digital marketing posts.');
+                return back()
+                    ->with('error', 'Only administrators can upload digital marketing posts.')
+                    ->with('flash_timeout', 3000);
             }
 
             $request->validate([
@@ -48,11 +50,15 @@ class DigitalMarketingController extends Controller
                 'description' => $request->description
             ]);
 
-            return back()->with('success', 'Digital marketing post uploaded successfully!');
+            return back()
+                ->with('success', 'Digital marketing post uploaded successfully!')
+                ->with('flash_timeout', 3000);
             
         } catch (\Exception $e) {
             Log::error('Digital marketing upload failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to upload post: ' . $e->getMessage());
+            return back()
+                ->with('error', 'Failed to upload post: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
         }
     }
 
@@ -62,7 +68,9 @@ class DigitalMarketingController extends Controller
             $admin = auth()->guard('admin')->user();
             
             if (!$admin) {
-                return back()->with('error', 'Unauthorized action.');
+                return back()
+                    ->with('error', 'Unauthorized action.')
+                    ->with('flash_timeout', 3000);
             }
 
             $request->validate([
@@ -74,11 +82,15 @@ class DigitalMarketingController extends Controller
                 'description' => $request->description
             ]);
 
-            return back()->with('success', 'Post updated successfully!');
+            return back()
+                ->with('success', 'Post updated successfully!')
+                ->with('flash_timeout', 3000);
             
         } catch (\Exception $e) {
             Log::error('Digital marketing update failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to update post: ' . $e->getMessage());
+            return back()
+                ->with('error', 'Failed to update post: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
         }
     }
 
@@ -88,27 +100,50 @@ class DigitalMarketingController extends Controller
             $admin = auth()->guard('admin')->user();
             
             if (!$admin) {
-                return back()->with('error', 'Unauthorized action.');
+                return back()
+                    ->with('error', 'Unauthorized action.')
+                    ->with('flash_timeout', 3000);
             }
 
             $post = DigitalMarketingUpload::findOrFail($id);
-            
-            // Delete cloud copy when URL is from Cloudinary; fallback to local disk.
-            if (str_starts_with((string) $post->image_path, 'http')) {
-                if ($this->cloudinary->isConfigured()) {
-                    $this->cloudinary->deleteByUrl((string) $post->image_path, 'image');
-                }
-            } elseif (Storage::disk('public')->exists($post->image_path)) {
-                Storage::disk('public')->delete($post->image_path);
-            }
-            
-            $post->delete();
 
-            return back()->with('success', 'Post deleted successfully!');
+            // Archive only (do not permanently delete), following existing JSON archive process.
+            DigitalMarketingUpload::archiveId((int) $post->id);
+
+            return back()
+                ->with('success', 'Post archived successfully!')
+                ->with('flash_timeout', 3000);
             
         } catch (\Exception $e) {
-            Log::error('Digital marketing delete failed', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to delete post: ' . $e->getMessage());
+            Log::error('Digital marketing archive failed', ['error' => $e->getMessage()]);
+            return back()
+                ->with('error', 'Failed to archive post: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
+        }
+    }
+
+    public function restore($id)
+    {
+        try {
+            $admin = auth()->guard('admin')->user();
+
+            if (! $admin) {
+                return back()
+                    ->with('error', 'Unauthorized action.')
+                    ->with('flash_timeout', 3000);
+            }
+
+            $post = DigitalMarketingUpload::findOrFail($id);
+            DigitalMarketingUpload::unarchiveId((int) $post->id);
+
+            return back()
+                ->with('success', 'Post restored successfully!')
+                ->with('flash_timeout', 3000);
+        } catch (\Exception $e) {
+            Log::error('Digital marketing restore failed', ['error' => $e->getMessage()]);
+            return back()
+                ->with('error', 'Failed to restore post: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
         }
     }
 }

@@ -118,12 +118,18 @@ class OrderController extends Controller
                 $order->update(['total_amount' => $total]);
             });
         } catch (\RuntimeException $e) {
-            return redirect()->back()->withInput()->with('error', $e->getMessage());
+            return redirect()->back()->withInput()
+                ->with('error', $e->getMessage())
+                ->with('flash_timeout', 3000);
         } catch (\Throwable $e) {
-            return redirect()->back()->withInput()->with('error', 'Unable to place order right now. Please try again.');
+            return redirect()->back()->withInput()
+                ->with('error', 'Unable to place order right now. Please try again.')
+                ->with('flash_timeout', 3000);
         }
 
-        return redirect()->route($redirectRoute)->with('success', 'Order placed successfully!');
+        return redirect()->route($redirectRoute)
+            ->with('success', 'Order placed successfully!')
+            ->with('flash_timeout', 3000);
     }
 
     // Checkout
@@ -134,7 +140,9 @@ class OrderController extends Controller
 
         $cart = session()->get($cartKey, []);
         if (empty($cart)) {
-            return redirect()->back()->with('error', 'Your cart is empty.');
+            return redirect()->back()
+                ->with('error', 'Your cart is empty.')
+                ->with('flash_timeout', 3000);
         }
 
         $orderData = [
@@ -196,16 +204,22 @@ class OrderController extends Controller
                 $order->update(['total_amount' => $total]);
             });
         } catch (\RuntimeException $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+            return redirect()->back()
+                ->with('error', $e->getMessage())
+                ->with('flash_timeout', 3000);
         } catch (\Throwable $e) {
-            return redirect()->back()->with('error', 'Unable to place order right now. Please try again.');
+            return redirect()->back()
+                ->with('error', 'Unable to place order right now. Please try again.')
+                ->with('flash_timeout', 3000);
         }
 
         // Clear the correct cart key
         session()->forget($cartKey);
         session()->forget('cart_owner');
 
-        return redirect()->route($redirectRoute)->with('success', 'Order placed successfully!');
+        return redirect()->route($redirectRoute)
+            ->with('success', 'Order placed successfully!')
+            ->with('flash_timeout', 3000);
     }
 
     // Show specific order details

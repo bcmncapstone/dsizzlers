@@ -17,13 +17,29 @@ class StockController extends Controller
     public function index()
     {
         $staff = Auth::guard('franchisee_staff')->user();
-        
-        // Get stocks for the franchisee that this staff belongs to
         $stocks = FranchiseeStock::with('item')
             ->where('franchisee_id', $staff->franchisee_id)
             ->get();
 
-        return view('franchisee-staff.stock.index', compact('stocks'));
+        // Add FIFO batch snapshot logic (same as franchisee)
+        $fifoSnapshots = [];
+        $fifoService = app(\App\Services\FranchiseeFifoStockService::class);
+        foreach ($stocks as $stockRow) {
+            $stock = $stockRow;
+            if (! $stock instanceof \App\Models\FranchiseeStock) {
+                $resolvedStockId = (int) ($stockRow->stock_id ?? 0);
+                if ($resolvedStockId <= 0) {
+                    continue;
+                }
+                $stock = FranchiseeStock::with('item')->find($resolvedStockId);
+                if (! $stock) {
+                    continue;
+                }
+            }
+            $fifoSnapshots[(int) $stock->stock_id] = $fifoService->getRemainingLots($stock);
+        }
+
+        return view('franchisee-staff.stock.index', compact('stocks', 'fifoSnapshots'));
     }
 
     /**
@@ -64,7 +80,8 @@ class StockController extends Controller
         // Check if trying to sell more than available
         if ($newQuantity < 0) {
             return redirect()->back()
-                ->with('error', 'Invalid quantity. Stock cannot be negative.');
+                ->with('error', 'Invalid quantity. Stock cannot be negative.')
+                ->with('flash_timeout', 3000);
         }
 
         DB::beginTransaction();
@@ -92,10 +109,13 @@ class StockController extends Controller
             DB::commit();
 
             return redirect()->route('franchisee-staff.stock.index')
-                ->with('success', 'Stock updated successfully.');
+                ->with('success', 'Stock updated successfully.')
+                ->with('flash_timeout', 3000);
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to update stock: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Failed to update stock: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
         }
     }
 
@@ -106,6 +126,7 @@ class StockController extends Controller
     {
         // This can be used to reverse a transaction if needed
         return redirect()->route('franchisee-staff.stock.index')
-            ->with('info', 'Stock adjustment cancelled.');
+            ->with('info', 'Stock adjustment cancelled.')
+            ->with('flash_timeout', 3000);
     }
 }

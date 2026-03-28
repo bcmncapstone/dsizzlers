@@ -17,6 +17,7 @@ class Kernel extends HttpKernel
     'role' => \App\Http\Middleware\CheckUserRole::class,
     'admin.auth' => \App\Http\Middleware\AdminAuth::class,
     'multi.auth' => \App\Http\Middleware\MultiAuth::class,
+    'franchisee_staff.active' => \App\Http\Middleware\EnsureFranchiseeStaffIsActive::class,
 ];
 
 }

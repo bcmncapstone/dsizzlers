@@ -2,6 +2,25 @@
 
 @section('content')
 <div class="py-12">
+    @if(session('success'))
+        <div class="mb-4 px-4 py-3 rounded bg-green-100 text-green-800 border border-green-300">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="mb-4 px-4 py-3 rounded bg-red-100 text-red-800 border border-red-300">
+            {{ session('error') }}
+        </div>
+    @endif
+    @if($errors->any())
+        <div class="mb-4 px-4 py-3 rounded bg-red-100 text-red-800 border border-red-300">
+            <ul class="list-disc pl-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8 flex items-start justify-between">
@@ -128,6 +147,7 @@
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Minimum Required</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Adjust</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -171,6 +191,24 @@
                                             </span>
                                         @endif
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <form action="{{ route('franchisee.branch.inventory.adjust', $item['item_id']) }}" method="POST" class="flex flex-col md:flex-row items-center gap-2">
+                                            @csrf
+                                            <input
+                                                type="number"
+                                                name="adjust_by"
+                                                min="1"
+                                                step="1"
+                                                class="border rounded px-2 py-1 w-16 text-xs md:text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                placeholder="Qty"
+                                                required
+                                            >
+                                            <div class="flex gap-1">
+                                                <button type="submit" name="direction" value="add" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs md:text-sm font-bold">+</button>
+                                                <button type="submit" name="direction" value="deduct" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs md:text-sm font-bold">-</button>
+                                            </div>
+                                        </form>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -197,7 +235,7 @@
                 </h2>
                 <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
                     <p class="text-sm text-red-700">
-                        The following items are running low or out of stock. Please contact admin to place an order for replenishment.
+                        The following items are running low or out of stock. You can place an order for replenishment.
                     </p>
                 </div>
                 <ul class="space-y-2">
@@ -217,4 +255,29 @@
         @endif
     </div>
 </div>
+   <!-- Flash Message -->
+    @if(session('success') || session('error'))
+        <div id="flash-message" class="mt-4 px-4 py-2 rounded bg-green-100 text-green-800">
+            {{ session('success') ?? session('error') }}
+        </div>
+    @endif
+</div>
+
+@if(session('flash_timeout'))
+    <script>
+        setTimeout(function() {
+            let alert = document.querySelector('.mb-4');
+            if(alert) alert.style.display = 'none';
+        }, {{ session('flash_timeout') }});
+    </script>
+@endif
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const flash = document.getElementById('flash-message');
+    if (flash) {
+        setTimeout(() => flash.remove(), 3000);
+    }
+});
+</script>
 @endsection

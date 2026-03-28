@@ -8,12 +8,17 @@ use App\Models\StockTransaction;
 use App\Models\Item;
 use App\Models\Order;
 use App\Models\FranchiseeStaff;
+use App\Services\FranchiseeFifoStockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
+    public function __construct(private FranchiseeFifoStockService $franchiseeFifoStockService)
+    {
+    }
+
     /**
      * Display the franchisee's stock inventory
      */
@@ -32,28 +37,33 @@ class StockController extends Controller
         $lowStock = $stocks->filter(fn($s) => $s->isLowStock())->count();
         $outOfStock = $stocks->filter(fn($s) => $s->isOutOfStock())->count();
 
+        $fifoSnapshots = [];
+        foreach ($stocks as $stockRow) {
+            $stock = $stockRow;
+
+            if (! $stock instanceof FranchiseeStock) {
+                $resolvedStockId = (int) ($stockRow->stock_id ?? 0);
+                if ($resolvedStockId <= 0) {
+                    continue;
+                }
+
+                $stock = FranchiseeStock::with('item')->find($resolvedStockId);
+                if (! $stock) {
+                    continue;
+                }
+            }
+
+            $fifoSnapshots[(int) $stock->stock_id] = $this->franchiseeFifoStockService->getRemainingLots($stock);
+        }
+
         return view('franchisee.stock.index', compact(
             'stocks',
             'totalItems',
             'inStock',
             'lowStock',
-            'outOfStock'
+            'outOfStock',
+            'fifoSnapshots'
         ));
-    }
-
-    /**
-     * Show the form to adjust stock
-     */
-    public function edit($stockId)
-    {
-        $franchisee = Auth::guard('franchisee')->user();
-        
-        $stock = FranchiseeStock::with('item')
-            ->where('stock_id', $stockId)
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->firstOrFail();
-
-        return view('franchisee.stock.edit', compact('stock'));
     }
 
     /**
@@ -62,27 +72,53 @@ class StockController extends Controller
     public function update(Request $request, $stockId)
     {
         $franchisee = Auth::guard('franchisee')->user();
-        
-        $stock = FranchiseeStock::where('stock_id', $stockId)
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->firstOrFail();
 
-        $request->validate([
-            'new_quantity' => 'required|integer|min:0',
-            'notes' => 'nullable|string|max:255',
-        ]);
+        $isInlineAdjust = $request->filled('adjust_by') && $request->filled('direction');
 
-        $newQuantity = $request->new_quantity;
-        $oldQuantity = $stock->current_quantity;
-
-        // Validate the new quantity is not greater than what was originally delivered
-        // This would require tracking total delivered - for now we just check it's not negative
-        if ($newQuantity < 0) {
-            return redirect()->back()->with('error', 'Quantity cannot be negative.');
+        if ($isInlineAdjust) {
+            $request->validate([
+                'adjust_by' => 'required|integer|min:1',
+                'direction' => 'required|in:add,deduct',
+                'notes' => 'nullable|string|max:255',
+            ]);
+        } else {
+            $request->validate([
+                'new_quantity' => 'required|integer|min:0',
+                'notes' => 'nullable|string|max:255',
+            ]);
         }
 
         DB::beginTransaction();
         try {
+            $stock = FranchiseeStock::with('item')
+                ->where('stock_id', $stockId)
+                ->where('franchisee_id', $franchisee->franchisee_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $oldQuantity = (int) $stock->current_quantity;
+            $newQuantity = (int) $request->new_quantity;
+
+            if ($isInlineAdjust) {
+                $adjustBy = (int) $request->adjust_by;
+                $direction = (string) $request->direction;
+                $newQuantity = $direction === 'add'
+                    ? $oldQuantity + $adjustBy
+                    : $oldQuantity - $adjustBy;
+            }
+
+            if ($newQuantity < 0) {
+                DB::rollBack();
+                return redirect()->back()
+                    ->with('error', 'Quantity cannot be negative.')
+                    ->with('flash_timeout', 3000);
+            }
+
+            $deductedQuantity = max($oldQuantity - $newQuantity, 0);
+            if ($deductedQuantity > 0) {
+                $this->franchiseeFifoStockService->allocateForDeduction($stock, $deductedQuantity);
+            }
+
             // Update stock
             $stock->current_quantity = $newQuantity;
             $stock->save();
@@ -96,7 +132,7 @@ class StockController extends Controller
                 'quantity' => $quantityChange,
                 'balance_after' => $newQuantity,
                 'reference_type' => 'manual',
-                'notes' => $request->notes ?? 'Manual stock adjustment',
+                'notes' => $request->notes ?? ($isInlineAdjust ? 'Inline stock adjustment' : 'Manual stock adjustment'),
                 'performed_by_type' => 'franchisee',
                 'performed_by_id' => $franchisee->franchisee_id,
             ]);
@@ -104,10 +140,13 @@ class StockController extends Controller
             DB::commit();
 
             return redirect()->route('franchisee.stock.index')
-                ->with('success', 'Stock updated successfully.');
+                ->with('success', 'Stock updated successfully.')
+                ->with('flash_timeout', 3000);
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Failed to update stock: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Failed to update stock: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
         }
     }
 
@@ -135,7 +174,9 @@ class StockController extends Controller
         if ($request->has('start_date') && $request->has('end_date') && 
             $request->start_date && $request->end_date &&
             $request->end_date < $request->start_date) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+                ->with('error', 'End date cannot be earlier than start date.')
+                ->with('flash_timeout', 3000);
         }
 
         $transactions = $query->paginate(20);
@@ -177,7 +218,9 @@ class StockController extends Controller
         if ($request->has('start_date') && $request->has('end_date') && 
             $request->start_date && $request->end_date &&
             $request->end_date < $request->start_date) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+                ->with('error', 'End date cannot be earlier than start date.')
+                ->with('flash_timeout', 3000);
         }
 
         $pendingOrders = $pendingQuery->orderBy('created_at', 'desc')->paginate(10, ['*'], 'pending_page');

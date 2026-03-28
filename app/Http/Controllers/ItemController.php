@@ -95,7 +95,9 @@ class ItemController extends Controller
         ]);
     }
 
-    return redirect()->route('admin.items.index')->with('success', 'Item added successfully!');
+    return redirect()->route('admin.items.index')
+        ->with('success', 'Item added successfully!')
+        ->with('flash_timeout', 3000);
 }
 
     public function edit($id)
@@ -159,7 +161,9 @@ class ItemController extends Controller
         ]);
     }
 
-    return redirect()->route('admin.items.index')->with('success', 'Item updated successfully!');
+    return redirect()->route('admin.items.index')
+        ->with('success', 'Item updated successfully!')
+        ->with('flash_timeout', 3000);
 }
 
     public function archive($id)
@@ -184,7 +188,8 @@ class ItemController extends Controller
         $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
 
         return redirect()->route($prefix . '.items.archived')
-            ->with('success', 'Item archived successfully!');
+            ->with('success', 'Item archived successfully!')
+            ->with('flash_timeout', 3000);
     }
 
     public function archived()
@@ -207,7 +212,8 @@ class ItemController extends Controller
         $this->saveArchivedItemIds($archivedIds);
 
         return redirect()->route('admin.items.archived')
-            ->with('success', 'Item restored successfully!');
+            ->with('success', 'Item restored successfully!')
+            ->with('flash_timeout', 3000);
     }
 
     /**

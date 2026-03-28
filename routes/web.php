@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\LoginController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\DigitalMarketingController;
 use App\Http\Controllers\CommunicationController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\BranchManagementController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
 use App\Http\Controllers\Franchisee\ReportController as FranchiseeReportController;
 use App\Models\Franchisee;
@@ -32,97 +34,7 @@ Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name(
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login.submit');
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
-Route::get('/admin/dashboard', function () {
-    $totalItemsSold = (int) DB::table('order_details')
-        ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
-        ->whereRaw('LOWER(orders.order_status) = ?', ['delivered'])
-        ->sum('order_details.quantity');
-
-    $lowStockCount = Item::where('stock_quantity', '>', 0)
-        ->where('stock_quantity', '<=', 10)
-        ->count();
-
-    $outOfStockCount = Item::where('stock_quantity', '<=', 0)->count();
-
-    $totalFranchisees = Franchisee::count();
-    $activeFranchisees = Franchisee::where('franchisee_status', 'Active')->count();
-
-    $totalOrders = Order::count();
-    $pendingOrders = Order::whereRaw('LOWER(order_status) = ?', ['pending'])->count();
-    $preparingOrders = Order::whereRaw('LOWER(order_status) = ?', ['preparing'])->count();
-    $shippedOrders = Order::whereRaw('LOWER(order_status) = ?', ['shipped'])->count();
-    $deliveredOrders = Order::whereRaw('LOWER(order_status) = ?', ['delivered'])->count();
-    $cancelledOrders = Order::whereRaw('LOWER(order_status) = ?', ['cancelled'])->count();
-
-    $totalSales = (float) Order::query()
-        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
-        ->sum('total_amount');
-
-    $salesThisMonth = (float) Order::query()
-        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
-        ->whereMonth('order_date', now()->month)
-        ->whereYear('order_date', now()->year)
-        ->sum('total_amount');
-
-    $today = now()->startOfDay();
-    $fromDate = $today->copy()->subDays(13);
-
-    $trendRows = DB::table('orders')
-        ->selectRaw('DATE(order_date) as chart_date, SUM(total_amount) as total_sales, COUNT(*) as order_count')
-        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
-        ->whereDate('order_date', '>=', $fromDate->toDateString())
-        ->groupByRaw('DATE(order_date)')
-        ->orderByRaw('DATE(order_date)')
-        ->get();
-
-    $salesByDate = [];
-    $ordersByDate = [];
-
-    foreach ($trendRows as $row) {
-        $key = (string) $row->chart_date;
-        $salesByDate[$key] = (float) $row->total_sales;
-        $ordersByDate[$key] = (int) $row->order_count;
-    }
-
-    $salesTrendLabels = [];
-    $salesTrendValues = [];
-    $salesTrendOrderCounts = [];
-
-    for ($offset = 13; $offset >= 0; $offset--) {
-        $day = $today->copy()->subDays($offset);
-        $key = $day->toDateString();
-
-        $salesTrendLabels[] = $day->format('M d');
-        $salesTrendValues[] = round($salesByDate[$key] ?? 0, 2);
-        $salesTrendOrderCounts[] = $ordersByDate[$key] ?? 0;
-    }
-
-    $recentOrders = Order::query()
-        ->select('order_id', 'name', 'order_status', 'payment_status', 'total_amount', 'order_date')
-        ->orderByDesc('order_date')
-        ->limit(8)
-        ->get();
-
-    return view('admin.dashboard', compact(
-        'totalItemsSold',
-        'lowStockCount',
-        'outOfStockCount',
-        'totalFranchisees',
-        'activeFranchisees',
-        'totalOrders',
-        'pendingOrders',
-        'preparingOrders',
-        'shippedOrders',
-        'deliveredOrders',
-        'cancelledOrders',
-        'totalSales',
-        'salesThisMonth',
-        'salesTrendLabels',
-        'salesTrendValues',
-        'salesTrendOrderCounts',
-        'recentOrders'
-    ));
-})->name('admin.dashboard');
+Route::get('/admin/dashboard', [DashboardController::class, 'index'])->name('admin.dashboard');
 
 // ACCOUNT CREATION (Admin only)
 Route::middleware('auth:admin')->group(function () {
@@ -130,12 +42,21 @@ Route::middleware('auth:admin')->group(function () {
     Route::get('/admin/accounts/create', [AccountController::class, 'create'])->name('accounts.create');
     Route::post('/admin/accounts/store', [AccountController::class, 'store'])->name('accounts.store');
     Route::get('/admin/accounts/{type}/{id}', [AccountController::class, 'show'])->name('accounts.show');
+
+    // Archive/Restore Franchisor Staff
+    Route::post('/admin/franchisor-staff/{staffId}/archive', [AccountController::class, 'archiveFranchisorStaff'])->name('admin.franchisor-staff.archive');
+    Route::post('/admin/franchisor-staff/{staffId}/restore', [AccountController::class, 'restoreFranchisorStaff'])->name('admin.franchisor-staff.restore');
 });
 
 //Account Creation for Franchisee Staff (Franchisee)
 Route::middleware(['auth:franchisee'])->group(function () {
+    Route::get('/franchisee/staff', [AccountController::class, 'indexFranchiseeStaff'])->name('franchisee.staff.index');
     Route::get('/franchisee/account/create', [AccountController::class, 'createFranchiseeStaff'])->name('account.create');
     Route::post('/franchisee/account/store', [AccountController::class, 'storeFranchiseeStaff'])->name('account.store');
+    Route::post('/franchisee/staff/{staffId}/archive', [AccountController::class, 'archiveFranchiseeStaff'])
+        ->name('franchisee.staff.archive');
+    Route::post('/franchisee/staff/{staffId}/restore', [AccountController::class, 'restoreFranchiseeStaff'])
+        ->name('franchisee.staff.restore');
 });
 
 // LOGIN ROUTES FOR EACH ROLE
@@ -171,11 +92,106 @@ Route::post('/password/reset/{role}', [PasswordResetController::class, 'reset'])
 
 // Franchisee Dashboard
 Route::middleware(['auth:franchisee'])->get('/franchisee/dashboard', function () {
-    return view('franchisee.dashboard');
+    $franchisee = Auth::guard('franchisee')->user();
+    $digitalMarketing = \App\Models\DigitalMarketingUpload::query()->notArchived()->latest()->get();
+    
+    // Stock Statistics - using FranchiseeStock
+    $lowStockCount = \App\Models\FranchiseeStock::where('franchisee_id', $franchisee->franchisee_id)
+        ->where('current_quantity', '>', 0)
+        ->where('current_quantity', '<=', 10)
+        ->count();
+    
+    $outOfStockCount = \App\Models\FranchiseeStock::where('franchisee_id', $franchisee->franchisee_id)
+        ->where('current_quantity', '<=', 0)
+        ->count();
+    
+    // Orders Statistics
+    $totalOrders = Order::where('franchisee_id', $franchisee->franchisee_id)->count();
+    $pendingOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
+        ->whereRaw('LOWER(order_status) = ?', ['pending'])
+        ->count();
+    $preparingOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
+        ->whereRaw('LOWER(order_status) = ?', ['preparing'])
+        ->count();
+    $shippedOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
+        ->whereRaw('LOWER(order_status) = ?', ['shipped'])
+        ->count();
+    $deliveredOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
+        ->whereRaw('LOWER(order_status) = ?', ['delivered'])
+        ->count();
+    
+    // Sales Data - based on manual stock decreases only.
+    $manualSalesFilter = function ($q) {
+        $q->where(function ($manualAdjustments) {
+            $manualAdjustments->where('stock_transactions.transaction_type', 'adjustment')
+                ->where('stock_transactions.quantity', '<', 0);
+        })->orWhere(function ($staffOutflow) {
+            $staffOutflow->where('stock_transactions.transaction_type', 'out')
+                ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+        });
+    };
+
+    $totalSales = (float) DB::table('stock_transactions')
+        ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+        ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+        ->where($manualSalesFilter)
+        ->selectRaw("COALESCE(SUM((CASE
+            WHEN stock_transactions.performed_by_type = 'franchisee_staff' THEN ABS(stock_transactions.quantity)
+            WHEN stock_transactions.quantity < 0 THEN ABS(stock_transactions.quantity)
+            ELSE 0
+        END) * items.price), 0) as total_sales")
+        ->value('total_sales');
+    
+    $salesThisMonth = (float) DB::table('stock_transactions')
+        ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+        ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+        ->where($manualSalesFilter)
+        ->whereMonth('stock_transactions.created_at', now()->month)
+        ->whereYear('stock_transactions.created_at', now()->year)
+        ->selectRaw("COALESCE(SUM((CASE
+            WHEN stock_transactions.performed_by_type = 'franchisee_staff' THEN ABS(stock_transactions.quantity)
+            WHEN stock_transactions.quantity < 0 THEN ABS(stock_transactions.quantity)
+            ELSE 0
+        END) * items.price), 0) as total_sales")
+        ->value('total_sales');
+    
+    // Staff Count
+    $staffCount = \App\Models\FranchiseeStaff::where('franchisee_id', $franchisee->franchisee_id)->count();
+    
+    // Top Selling Items - based on manual stock decreases.
+    $topItems = DB::table('stock_transactions')
+        ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+        ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+        ->where($manualSalesFilter)
+        ->select('items.item_name')
+        ->selectRaw("SUM(CASE
+            WHEN stock_transactions.performed_by_type = 'franchisee_staff' THEN ABS(stock_transactions.quantity)
+            WHEN stock_transactions.quantity < 0 THEN ABS(stock_transactions.quantity)
+            ELSE 0
+        END) as total_quantity")
+        ->groupBy('items.item_id', 'items.item_name')
+        ->orderByDesc('total_quantity')
+        ->limit(5)
+        ->get();
+    
+    return view('franchisee.dashboard', compact(
+        'digitalMarketing',
+        'lowStockCount',
+        'outOfStockCount',
+        'totalOrders',
+        'pendingOrders',
+        'preparingOrders',
+        'shippedOrders',
+        'deliveredOrders',
+        'totalSales',
+        'salesThisMonth',
+        'staffCount',
+        'topItems'
+    ));
 })->name('franchisee.dashboard');
 
 // Franchisee Staff Dashboard
-Route::middleware(['auth:franchisee_staff'])->get('/franchisee-staff/dashboard', function () {
+Route::middleware(['auth:franchisee_staff', 'franchisee_staff.active'])->get('/franchisee-staff/dashboard', function () {
     return view('franchisee-staff.dashboard');
 })->name('franchisee-staff.dashboard');
 
@@ -210,7 +226,7 @@ Route::middleware(['auth:franchisor_staff'])->prefix('franchisor-staff/stock')->
 });
 
 // Franchisee Staff Password Routes
-Route::middleware('auth:franchisee_staff')->group(function () {
+Route::middleware(['auth:franchisee_staff', 'franchisee_staff.active'])->group(function () {
     Route::get('franchisee-staff/password', [AccountSettingsController::class, 'editFranchiseeStaffPassword'])
         ->name('franchisee-staff.password');
     Route::post('franchisee-staff/password', [AccountSettingsController::class, 'updateFranchiseeStaffPassword'])
@@ -223,7 +239,7 @@ Route::middleware('auth:franchisee_staff')->group(function () {
 });
 
 // Franchisee Staff Stock Routes
-Route::middleware(['auth:franchisee_staff'])->prefix('franchisee-staff/stock')->name('franchisee-staff.stock.')->group(function () {
+Route::middleware(['auth:franchisee_staff', 'franchisee_staff.active'])->prefix('franchisee-staff/stock')->name('franchisee-staff.stock.')->group(function () {
     Route::get('/', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'index'])->name('index');
     Route::get('/{stockId}/edit', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'edit'])->name('edit');
     Route::post('/{stockId}', [\App\Http\Controllers\FranchiseeStaff\StockController::class, 'update'])->name('update');
@@ -267,13 +283,17 @@ Route::middleware(['auth:franchisee'])->prefix('franchisee/branch')->name('franc
     Route::get('/dashboard', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'dashboard'])->name('dashboard');
     Route::get('/performance', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'performance'])->name('performance');
     Route::get('/inventory', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'inventory'])->name('inventory');
+    // Redirect GET requests for adjust to inventory page to avoid method not allowed error
+    Route::get('/inventory/adjust/{itemId}', function() {
+        return redirect()->route('franchisee.branch.inventory');
+    });
+    Route::post('/inventory/adjust/{itemId}', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'adjustInventory'])->name('inventory.adjust');
     Route::get('/financial', [\App\Http\Controllers\Franchisee\BranchManagementController::class, 'financial'])->name('financial');
 });
 
 // Stock Management for Franchisee
 Route::middleware(['auth:franchisee'])->prefix('franchisee/stock')->name('franchisee.stock.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Franchisee\StockController::class, 'index'])->name('index');
-    Route::get('/{stockId}/edit', [\App\Http\Controllers\Franchisee\StockController::class, 'edit'])->name('edit');
     Route::post('/{stockId}', [\App\Http\Controllers\Franchisee\StockController::class, 'update'])->name('update');
     Route::get('/history', [\App\Http\Controllers\Franchisee\StockController::class, 'history'])->name('history');
     Route::get('/staff-orders', [\App\Http\Controllers\Franchisee\StockController::class, 'staffOrders'])->name('staff-orders');
@@ -340,7 +360,7 @@ Route::prefix('franchisee')
     });
 
 Route::prefix('franchisee-staff')
-    ->middleware(['auth:franchisee_staff'])
+    ->middleware(['auth:franchisee_staff', 'franchisee_staff.active'])
     ->name('franchisee_staff.')
     ->group(function () {
         Route::get('/item', [FranchiseeStaffItemController::class, 'index'])->name('item.index');
@@ -383,7 +403,7 @@ Route::prefix('franchisee')
 // Franchisee Staff Cart & Orders 
 Route::prefix('franchisee-staff')
     ->name('franchisee_staff.')
-    ->middleware(['auth:franchisee_staff'])
+    ->middleware(['auth:franchisee_staff', 'franchisee_staff.active'])
     ->group(function () {
         // Cart
         Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -500,7 +520,7 @@ Route::middleware(['auth:franchisor_staff'])->group(function () {
         ->name('franchisor-staff.account.update');
 });
 
-Route::middleware(['auth:franchisee_staff'])->group(function () {
+Route::middleware(['auth:franchisee_staff', 'franchisee_staff.active'])->group(function () {
     Route::get('/franchisee-staff/account', [StaffAccountController::class, 'showFranchiseeStaff'])
         ->name('franchisee-staff.account.show');
     Route::put('/franchisee-staff/account', [StaffAccountController::class, 'updateFranchiseeStaff'])
@@ -535,11 +555,17 @@ Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {
 
     Route::resource('digital-marketing', DigitalMarketingController::class)
         ->only(['index', 'store', 'update', 'destroy']);
+    Route::post('/digital-marketing/{digital_marketing}/restore', [DigitalMarketingController::class, 'restore'])
+        ->name('digital-marketing.restore');
         
     Route::get('/manage-communication', [CommunicationController::class, 'index'])
         ->name('communication.index');
     Route::post('/communication/start', [CommunicationController::class, 'start'])
         ->name('communication.start');
+    Route::post('/communication/{conversation}/archive', [CommunicationController::class, 'archiveConversation'])
+        ->name('communication.archive');
+    Route::post('/communication/{conversation}/restore', [CommunicationController::class, 'restoreConversation'])
+        ->name('communication.restore');
 });
 
 // Fetch messages without middleware for polling to work

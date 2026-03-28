@@ -35,7 +35,9 @@ class AccountSettingsController extends Controller
         $user->astaff_pass = Hash::make($request->password);
         $user->save();
 
-        return back()->with('success', 'Profile updated successfully.');
+        return back()
+            ->with('success', 'Profile updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     //Franchisee Staff Password
@@ -66,7 +68,9 @@ class AccountSettingsController extends Controller
         $user->fstaff_pass = Hash::make($request->password);
         $user->save();
 
-        return back()->with('success', 'Profile updated successfully.');
+        return back()
+            ->with('success', 'Profile updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     //Franchisee Password
@@ -96,7 +100,9 @@ class AccountSettingsController extends Controller
         $user->franchisee_pass = Hash::make($request->password);
         $user->save();
 
-        return back()->with('success', 'Profile updated successfully.');
+        return back()
+            ->with('success', 'Profile updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Admin Password
@@ -126,7 +132,9 @@ class AccountSettingsController extends Controller
         $user->admin_pass = Hash::make($request->password);
         $user->save();
 
-        return back()->with('success', 'Profile updated successfully.');
+        return back()
+            ->with('success', 'Profile updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // --- Username update methods for each guard ---
@@ -146,7 +154,9 @@ class AccountSettingsController extends Controller
         $user->astaff_username = $request->username;
         $user->save();
 
-        return back()->with('success', 'Username updated successfully.');
+        return back()
+            ->with('success', 'Username updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Franchisee Staff Username
@@ -165,7 +175,9 @@ class AccountSettingsController extends Controller
         $user->fstaff_username = $request->username;
         $user->save();
 
-        return back()->with('success', 'Username updated successfully.');
+        return back()
+            ->with('success', 'Username updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Franchisee Username
@@ -184,7 +196,9 @@ class AccountSettingsController extends Controller
         $user->franchisee_username = $request->username;
         $user->save();
 
-        return back()->with('success', 'Username updated successfully.');
+        return back()
+            ->with('success', 'Username updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Admin Username
@@ -203,6 +217,8 @@ class AccountSettingsController extends Controller
         $user->admin_username = $request->username;
         $user->save();
 
-        return back()->with('success', 'Username updated successfully.');
+        return back()
+            ->with('success', 'Username updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 }

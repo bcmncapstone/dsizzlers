@@ -139,7 +139,7 @@
                                 <td>
                                     <div class="admin-stock-control-block">
                                         <div class="admin-stock-current-row">
-                                            <span class="admin-stock-current-label">On hand:</span>
+                                            <span class="admin-stock-current-label">Current Stock:</span>
                                             <strong class="admin-stock-current-value">{{ $item->stock_quantity }}</strong>
                                         </div>
                                         <span class="inventory-status-badge {{ $isOut ? 'inventory-status-out-stock' : ($isLow ? 'inventory-status-low-stock' : 'inventory-status-in-stock') }}">
@@ -238,18 +238,19 @@
                                                 </thead>
                                                 <tbody>
                                                     @foreach($snap['lots'] as $lot)
-                                                        <tr>
-                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">{{ ($lot['source'] ?? 'stock_in') === 'legacy_balance' ? 'Opening Stock' : 'Restocked' }}</td>
-                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">{{ $lot['stock_in_id'] ?? '-' }}</td>
-                                                            <td style="padding:5px 8px; border:1px solid #d1d5db;">
-                                                                @if($lot['received_date'])
-                                                                    {{ \Illuminate\Support\Carbon::parse($lot['received_date'])->format('M d, Y H:i') }}
-                                                                @else
-                                                                    -
-                                                                @endif
-                                                            </td>
-                                                            <td style="padding:5px 8px; border:1px solid #d1d5db; text-align:right; font-weight:700;">{{ $lot['quantity_remaining'] }}</td>
-                                                        </tr>
+                                                            @php $batchNumber = $loop->iteration; @endphp
+                                                            <tr>
+                                                                <td style="padding:5px 8px; border:1px solid #d1d5db;">{{ ($lot['source'] ?? 'stock_in') === 'legacy_balance' ? 'Opening Stock' : 'Restocked' }}</td>
+                                                                <td style="padding:5px 8px; border:1px solid #d1d5db;">{{ $batchNumber }}</td>
+                                                                <td style="padding:5px 8px; border:1px solid #d1d5db;">
+                                                                    @if($lot['received_date'])
+                                                                        {{ \Illuminate\Support\Carbon::parse($lot['received_date'])->format('M d, Y H:i') }}
+                                                                    @else
+                                                                        -
+                                                                    @endif
+                                                                </td>
+                                                                <td style="padding:5px 8px; border:1px solid #d1d5db; text-align:right; font-weight:700;">{{ $lot['quantity_remaining'] }}</td>
+                                                            </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>

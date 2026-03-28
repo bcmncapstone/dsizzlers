@@ -21,24 +21,28 @@
         Filters: Start {{ $filters['start_date'] ?? 'N/A' }} | End {{ $filters['end_date'] ?? 'N/A' }}
     </div>
 
-    <p><strong>Total Orders:</strong> {{ $totalOrders }} &nbsp; | &nbsp; <strong>Total Sales:</strong> ₱{{ number_format($totalSales, 2) }}</p>
+    <p><strong>Total Sales Entries:</strong> {{ $totalOrders }} &nbsp; | &nbsp; <strong>Total Sales:</strong> ₱{{ number_format($totalSales, 2) }}</p>
 
     <table>
         <thead>
             <tr>
-                <th>Order ID</th>
-                <th>Ordered By</th>
-                <th>Order Date</th>
-                <th class="right">Total</th>
+                <th>Transaction ID</th>
+                <th>Item</th>
+                <th>Decreased By</th>
+                <th>Qty Sold</th>
+                <th>Date</th>
+                <th class="right">Line Total</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($orders as $order)
+            @foreach($salesEntries as $entry)
                 <tr>
-                    <td>{{ $order->order_id }}</td>
-                    <td>{{ $order->ordered_by }}</td>
-                    <td>{{ \Carbon\Carbon::parse($order->order_date)->format('M d, Y') }}</td>
-                    <td class="right">₱{{ number_format($order->total_amount, 2) }}</td>
+                    <td>{{ $entry->transaction_id }}</td>
+                    <td>{{ $entry->item_name }}</td>
+                    <td>{{ $entry->decreased_by }}</td>
+                    <td>{{ $entry->quantity_sold }}</td>
+                    <td>{{ \Carbon\Carbon::parse($entry->created_at)->format('M d, Y') }}</td>
+                    <td class="right">₱{{ number_format($entry->line_total, 2) }}</td>
                 </tr>
             @endforeach
         </tbody>

@@ -58,7 +58,9 @@ class FranchiseeController extends Controller
                         ->firstOrFail();
 
         if (! $branch->contract_file) {
-            return back()->with('error', 'Contract file not found.');
+            return back()
+                ->with('error', 'Contract file not found.')
+                ->with('flash_timeout', 3000);
         }
 
         if (MediaStorage::isRemote($branch->contract_file)) {
@@ -74,7 +76,9 @@ class FranchiseeController extends Controller
         $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
 
         if (! file_exists($filePath)) {
-            return back()->with('error', 'Contract file not found.');
+            return back()
+                ->with('error', 'Contract file not found.')
+                ->with('flash_timeout', 3000);
         }
 
         if (request()->query('mode') === 'download') {

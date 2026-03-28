@@ -7,6 +7,11 @@
         <div class="account-create-header">
             <h2 class="account-create-title">Create Staff Account</h2>
             <p class="account-create-subtitle">Add a new staff member to your team</p>
+            <p style="margin-top: 8px;">
+                <a href="{{ route('franchisee.staff.index') }}" style="font-size: 14px; color: #666;">
+                    ← Back to Staff List
+                </a>
+            </p>
         </div>
 
         {{-- Form Container --}}

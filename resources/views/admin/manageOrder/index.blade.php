@@ -7,8 +7,8 @@
 
         <!-- Page Header -->
         <div class="page-header">
-            <h1>Orders Management</h1>
-            <p>Track and manage all customer orders</p>
+            <h1>Order Management</h1>
+            <p>Track and manage all customer order</p>
         </div>
 
         <!-- Success Message -->
@@ -35,6 +35,13 @@
                 <button type="submit" class="btn btn-info">Apply Filter</button>
             </form>
         </div>
+
+        @if(!empty($selectedStatus))
+            <div class="alert alert-info">
+                <strong>Filter:</strong> Showing <strong>{{ $selectedStatus }}</strong> orders.
+                <a href="{{ route('admin.manageOrder.index') }}" style="margin-left: 8px;">Clear</a>
+            </div>
+        @endif
 
         <!-- Orders Table -->
         <div class="table-section">

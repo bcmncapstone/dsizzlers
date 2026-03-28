@@ -27,7 +27,8 @@ class ReportController extends Controller
     public function sales(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $query = DB::table('order_details')
@@ -140,7 +141,8 @@ class ReportController extends Controller
     public function salesPdf(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $query = DB::table('order_details')
@@ -167,7 +169,8 @@ class ReportController extends Controller
         $orderDetails = $query->orderBy('orders.order_date', 'desc')->get();
 
         if ($orderDetails->isEmpty()) {
-            return redirect()->back()->with('error', 'No sales data found for the selected filters.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $totalSales = $orderDetails->sum('subtotal');
@@ -321,7 +324,8 @@ class ReportController extends Controller
     public function franchiseeSales(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisees = Franchisee::orderBy('franchisee_name')->get();
@@ -382,7 +386,8 @@ class ReportController extends Controller
     public function franchiseeSalesPdf(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $query = Order::query()
@@ -403,7 +408,8 @@ class ReportController extends Controller
         $rows = $query->get();
 
         if ($rows->isEmpty()) {
-            return redirect()->back()->with('error', 'No franchisee sales data found for the selected filters.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisees = Franchisee::orderBy('franchisee_name')->get()->keyBy('franchisee_id');

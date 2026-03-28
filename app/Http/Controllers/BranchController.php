@@ -101,7 +101,9 @@ class BranchController extends Controller
         // Update branch_status to true using raw query to avoid type casting issues
         $branch->update(['branch_status' => DB::raw('true')]);
 
-        return redirect()->route('admin.branches.index')->with('success', 'Branch added successfully.');
+        return redirect()->route('admin.branches.index')
+            ->with('success', 'Branch added successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Update existing branch
@@ -139,7 +141,9 @@ class BranchController extends Controller
 
         $branch->update($validated);
 
-        return redirect()->route('admin.branches.index')->with('success', 'Branch updated successfully.');
+        return redirect()->route('admin.branches.index')
+            ->with('success', 'Branch updated successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Archive branch
@@ -154,7 +158,9 @@ class BranchController extends Controller
             $this->saveArchivedBranchIds($archivedIds);
         }
 
-        return redirect()->route('admin.branches.index')->with('success', 'Branch archived successfully.');
+        return redirect()->route('admin.branches.index')
+            ->with('success', 'Branch archived successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Restore branch
@@ -167,7 +173,9 @@ class BranchController extends Controller
         }));
         $this->saveArchivedBranchIds($archivedIds);
 
-        return redirect()->route('admin.branches.archived')->with('success', 'Branch restored successfully.');
+        return redirect()->route('admin.branches.archived')
+            ->with('success', 'Branch restored successfully.')
+            ->with('flash_timeout', 3000);
     }
 
     // Download/Preview contract file
@@ -176,7 +184,9 @@ class BranchController extends Controller
         $branch = Branch::findOrFail($id);
 
         if (! $branch->contract_file) {
-            return back()->with('error', 'File not found.');
+            return back()
+                ->with('error', 'File not found.')
+                ->with('flash_timeout', 3000);
         }
 
         if (MediaStorage::isRemote($branch->contract_file)) {
@@ -192,7 +202,9 @@ class BranchController extends Controller
         $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
 
         if (! file_exists($filePath)) {
-            return back()->with('error', 'File not found.');
+            return back()
+                ->with('error', 'File not found.')
+                ->with('flash_timeout', 3000);
         }
 
         if ($request->query('mode') === 'download') {

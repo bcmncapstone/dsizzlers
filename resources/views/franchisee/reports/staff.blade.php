@@ -110,6 +110,12 @@
     const staffSalesCtx = document.getElementById('staffSalesChart');
     if (staffSalesCtx) {
         const staffSalesData = @json($topStaffBySales);
+        const pesoFormatter = new Intl.NumberFormat('en-PH', {
+            style: 'currency',
+            currency: 'PHP',
+            minimumFractionDigits: 2,
+        });
+
         new Chart(staffSalesCtx, {
             type: 'bar',
             data: {
@@ -132,11 +138,19 @@
                 plugins: {
                     legend: {
                         display: false,
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `Sales: ${pesoFormatter.format(context.raw || 0)}`,
+                        },
                     }
                 },
                 scales: {
                     x: {
                         beginAtZero: true,
+                        ticks: {
+                            callback: (value) => pesoFormatter.format(value),
+                        }
                     }
                 }
             }

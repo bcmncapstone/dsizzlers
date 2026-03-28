@@ -8,7 +8,7 @@
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Financial Management</h1>
                 <p class="mt-2 text-sm text-gray-600">
-                    Branch inventory and stock levels
+                    Branch sales summary and trends
                 </p>
             </div>
             <a href="{{ route('franchisee.branch.dashboard') }}" 
@@ -19,7 +19,7 @@
 
         <!-- Key Financial Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- Total Revenue (Filtered) -->
+            <!-- Total Sales (Filtered) -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex items-center">
@@ -30,7 +30,7 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Sales</dt>
                                 <dd class="text-xs text-gray-400 mb-1">({{ $dateRangeLabel }})</dd>
                                 <dd class="text-2xl font-semibold text-gray-900">₱{{ number_format($totalRevenue, 2) }}</dd>
                             </dl>
@@ -39,7 +39,7 @@
                 </div>
             </div>
 
-            <!-- Current Month Revenue -->
+            <!-- Current Month Sales -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
                     <div class="flex items-center">
@@ -50,7 +50,7 @@
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">This Month Revenue</dt>
+                                <dt class="text-sm font-medium text-gray-500 truncate">This Month Sales</dt>
                                 <dd class="text-xs text-gray-400 mb-1">({{ now()->format('F Y') }})</dd>
                                 <dd class="text-2xl font-semibold text-gray-900">₱{{ number_format($currentMonthRevenue, 2) }}</dd>
                             </dl>
@@ -136,7 +136,7 @@
                 <div class="ml-3">
                     <h3 class="text-sm font-medium text-blue-800">Financial Summary</h3>
                     <div class="mt-2 text-sm text-blue-700">
-                        <p>Track your branch's total revenue and sales trends. Use the date filter to view sales for specific periods.</p>
+                        <p>Track your branch sales based on stock decreases. Use the date filter to view sales for specific periods.</p>
                     </div>
                 </div>
             </div>

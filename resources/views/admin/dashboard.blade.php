@@ -11,7 +11,7 @@
         <!-- Welcome Header -->
         <div class="dashboard-header">
             <h1>Admin Dashboard</h1>
-            <p>Summary of reports, operational data, trend line chart, and franchisee overview.</p>
+            <p>Overview of sales, orders, inventory health, and branch performance.</p>
         </div>
 
         @if(session('success'))
@@ -152,22 +152,147 @@
             </div>
         </div>
 
+        <!-- Digital Marketing Upload -->
+        <section class="marketing-section" style="margin-top: 28px;">
+            <h3>Digital Marketing Management</h3>
+
+            @if($errors->any())
+                <div class="alert alert-error">
+                    <ul style="margin:0;padding-left:18px;">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <div class="marketing-upload-container">
+                <h4>Upload Digital Marketing</h4>
+
+                <form method="POST" action="{{ route('digital-marketing.store') }}" enctype="multipart/form-data" id="dashboardMarketingForm">
+                    @csrf
+
+                    <div class="form-group">
+                        <label class="form-label">Select Image:</label>
+
+                        <input
+                            type="file"
+                            name="image"
+                            id="dash_marketing_image"
+                            accept="image/*"
+                            required
+                            class="file-input-hidden"
+                            onchange="dashPreviewImage(event)"
+                        >
+
+                        <div class="button-group">
+                            <button type="button" onclick="document.getElementById('dash_marketing_image').click()" class="btn btn-gallery">
+                                Choose from Gallery
+                            </button>
+                            <button type="button" onclick="dashOpenCamera()" class="btn btn-camera">
+                                Take Photo
+                            </button>
+                        </div>
+
+                        <span id="dash-file-name" class="file-name-display"></span>
+
+                        <div id="dash-image-preview" class="image-preview-container">
+                            <img id="dash-preview-img" src="" alt="Preview" class="preview-image">
+                            <button type="button" onclick="dashRemoveImage()" class="btn btn-remove">Remove Image</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dash_description" class="form-label">Description (Optional):</label>
+                        <textarea name="description" id="dash_description" rows="3" placeholder="Enter a description for this marketing post..." class="form-textarea"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-submit">Upload Post</button>
+                </form>
+            </div>
+
+            <!-- Camera Modal -->
+            <div id="dash-camera-modal" class="camera-modal">
+                <div class="camera-modal-content">
+                    <h3>Take Photo</h3>
+                    <video id="dash-camera-stream" autoplay playsinline class="camera-stream"></video>
+                    <canvas id="dash-camera-canvas" class="camera-canvas"></canvas>
+                    <div class="modal-button-group">
+                        <button type="button" onclick="dashCapturePhoto()" class="btn btn-camera">Capture</button>
+                        <button type="button" onclick="dashCloseCamera()" class="btn btn-remove">Close</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Existing Posts -->
+            <div style="margin-top: 28px;">
+                <h4>Uploaded Posts</h4>
+                <div class="marketing-posts-container">
+                    @forelse($digitalMarketing ?? [] as $post)
+                        <div class="marketing-post">
+                            <img
+                                src="{{ media_url($post->image_path) }}"
+                                alt="Marketing Image"
+                                id="admin-dash-img-{{ $post->id }}"
+                                class="marketing-post-image"
+                                onclick="adminDashViewImage({{ $post->id }})"
+                                title="Click to view full size"
+                                style="cursor:pointer;"
+                            >
+                            @if($post->description)
+                                <p class="marketing-post-description">{{ $post->description }}</p>
+                            @endif
+                            <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
+                            <div class="button-group" style="margin-top:8px;">
+                                <button onclick="adminDashViewImage({{ $post->id }})" class="btn btn-gallery">View</button>
+                                <a href="{{ media_url($post->image_path) }}" download="marketing-{{ $post->id }}.jpg" class="btn btn-camera">Download</a>
+                                <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display:inline;" onsubmit="return confirm('Archive this post?');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-remove">Archive</button>
+                                </form>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="empty-state">No posts uploaded yet.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <!-- Full Image Modal -->
+            <div id="admin-dash-image-modal" class="camera-modal" onclick="adminDashCloseModal()">
+                <div class="camera-modal-content" onclick="event.stopPropagation()">
+                    <button onclick="adminDashCloseModal()" class="btn btn-close">Close</button>
+                    <img id="admin-dash-modal-img" src="" alt="Full Size" class="modal-image">
+                    <div class="modal-download-container">
+                        <a id="admin-dash-download-btn" href="" download class="btn btn-camera">Download Image</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Quick Actions -->
-        <div class="sales-table-section" style="margin-bottom: 24px;">
+        <section class="sales-table-section" style="margin-bottom: 24px;">
             <div class="sales-table-header">
                 <h3>Quick Actions</h3>
             </div>
-        </div>
-
-        <!-- Dashboard Cards Grid -->
-        <div class="card-grid">
+            <div class="card-grid">
             
             <!-- Create Account Card -->
-            <a href="{{ route('accounts.create') }}" class="card card-orange">
+            <a href="{{ route('accounts.index') }}" class="card card-orange">
                 <div class="card-icon-wrapper">
                 </div>
                 <h3>Account</h3>
                 <p>Add new user accounts and manage permissions</p>
+                <div class="card-arrow">View →</div>
+            </a>
+
+               <!-- Update Password Card -->
+            <a href="{{ route('admin.password.update') }}" class="card card-orange">
+                <div class="card-icon-wrapper">
+                </div>
+                <h3>Update Profile</h3>
+                <p>Secure your account with a new password</p>
                 <div class="card-arrow">View →</div>
             </a>
 
@@ -177,15 +302,6 @@
                 </div>
                 <h3>Contract</h3>
                 <p>View and manage contracts</p>
-                <div class="card-arrow">View →</div>
-            </a>
-
-              <!-- Update Password Card -->
-            <a href="{{ route('admin.password.update') }}" class="card card-orange">
-                <div class="card-icon-wrapper">
-                </div>
-                <h3>Update Password</h3>
-                <p>Secure your account with a new password</p>
                 <div class="card-arrow">View →</div>
             </a>
 
@@ -225,15 +341,9 @@
                 <div class="card-arrow">View →</div>
             </a>
 
-            <!-- Messages Card -->
-            <a href="{{ route('communication.index') }}" class="card card-green">
-                <div class="card-icon-wrapper">
-                </div>
-                <h3>Message</h3>
-                <p>Communicate with team and users in real-time</p>
-                <div class="card-arrow">View →</div>
-            </a>
-        </div>
+        
+            </div>
+        </section>
     </div>
 </div>
 
@@ -310,3 +420,90 @@
 </script>
 
 @endsection
+
+@push('scripts')
+<script>
+    let dashCameraStream = null;
+
+    function dashPreviewImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('dash-preview-img').src = e.target.result;
+                document.getElementById('dash-image-preview').classList.add('show');
+                document.getElementById('dash-file-name').textContent = '✓ ' + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    async function dashOpenCamera() {
+        const modal = document.getElementById('dash-camera-modal');
+        const video = document.getElementById('dash-camera-stream');
+        modal.classList.add('show');
+        try {
+            dashCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = dashCameraStream;
+        } catch (error) {
+            alert('Unable to access camera. Please check permissions or use "Choose from Gallery".\n\nError: ' + error.message);
+            dashCloseCamera();
+        }
+    }
+
+    function dashCapturePhoto() {
+        const video = document.getElementById('dash-camera-stream');
+        const canvas = document.getElementById('dash-camera-canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(function(blob) {
+            const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            document.getElementById('dash_marketing_image').files = dataTransfer.files;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('dash-preview-img').src = e.target.result;
+                document.getElementById('dash-image-preview').classList.add('show');
+                document.getElementById('dash-file-name').textContent = '✓ camera-photo.jpg';
+            };
+            reader.readAsDataURL(file);
+            dashCloseCamera();
+        }, 'image/jpeg', 0.95);
+    }
+
+    function dashCloseCamera() {
+        const modal = document.getElementById('dash-camera-modal');
+        const video = document.getElementById('dash-camera-stream');
+        if (dashCameraStream) {
+            dashCameraStream.getTracks().forEach(track => track.stop());
+            dashCameraStream = null;
+        }
+        video.srcObject = null;
+        modal.classList.remove('show');
+    }
+
+    function dashRemoveImage() {
+        document.getElementById('dash_marketing_image').value = '';
+        document.getElementById('dash-image-preview').classList.remove('show');
+        document.getElementById('dash-file-name').textContent = '';
+    }
+
+    function adminDashViewImage(postId) {
+        const img = document.getElementById('admin-dash-img-' + postId);
+        const modal = document.getElementById('admin-dash-image-modal');
+        const modalImg = document.getElementById('admin-dash-modal-img');
+        const downloadBtn = document.getElementById('admin-dash-download-btn');
+        modalImg.src = img.src;
+        downloadBtn.href = img.src;
+        downloadBtn.download = 'marketing-' + postId + '.jpg';
+        modal.classList.add('show');
+    }
+
+    function adminDashCloseModal() {
+        document.getElementById('admin-dash-image-modal').classList.remove('show');
+    }
+</script>
+@endpush

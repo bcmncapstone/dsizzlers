@@ -1,125 +1,65 @@
 @extends('layouts.franchisee')
 
 @section('content')
-<div class="py-12">
-    <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-            <div class="p-6 bg-white border-b border-gray-200">
-                <h1 class="text-3xl font-bold text-gray-900">Branch Management</h1>
-                <p class="mt-2 text-sm text-gray-600">
+<div class="reports-page">
+    <div class="reports-container">
+        <div class="reports-header-box">
+            <div class="reports-header">
+                <h1 class="reports-title">Branch Management</h1>
+                <p class="reports-subtitle">
                     {{ $branch->location }} - Manage your branch performance, inventory, and finances
                 </p>
             </div>
         </div>
 
-        <!-- Quick Stats Overview -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Total Orders -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Orders</dt>
-                                <dd class="text-2xl font-semibold text-gray-900">{{ number_format($totalOrders) }}</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
+        <div class="reports-grid" style="margin-bottom: 24px;">
+            <div class="reports-card">
+                <h2 class="reports-card-title">Total Orders</h2>
+                <p class="reports-card-description">All branch orders to date</p>
+                <div class="reports-card-link">{{ number_format($totalOrders) }}</div>
             </div>
 
-            <!-- Total Revenue -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                            <svg class="h-6 w-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                                <dd class="text-2xl font-semibold text-gray-900">₱{{ number_format($totalRevenue, 2) }}</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
+            <div class="reports-card">
+                <h2 class="reports-card-title">Total Sales</h2>
+                <p class="reports-card-description">Sales from stock decreases</p>
+                <div class="reports-card-link">₱{{ number_format($totalSales, 2) }}</div>
             </div>
 
-        </div>
-
-        <!-- Management Modules -->
-        <div class="mb-8">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900 mb-2">Branch Management Modules</h2>
-                <p class="text-gray-600">
-                    Select a module to view detailed information about your branch operations
-                </p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Performance Module -->
-                <a href="{{ route('franchisee.branch.performance') }}" 
-                   class="group block bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 p-8 text-center border border-gray-100">
-                    <div class="flex items-center justify-center mb-6">
-                        <svg class="h-16 w-16 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Performance</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
-                        View operational performance metrics
-                    </p>
-                    <span class="text-blue-500 font-medium group-hover:text-blue-700 transition text-sm">
-                        View Report →
-                    </span>
-                </a>
-
-                <!-- Inventory Module -->
-                <a href="{{ route('franchisee.branch.inventory') }}" 
-                   class="group block bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 p-8 text-center border border-gray-100">
-                    <div class="flex items-center justify-center mb-6">
-                        <svg class="h-16 w-16 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Item Inventory</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
-                        Track stock movements by date range
-                    </p>
-                    <span class="text-orange-500 font-medium group-hover:text-orange-700 transition text-sm">
-                        View Report →
-                    </span>
-                </a>
-
-                <!-- Financial Module -->
-                <a href="{{ route('franchisee.branch.financial') }}" 
-                   class="group block bg-white rounded-lg shadow-sm hover:shadow-lg transition duration-300 p-8 text-center border border-gray-100">
-                    <div class="flex items-center justify-center mb-6">
-                        <svg class="h-16 w-16 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Financial</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed mb-4">
-                        Track revenue, expenses, and profitability
-                    </p>
-                    <span class="text-green-500 font-medium group-hover:text-green-700 transition text-sm">
-                        View Report →
-                    </span>
-                </a>
+            <div class="reports-card">
+                <h2 class="reports-card-title">Sales This Month</h2>
+                <p class="reports-card-description">Current month stock-decrease sales</p>
+                <div class="reports-card-link">₱{{ number_format($salesThisMonth, 2) }}</div>
             </div>
         </div>
 
-        <!-- Important Note -->
-        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+        <div class="reports-header-box" style="margin-bottom: 20px;">
+            <div class="reports-header">
+                <h2 class="reports-title" style="font-size: 1.35rem;">Branch Management Modules</h2>
+                <p class="reports-subtitle">Select a module to view detailed information about your branch operations</p>
+            </div>
+        </div>
+
+        <div class="reports-grid">
+            <a href="{{ route('franchisee.branch.performance') }}" class="reports-card">
+                <h2 class="reports-card-title">Performance</h2>
+                <p class="reports-card-description">View operational performance metrics</p>
+                <div class="reports-card-link">View Report →</div>
+            </a>
+
+            <a href="{{ route('franchisee.branch.inventory') }}" class="reports-card">
+                <h2 class="reports-card-title">Item Inventory</h2>
+                <p class="reports-card-description">Track stock movements by date range</p>
+                <div class="reports-card-link">View Report →</div>
+            </a>
+
+            <a href="{{ route('franchisee.branch.financial') }}" class="reports-card">
+                <h2 class="reports-card-title">Financial</h2>
+                <p class="reports-card-description">Track revenue, expenses, and profitability</p>
+                <div class="reports-card-link">View Report →</div>
+            </a>
+        </div>
+
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded" style="margin-top: 24px;">
             <div class="flex">
                 <div class="flex-shrink-0">
                     <svg class="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
@@ -130,9 +70,7 @@
                     <h3 class="text-sm font-medium text-yellow-800">Inventory Management Note</h3>
                     <div class="mt-2 text-sm text-yellow-700">
                         <p>
-                            All inventory is automatically calculated from orders delivered by admin. 
-                            Franchisees cannot manually add items. Stock levels reflect items received 
-                            from admin minus items sold to customers.
+                            Delivered items increase your stock. Sales are counted when stock is manually decreased by franchisee or franchisee staff.
                         </p>
                     </div>
                 </div>

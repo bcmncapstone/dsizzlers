@@ -60,7 +60,7 @@
 
         <!-- Error Messages -->
         @if(session('error'))
-            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 mb-6 js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">
                 <div class="flex">
                     <div class="flex-shrink-0">
                         <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">

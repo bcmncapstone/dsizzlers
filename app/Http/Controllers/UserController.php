@@ -36,6 +36,8 @@ class UserController extends Controller
             'is_password_updated' => false,
         ]);
 
-        return redirect()->route('accounts.create')->with('success', 'User account created successfully.');
+        return redirect()->route('accounts.create')
+            ->with('success', 'User account created successfully.')
+            ->with('flash_timeout', 3000);
     }
 }

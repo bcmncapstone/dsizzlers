@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Admin;
+use App\Models\FranchiseeStaff;
 
 class LoginController extends Controller
 {
@@ -44,6 +45,11 @@ class LoginController extends Controller
             'username' => 'required',
             'password' => 'required',
         ]);
+
+        $staff = FranchiseeStaff::where('fstaff_username', $credentials['username'])->first();
+        if ($staff && $staff->fstaff_status !== 'Active') {
+            return back()->withErrors(['login_error' => 'Your account has been archived. Please contact your franchisee admin.']);
+        }
 
         if (Auth::guard('franchisee_staff')->attempt([
             'fstaff_username' => $credentials['username'],
@@ -132,6 +138,13 @@ class LoginController extends Controller
 
         // Franchisee Staff login
         if ($role === 'franchisee-staff') {
+            $staff = FranchiseeStaff::where('fstaff_username', $username)->first();
+            if ($staff && $staff->fstaff_status !== 'Active') {
+                return back()
+                    ->withInput($request->only('username', 'role_type'))
+                    ->withErrors(['login_error' => 'Your account has been archived. Please contact your franchisee admin.']);
+            }
+
             if (Auth::guard('franchisee_staff')->attempt([
                 'fstaff_username' => $username,
                 'password' => $password,

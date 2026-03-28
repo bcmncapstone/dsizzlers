@@ -35,7 +35,9 @@ class StaffAccountController extends Controller
             'astaff_email' => $request->email,
         ]);
 
-        return back()->with('success', 'Profile updated successfully');
+        return back()
+            ->with('success', 'Profile updated successfully')
+            ->with('flash_timeout', 3000);
     }
 
     // Update Franchisee Staff Account
@@ -53,6 +55,8 @@ class StaffAccountController extends Controller
             'fstaff_email' => $request->email,
         ]);
 
-        return back()->with('success', 'Profile updated successfully');
+        return back()
+            ->with('success', 'Profile updated successfully')
+            ->with('flash_timeout', 3000);
     }
 }

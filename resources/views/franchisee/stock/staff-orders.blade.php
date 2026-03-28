@@ -82,7 +82,7 @@
                 </div>
 
                 @if(session('error'))
-                    <div class="mt-4 bg-red-50 border-l-4 border-red-400 p-4">
+                    <div class="mt-4 bg-red-50 border-l-4 border-red-400 p-4 js-flash-alert" data-timeout="{{ (int) session('flash_timeout', 3000) }}">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">

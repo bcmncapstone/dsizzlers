@@ -21,47 +21,61 @@ class ReportController extends Controller
     public function sales(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisee = Auth::guard('franchisee')->user();
 
-        $query = Order::with(['franchisee', 'orderDetails.item', 'staff'])
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->where('order_status', 'Delivered')
+        $query = StockTransaction::query()
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where(function ($q) {
+                // Sales are counted only when stock is manually decreased.
+                $q->where(function ($manualAdjustments) {
+                    $manualAdjustments->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOutflow) {
+                    $staffOutflow->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            })
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->end_date);
-            });
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
+            })
+            ->select(
+                'stock_transactions.transaction_id',
+                'stock_transactions.quantity',
+                'stock_transactions.created_at',
+                'stock_transactions.performed_by_type',
+                'stock_transactions.notes',
+                'items.item_name',
+                'items.item_category',
+                'items.price'
+            );
 
         $summaryQuery = clone $query;
-        $totalSales = $summaryQuery->sum('total_amount');
+        $totalSales = $summaryQuery->get()->sum(function ($row) {
+            $quantitySold = $this->normalizeSoldQuantity($row->quantity, $row->performed_by_type);
+
+            return $quantitySold * (float) $row->price;
+        });
         $totalOrders = $summaryQuery->count();
 
-        $orders = $query->orderBy('order_date', 'desc')->paginate(50);
+        $salesEntries = $query->orderBy('stock_transactions.created_at', 'desc')->paginate(50);
 
-        // Compute concatenated item names per order for display and ordered by info
-        $orders->getCollection()->transform(function ($order) {
-            $order->item_names = $order->orderDetails
-                ? $order->orderDetails
-                    ->map(function ($detail) {
-                        return optional($detail->item)->item_name;
-                    })
-                    ->filter()
-                    ->implode(', ')
-                : '';
+        $salesEntries->getCollection()->transform(function ($entry) {
+            $entry->quantity_sold = $this->normalizeSoldQuantity($entry->quantity, $entry->performed_by_type);
+            $entry->line_total = $entry->quantity_sold * (float) $entry->price;
+            $entry->decreased_by = $entry->performed_by_type === 'franchisee_staff' ? 'Franchisee Staff' : 'Franchisee';
 
-            // Determine who ordered: Staff or Franchisee
-            $order->ordered_by = $order->fstaff_id && $order->staff 
-                ? $order->staff->fstaff_fname . ' ' . $order->staff->fstaff_lname
-                : 'Franchisee';
-
-            return $order;
+            return $entry;
         });
-        $noData = $orders->isEmpty();
-        $availableRange = $noData ? $this->getOrderDateRange($franchisee->franchisee_id) : null;
+        $noData = $salesEntries->isEmpty();
+        $availableRange = $noData ? $this->getManualSalesDateRange($franchisee->franchisee_id) : null;
 
         // Get chart data using separate method
         $chartQuery = $this->getChartQueryData($franchisee->franchisee_id, $request);
@@ -70,7 +84,7 @@ class ReportController extends Controller
         $dailySales = $this->getDailySales($chartQuery);
 
         return view('franchisee.reports.sales', compact(
-            'orders',
+            'salesEntries',
             'totalSales',
             'totalOrders',
             'noData',
@@ -83,24 +97,32 @@ class ReportController extends Controller
 
     private function getChartQueryData(int $franchiseeId, Request $request)
     {
-        return DB::table('order_details')
-            ->join('items', 'order_details.item_id', '=', 'items.item_id')
-            ->join('orders', 'order_details.order_id', '=', 'orders.order_id')
-            ->where('orders.franchisee_id', $franchiseeId)
-            ->where('orders.order_status', 'Delivered')
+        return DB::table('stock_transactions')
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where('stock_transactions.franchisee_id', $franchiseeId)
+            ->where(function ($q) {
+                $q->where(function ($manualAdjustments) {
+                    $manualAdjustments->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOutflow) {
+                    $staffOutflow->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            })
             ->select(
-                'order_details.item_id',
+                'stock_transactions.item_id',
                 'items.item_name',
                 'items.item_category',
-                'order_details.quantity',
-                'order_details.subtotal',
-                'orders.order_date'
+                'stock_transactions.quantity',
+                'stock_transactions.performed_by_type',
+                'items.price',
+                'stock_transactions.created_at'
             )
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('orders.order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('orders.order_date', '<=', $request->end_date);
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
             })
             ->get();
     }
@@ -109,11 +131,17 @@ class ReportController extends Controller
     {
         return collect($chartQuery)
             ->groupBy('item_name')
-            ->map(function($group) { 
+            ->map(function($group) {
+                $quantitySold = $group->sum(function ($item) {
+                    return $this->normalizeSoldQuantity($item->quantity, $item->performed_by_type);
+                });
+
                 return [
                     'name' => $group->first()->item_name,
-                    'quantity' => $group->sum('quantity'),
-                    'sales' => $group->sum('subtotal')
+                    'quantity' => $quantitySold,
+                    'sales' => $group->sum(function ($item) {
+                        return $this->normalizeSoldQuantity($item->quantity, $item->performed_by_type) * (float) $item->price;
+                    })
                 ];
             })
             ->sortByDesc('quantity')
@@ -126,11 +154,17 @@ class ReportController extends Controller
     {
         return collect($chartQuery)
             ->groupBy('item_category')
-            ->map(function($group) { 
+            ->map(function($group) {
+                $quantitySold = $group->sum(function ($item) {
+                    return $this->normalizeSoldQuantity($item->quantity, $item->performed_by_type);
+                });
+
                 return [
                     'category' => $group->first()->item_category ?? 'Uncategorized',
-                    'quantity' => $group->sum('quantity'),
-                    'sales' => $group->sum('subtotal')
+                    'quantity' => $quantitySold,
+                    'sales' => $group->sum(function ($item) {
+                        return $this->normalizeSoldQuantity($item->quantity, $item->performed_by_type) * (float) $item->price;
+                    })
                 ];
             })
             ->sortByDesc('sales')
@@ -141,14 +175,20 @@ class ReportController extends Controller
     private function getDailySales($chartQuery)
     {
         return collect($chartQuery)
-            ->groupBy(function($item) { 
-                return \Carbon\Carbon::parse($item->order_date)->format('Y-m-d');
+            ->groupBy(function($item) {
+                return \Carbon\Carbon::parse($item->created_at)->format('Y-m-d');
             })
-            ->map(function($group) { 
+            ->map(function($group) {
+                $quantitySold = $group->sum(function ($item) {
+                    return $this->normalizeSoldQuantity($item->quantity, $item->performed_by_type);
+                });
+
                 return [
-                    'date' => $group->first()->order_date,
-                    'sales' => $group->sum('subtotal'),
-                    'quantity' => $group->sum('quantity')
+                    'date' => $group->first()->created_at,
+                    'sales' => $group->sum(function ($item) {
+                        return $this->normalizeSoldQuantity($item->quantity, $item->performed_by_type) * (float) $item->price;
+                    }),
+                    'quantity' => $quantitySold
                 ];
             })
             ->sortBy('date')
@@ -159,40 +199,59 @@ class ReportController extends Controller
     public function salesPdf(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisee = Auth::guard('franchisee')->user();
 
-        $orders = Order::with(['franchisee', 'staff', 'orderDetails.item'])
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->where('order_status', 'Delivered')
+        $salesEntries = StockTransaction::query()
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where(function ($q) {
+                $q->where(function ($manualAdjustments) {
+                    $manualAdjustments->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOutflow) {
+                    $staffOutflow->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            })
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->end_date);
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
             })
-            ->orderBy('order_date', 'desc')
+            ->select(
+                'stock_transactions.transaction_id',
+                'stock_transactions.quantity',
+                'stock_transactions.created_at',
+                'stock_transactions.performed_by_type',
+                'items.item_name',
+                'items.price'
+            )
+            ->orderBy('stock_transactions.created_at', 'desc')
             ->get();
 
-        if ($orders->isEmpty()) {
-            return redirect()->back()->with('error', 'No sales data found for the selected filters.');
+        if ($salesEntries->isEmpty()) {
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
-        // Compute ordered by info for each order
-        $orders->transform(function ($order) {
-            $order->ordered_by = $order->fstaff_id && $order->staff 
-                ? $order->staff->fstaff_fname . ' ' . $order->staff->fstaff_lname
-                : 'Franchisee';
-            return $order;
+        $salesEntries->transform(function ($entry) {
+            $entry->quantity_sold = $this->normalizeSoldQuantity($entry->quantity, $entry->performed_by_type);
+            $entry->line_total = $entry->quantity_sold * (float) $entry->price;
+            $entry->decreased_by = $entry->performed_by_type === 'franchisee_staff' ? 'Franchisee Staff' : 'Franchisee';
+
+            return $entry;
         });
 
-        $totalSales = $orders->sum('total_amount');
-        $totalOrders = $orders->count();
+        $totalSales = $salesEntries->sum('line_total');
+        $totalOrders = $salesEntries->count();
 
         $pdf = Pdf::loadView('franchisee.reports.pdf.sales', [
-            'orders' => $orders,
+            'salesEntries' => $salesEntries,
             'totalSales' => $totalSales,
             'totalOrders' => $totalOrders,
             'filters' => $request->only(['start_date', 'end_date']),
@@ -201,10 +260,20 @@ class ReportController extends Controller
         return $pdf->download('sales-report.pdf');
     }
 
+    private function normalizeSoldQuantity(int $quantity, ?string $performedByType = null): int
+    {
+        if ($performedByType === 'franchisee_staff') {
+            return abs($quantity);
+        }
+
+        return $quantity < 0 ? abs($quantity) : 0;
+    }
+
     public function inventory(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisee = Auth::guard('franchisee')->user();
@@ -257,7 +326,8 @@ class ReportController extends Controller
     public function inventoryPdf(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisee = Auth::guard('franchisee')->user();
@@ -274,7 +344,8 @@ class ReportController extends Controller
             ->get();
 
         if ($transactions->isEmpty()) {
-            return redirect()->back()->with('error', 'No inventory data found for the selected filters.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $pdf = Pdf::loadView('franchisee.reports.pdf.inventory', [
@@ -288,7 +359,8 @@ class ReportController extends Controller
     public function staff(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisee = Auth::guard('franchisee')->user();
@@ -348,7 +420,8 @@ class ReportController extends Controller
     public function staffPdf(Request $request)
     {
         if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()->with('error', 'End date cannot be earlier than start date.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $franchisee = Auth::guard('franchisee')->user();
@@ -359,7 +432,8 @@ class ReportController extends Controller
             ->get();
 
         if ($staff->isEmpty()) {
-            return redirect()->back()->with('error', 'No staff data found for this branch.');
+            return redirect()->back()
+            ->with('flash_timeout', 3000);
         }
 
         $performance = Order::query()
@@ -395,6 +469,23 @@ class ReportController extends Controller
         return Order::query()
             ->where('franchisee_id', $franchiseeId)
             ->selectRaw('MIN(order_date) as min_date, MAX(order_date) as max_date')
+            ->first();
+    }
+
+    private function getManualSalesDateRange(int $franchiseeId)
+    {
+        return StockTransaction::query()
+            ->where('franchisee_id', $franchiseeId)
+            ->where(function ($q) {
+                $q->where(function ($manualAdjustments) {
+                    $manualAdjustments->where('transaction_type', 'adjustment')
+                        ->where('quantity', '<', 0);
+                })->orWhere(function ($staffOutflow) {
+                    $staffOutflow->where('transaction_type', 'out')
+                        ->where('performed_by_type', 'franchisee_staff');
+                });
+            })
+            ->selectRaw('MIN(created_at) as min_date, MAX(created_at) as max_date')
             ->first();
     }
 
