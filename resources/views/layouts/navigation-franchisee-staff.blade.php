@@ -9,18 +9,34 @@
             </div>
         </a>
 
-        <button type="button" class="navbar-toggle" data-navbar-toggle aria-expanded="false" aria-label="Toggle navigation">
+       <button type="button" class="navbar-toggle block md:hidden" data-navbar-toggle aria-expanded="false" aria-label="Toggle navigation">
             <span></span>
             <span></span>
             <span></span>
         </button>
 
-        <!-- Desktop Navigation -->
-        <ul class="navbar-nav" data-navbar-menu>
+        <!-- Navigation Menu -->
+        <ul class="navbar-nav flex-col md:flex-row md:flex md:static absolute right-0 top-full bg-white md:bg-transparent w-full md:w-auto shadow md:shadow-none z-50 transition-all duration-200 ease-in-out hidden md:flex" data-navbar-menu>
+                    <style>
+                    @media (max-width: 1024px) {
+                        .navbar-nav {
+                            display: none;
+                        }
+                        .navbar-nav.is-open {
+                            display: flex !important;
+                        }
+                        .navbar-nav.is-open a {
+                            color: #FF5722 !important; /* dsizzlers orange */
+                        }
+                        .navbar-nav.is-open a.active {
+                            color: #C41C00 !important; /* highlight active link */
+                        }
+                    }
+                    </style>
             <li><a href="{{ route('franchisee-staff.dashboard') }}" class="{{ request()->routeIs('franchisee-staff.dashboard') ? 'active' : '' }}">Dashboard</a></li>
-            <li><a href="{{ route('franchisee_staff.orders.index') }}" class="{{ request()->routeIs('franchisee_staff.orders.*') ? 'active' : '' }}">Orders</a></li>
+            <li><a href="{{ route('franchisee_staff.orders.index') }}" class="{{ request()->routeIs('franchisee_staff.orders.*') ? 'active' : '' }}">Order</a></li>
              <li><a href="{{ route('franchisee_staff.item.index') }}" class="{{ request()->routeIs('franchisee_staff.item.*') ? 'active' : '' }}">Item</a></li>
-            <li><a href="{{ route('franchisee-staff.stock.index') }}" class="{{ request()->routeIs('franchisee-staff.stock.*') ? 'active' : '' }}">Item Stock</a></li>
+            <li><a href="{{ route('franchisee-staff.stock.index') }}" class="{{ request()->routeIs('franchisee-staff.stock.*') ? 'active' : '' }}">Stock</a></li>
             <li><a href="{{ route('franchisee-staff.password') }}" class="{{ request()->routeIs('franchisee-staff.password*') ? 'active' : '' }}">Update Password</a></li>
             <li><a href="{{ route('franchisee-staff.account.show') }}" class="{{ request()->routeIs('franchisee-staff.account.*') ? 'active' : '' }}">Edit Profile</a></li>
 

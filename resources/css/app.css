@@ -1,3 +1,7 @@
+/* Hamburger menu open state for mobile nav */
+.navbar-nav.open {
+    display: flex !important;
+}
 @import 'tailwindcss';
 
 /* ====================================

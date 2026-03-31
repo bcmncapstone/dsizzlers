@@ -212,7 +212,10 @@
 
                         <div id="description-display-{{ $post->id }}">
                             @if($post->description)
-                                <p class="marketing-post-description">{{ $post->description }}</p>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <p class="marketing-post-description" id="desc-{{ $post->id }}" style="margin-bottom: 0;">{{ $post->description }}</p>
+                                    <button type="button" class="btn btn-edit" onclick="copyDescription({{ $post->id }})" title="Copy Description">Copy</button>
+                                </div>
                             @endif
                             <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
                         </div>
@@ -266,7 +269,10 @@
                             title="Click to view full size"
                         >
                         @if($post->description)
-                            <p class="marketing-post-description">{{ $post->description }}</p>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <p class="marketing-post-description" id="franchisee-desc-{{ $post->id }}" style="margin-bottom: 0;">{{ $post->description }}</p>
+                                <button type="button" class="btn btn-edit" onclick="copyFranchiseeDescription({{ $post->id }})" title="Copy Description">Copy</button>
+                            </div>
                         @endif
                         <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
 
@@ -391,6 +397,60 @@
         modalImg.src = img.src;
         downloadBtn.href = img.src;
         downloadBtn.download = 'marketing-' + postId + '.jpg';
+    }
+
+
+    function copyDescription(postId) {
+        const descElem = document.getElementById('desc-' + postId);
+        if (!descElem) return;
+        const text = descElem.textContent || descElem.innerText;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Description copied to clipboard!');
+            }, function() {
+                alert('Failed to copy description.');
+            });
+        } else {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('Description copied to clipboard!');
+            } catch (err) {
+                alert('Failed to copy description.');
+            }
+            document.body.removeChild(textarea);
+        }
+    }
+
+
+    function copyFranchiseeDescription(postId) {
+        const descElem = document.getElementById('franchisee-desc-' + postId);
+        if (!descElem) return;
+        const text = descElem.textContent || descElem.innerText;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Description copied to clipboard!');
+            }, function() {
+                alert('Failed to copy description.');
+            });
+        } else {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('Description copied to clipboard!');
+            } catch (err) {
+                alert('Failed to copy description.');
+            }
+            document.body.removeChild(textarea);
+        }
     }
 
     function closeImageModal() {

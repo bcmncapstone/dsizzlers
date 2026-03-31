@@ -59,6 +59,7 @@
                             <th>Address</th>
                             <th>Order Status</th>
                             <th>Payment Status</th>
+                            <th>Ordered At</th> 
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -95,6 +96,11 @@
                                     @endphp
                                     <span class="badge {{ $paymentClass }}">{{ ucfirst($paymentStatus) }}</span>
                                 </td>
+                                 <td>
+                <div class="table-date">
+                    {{ $order->created_at ? $order->created_at->format('M d, Y h:i A') : 'N/A' }}
+                </div>
+            </td>
                                 <td>
                                     <div class="table-actions">
                                         <a href="{{ route('admin.manageOrder.show', $order->order_id) }}" class="table-action-btn table-action-edit">

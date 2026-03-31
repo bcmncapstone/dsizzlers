@@ -9,17 +9,26 @@
             $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
         @endphp
 
-        @if(session('success'))
-            <div class="alert alert-success js-flash-alert" style="margin-bottom: 16px;" data-timeout="{{ session('flash_timeout', 3000) }}">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="alert alert-error js-flash-alert" style="margin-bottom: 16px;" data-timeout="{{ session('flash_timeout', 3000) }}">
-                {{ session('error') }}
-            </div>
-        @endif
+        @if(session('success') || session('error'))
+    <div
+        class="alert {{ session('success') ? 'alert-success' : 'alert-error' }} js-flash-alert"
+        style="margin-bottom: 16px;"
+        data-timeout="{{ session('flash_timeout', 3000) }}"
+    >
+        {{ session('success') ?? session('error') }}
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var alert = document.querySelector('.js-flash-alert');
+            if (alert) {
+                var timeout = parseInt(alert.getAttribute('data-timeout')) || 3000;
+                setTimeout(function() {
+                    alert.remove();
+                }, timeout);
+            }
+        });
+    </script>
+@endif
 
         <!-- Action Buttons -->
         <div class="action-buttons">

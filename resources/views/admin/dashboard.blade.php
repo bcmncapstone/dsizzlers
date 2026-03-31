@@ -10,7 +10,7 @@
         
         <!-- Welcome Header -->
         <div class="dashboard-header">
-            <h1>Admin Dashboard</h1>
+            <h1>Franchisor Dashboard</h1>
             <p>Overview of sales, orders, inventory health, and branch performance.</p>
         </div>
 
@@ -231,16 +231,19 @@
                     @forelse($digitalMarketing ?? [] as $post)
                         <div class="marketing-post">
                             <img
-                                src="{{ media_url($post->image_path) }}"
+                                src="{{ is_object($post) && isset($post->image_path) ? media_url($post->image_path) : '' }}"
                                 alt="Marketing Image"
-                                id="admin-dash-img-{{ $post->id }}"
+                                id="admin-dash-img-{{ is_object($post) && isset($post->id) ? $post->id : '' }}"
                                 class="marketing-post-image"
-                                onclick="adminDashViewImage({{ $post->id }})"
+                                onclick="adminDashViewImage({{ is_object($post) && isset($post->id) ? $post->id : 'null' }})"
                                 title="Click to view full size"
                                 style="cursor:pointer;"
                             >
                             @if($post->description)
-                                <p class="marketing-post-description">{{ $post->description }}</p>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <p class="marketing-post-description" id="admin-dash-desc-{{ $post->id }}" style="margin-bottom: 0;">{{ $post->description }}</p>
+                                    <button type="button" class="btn btn-edit" onclick="adminDashCopyDescription({{ $post->id }})" title="Copy Description">Copy</button>
+                                </div>
                             @endif
                             <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
                             <div class="button-group" style="margin-top:8px;">
@@ -500,6 +503,32 @@
         downloadBtn.href = img.src;
         downloadBtn.download = 'marketing-' + postId + '.jpg';
         modal.classList.add('show');
+    }
+
+    function adminDashCopyDescription(postId) {
+        const descElem = document.getElementById('admin-dash-desc-' + postId);
+        if (!descElem) return;
+        const text = descElem.textContent || descElem.innerText;
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(text).then(function() {
+                alert('Description copied to clipboard!');
+            }, function() {
+                alert('Failed to copy description.');
+            });
+        } else {
+            // Fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                alert('Description copied to clipboard!');
+            } catch (err) {
+                alert('Failed to copy description.');
+            }
+            document.body.removeChild(textarea);
+        }
     }
 
     function adminDashCloseModal() {

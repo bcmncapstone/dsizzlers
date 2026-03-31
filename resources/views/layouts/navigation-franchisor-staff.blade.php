@@ -9,17 +9,33 @@
             </div>
         </a>
 
-        <button type="button" class="navbar-toggle" data-navbar-toggle aria-expanded="false" aria-label="Toggle navigation">
+         <button type="button" class="navbar-toggle block md:hidden" data-navbar-toggle aria-expanded="false" aria-label="Toggle navigation">
             <span></span>
             <span></span>
             <span></span>
         </button>
 
-        <!-- Desktop Navigation -->
-        <ul class="navbar-nav" data-navbar-menu>
+        <!-- Navigation Menu -->
+        <ul class="navbar-nav flex-col md:flex-row md:flex md:static absolute right-0 top-full bg-white md:bg-transparent w-full md:w-auto shadow md:shadow-none z-50 transition-all duration-200 ease-in-out hidden md:flex" data-navbar-menu>
+                    <style>
+                    @media (max-width: 1024px) {
+                        .navbar-nav {
+                            display: none;
+                        }
+                        .navbar-nav.is-open {
+                            display: flex !important;
+                        }
+                        .navbar-nav.is-open a {
+                            color: #FF5722 !important; /* dsizzlers orange */
+                        }
+                        .navbar-nav.is-open a.active {
+                            color: #C41C00 !important; /* highlight active link */
+                        }
+                    }
+                    </style>
             <li><a href="{{ route('franchisor-staff.dashboard') }}" class="{{ request()->routeIs('franchisor-staff.dashboard') ? 'active' : '' }}">Dashboard</a></li>
-            <li><a href="{{ route('franchisor-staff.items.index') }}" class="{{ request()->routeIs('franchisor-staff.items.*') ? 'active' : '' }}">Items</a></li>
-            <li><a href="{{ route('franchisor-staff.stock.index') }}" class="{{ request()->routeIs('franchisor-staff.stock.*') ? 'active' : '' }}">Item Stock</a></li>
+            <li><a href="{{ route('franchisor-staff.items.index') }}" class="{{ request()->routeIs('franchisor-staff.items.*') ? 'active' : '' }}">Item</a></li>
+            <li><a href="{{ route('franchisor-staff.stock.index') }}" class="{{ request()->routeIs('franchisor-staff.stock.*') ? 'active' : '' }}">Stock</a></li>
             <li><a href="{{ route('franchisor-staff.password') }}" class="{{ request()->routeIs('franchisor-staff.password') ? 'active' : '' }}">Update Password</a></li>
             <li>
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: inline;">

@@ -9,14 +9,14 @@
             </div>
         </a>
 
-        <button type="button" class="navbar-toggle" data-navbar-toggle aria-expanded="false" aria-label="Toggle navigation">
+        <button type="button" class="navbar-toggle block md:hidden" data-navbar-toggle aria-expanded="false" aria-label="Toggle navigation">
             <span></span>
             <span></span>
             <span></span>
         </button>
 
-        <!-- Desktop Navigation -->
-        <ul class="navbar-nav" data-navbar-menu>
+        <!-- Navigation Menu -->
+        <ul class="navbar-nav flex-col md:flex-row md:flex md:static absolute right-0 top-full bg-white md:bg-transparent w-full md:w-auto shadow md:shadow-none z-50 transition-all duration-200 ease-in-out hidden md:flex" data-navbar-menu>
             <li><a href="{{ route('franchisee.dashboard') }}" class="{{ request()->routeIs('franchisee.dashboard') ? 'active' : '' }}">Dashboard</a></li>
             <li><a href="{{ route('franchisee.branch.dashboard') }}" class="{{ request()->routeIs('franchisee.branch.*') ? 'active' : '' }}">Manage Branch</a></li>
             <li><a href="{{ route('franchisee.cart.index') }}" class="{{ request()->routeIs('franchisee.cart.*') ? 'active' : '' }}">Cart</a></li>
@@ -24,7 +24,6 @@
             <li><a href="{{ route('franchisee.item.index') }}" class="{{ request()->routeIs('franchisee.item.*') ? 'active' : '' }}">Item</a></li>
             <li><a href="{{ route('franchisee.reports.index') }}" class="{{ request()->routeIs('franchisee.reports.*') ? 'active' : '' }}">Report</a></li>
             <li><a href="{{ route('franchisee.password') }}" class="{{ request()->routeIs('franchisee.password*') ? 'active' : '' }}">Account</a></li>
-            
             <li>
                 <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                     @csrf
@@ -32,5 +31,21 @@
                 </form>
             </li>
         </ul>
+        <style>
+        @media (max-width: 1024px) {
+            .navbar-nav {
+                display: none;
+            }
+            .navbar-nav.is-open {
+                display: flex !important;
+            }
+            .navbar-nav.is-open a {
+                color: #FF5722 !important; /* dsizzlers orange */
+            }
+            .navbar-nav.is-open a.active {
+                color: #C41C00 !important; /* highlight active link */
+            }
+        }
+        </style>
     </div>
 </nav>

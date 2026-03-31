@@ -7,12 +7,6 @@ use App\Models\StockIn;
 
 class FifoStockService
 {
-    /**
-     * Validates and allocates checkout quantity from oldest stock-in lots first.
-     *
-     * Returns allocation details for the current checkout request.
-     * Throws RuntimeException when FIFO-available stock is insufficient.
-     */
     public function allocateForCheckout(Item $item, int $requestedQuantity): array
     {
         if ($requestedQuantity <= 0) {
@@ -58,23 +52,16 @@ class FifoStockService
         ];
     }
 
-    /**
-     * Returns current lot-by-lot FIFO balance for display/reporting.
-     */
     public function getRemainingLots(Item $item): array
     {
         $snapshot = $this->buildRemainingLotsSnapshot($item, false);
-
-        $lots = array_values(array_filter($snapshot['lots'], function (array $lot) {
-            return ($lot['quantity_remaining'] ?? 0) > 0;
-        }));
 
         return [
             'item_id' => (int) $item->item_id,
             'item_name' => (string) $item->item_name,
             'stock_quantity' => max((int) $item->stock_quantity, 0),
             'fifo_available' => $snapshot['available'],
-            'lots' => $lots,
+            'lots' => $snapshot['lots'], 
         ];
     }
 
@@ -91,7 +78,8 @@ class FifoStockService
             $lotsQuery->lockForUpdate();
         }
 
-        $lots = $lotsQuery->get(['stock_in_id', 'quantity_received', 'received_date']);
+        // ADDED 'updated_at' to the select list
+        $lots = $lotsQuery->get(['stock_in_id', 'quantity_received', 'received_date', 'updated_at']);
 
         $workingLots = [];
         foreach ($lots as $lot) {
@@ -99,18 +87,19 @@ class FifoStockService
                 'stock_in_id' => (int) $lot->stock_in_id,
                 'quantity_remaining' => max((int) $lot->quantity_received, 0),
                 'received_date' => $lot->received_date ? (string) $lot->received_date : null,
+                'updated_at' => $lot->updated_at, // CAPTURING UPDATED_AT
                 'source' => 'stock_in',
             ];
         }
 
         $totalFromLots = array_sum(array_column($workingLots, 'quantity_remaining'));
 
-        // Backward compatibility: if historical lots are incomplete, treat the difference as legacy opening balance.
         if ($totalFromLots < $currentStock) {
             array_unshift($workingLots, [
                 'stock_in_id' => null,
                 'quantity_remaining' => $currentStock - $totalFromLots,
                 'received_date' => null,
+                'updated_at' => null,
                 'source' => 'legacy_balance',
             ]);
             $totalFromLots = $currentStock;
@@ -141,6 +130,7 @@ class FifoStockService
             $consume = min($lot['quantity_remaining'], $remainingToConsume);
             $lot['quantity_remaining'] -= $consume;
             $remainingToConsume -= $consume;
+           
         }
         unset($lot);
     }

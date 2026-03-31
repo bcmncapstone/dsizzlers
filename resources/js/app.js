@@ -17,4 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 320);
         }, timeout);
     });
+
+    // Hamburger menu toggle
+    const navbarToggle = document.querySelector('[data-navbar-toggle]');
+    const navbarMenu = document.querySelector('[data-navbar-menu]');
+    if (navbarToggle && navbarMenu) {
+        navbarToggle.addEventListener('click', () => {
+            const expanded = navbarToggle.getAttribute('aria-expanded') === 'true';
+            navbarToggle.setAttribute('aria-expanded', !expanded);
+            navbarMenu.classList.toggle('is-open');
+        });
+    }
 });

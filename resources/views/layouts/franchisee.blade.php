@@ -32,5 +32,11 @@
         </svg>
     </a>
     @stack('scripts')
+    <!-- Footer -->
+    <footer class="w-full bg-gray-800 text-white text-center py-4 mt-8">
+        <div class="container mx-auto">
+            &copy; {{ date('Y') }} DSizzlers. All rights reserved.
+        </div>
+    </footer>
 </body>
 </html>

@@ -117,34 +117,54 @@
         <div class="bg-white shadow-sm p-8 rounded-lg mt-6">
             <h2>Actions</h2>
             <div class="actions-grid">
+                <div class="action-form">
+    <button type="button"
+        class="action-button update-status {{ ! $canUpdateOrderStatus ? 'opacity-50 cursor-not-allowed' : '' }}"
+        {{ ! $canUpdateOrderStatus ? 'disabled' : '' }}
+        onclick="openStatusModal()">
+        Update Order Status
+    </button>
+    @if(! $isPaymentConfirmed)
+        <p class="mt-2 text-xs text-gray-500">Confirm payment first before updating the order status.</p>
+    @elseif($isCancelledOrder)
+        <p class="mt-2 text-xs text-gray-500">Order status cannot be changed after cancellation.</p>
+    @endif
+</div>
                 
                 <!-- Confirm Payment -->
                 <form action="{{ route('admin.manageOrder.confirmPayment', $order->order_id) }}" method="POST" class="action-form">
-                    @csrf
-                    <button type="submit" class="action-button confirm-payment {{ $isCancelledOrder ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $isCancelledOrder ? 'disabled' : '' }}>
-                        Confirm Payment
-                    </button>
-                    @if($isCancelledOrder)
-                        <p class="mt-2 text-xs text-gray-500">Payment cannot be confirmed for a cancelled order.</p>
-                    @endif
-                </form>
+    @csrf
+    <button type="submit"
+        class="action-button confirm-payment {{ ($isCancelledOrder || $isPaymentConfirmed) ? 'opacity-50 cursor-not-allowed' : '' }}"
+        {{ ($isCancelledOrder || $isPaymentConfirmed) ? 'disabled' : '' }}>
+        Confirm Payment
+    </button>
+    @if($isCancelledOrder)
+        <p class="mt-2 text-xs text-gray-500">Payment cannot be confirmed for a cancelled order.</p>
+    @elseif($isPaymentConfirmed)
+        <p class="mt-2 text-xs text-green-600">Payment already confirmed.</p>
+    @endif
+</form>
 
                 <!-- Update Status -->
-                <form action="{{ route('admin.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST" class="action-form">
-                    @csrf
-                    <select name="order_status" onchange="this.form.submit()" class="status-select {{ ! $canUpdateOrderStatus ? 'opacity-50 cursor-not-allowed bg-gray-100' : '' }}" {{ ! $canUpdateOrderStatus ? 'disabled' : '' }}>
-                        <option value="">Update Order Status</option>
-                        <option value="Pending" {{ ($order->order_status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
-                        <option value="Preparing" {{ ($order->order_status ?? '') == 'Preparing' ? 'selected' : '' }}>Preparing</option>
-                        <option value="Shipped" {{ ($order->order_status ?? '') == 'Shipped' ? 'selected' : '' }}>Shipped</option>
-                        <option value="Delivered" {{ ($order->order_status ?? '') == 'Delivered' ? 'selected' : '' }}>Delivered</option>
-                    </select>
-                    @if(! $isPaymentConfirmed)
-                        <p class="mt-2 text-xs text-gray-500">Confirm payment first before updating the order status.</p>
-                    @elseif($isCancelledOrder)
-                        <p class="mt-2 text-xs text-gray-500">Order status cannot be changed after cancellation.</p>
-                    @endif
-                </form>
+<div id="statusModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center;">
+    <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; top:10vh;">
+        <h3 style="margin-bottom:1rem;">Update Order Status</h3>
+        <form id="statusForm" action="{{ route('admin.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST">
+            @csrf
+            <select name="order_status" class="status-select" style="width:100%; margin-bottom:1rem;">
+                <option value="Pending" {{ ($order->order_status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
+                <option value="Preparing" {{ ($order->order_status ?? '') == 'Preparing' ? 'selected' : '' }}>Preparing</option>
+                <option value="Shipped" {{ ($order->order_status ?? '') == 'Shipped' ? 'selected' : '' }}>Shipped</option>
+                <option value="Delivered" {{ ($order->order_status ?? '') == 'Delivered' ? 'selected' : '' }}>Delivered</option>
+            </select>
+            <div style="text-align:right;">
+                <button type="button" onclick="closeStatusModal()" style="margin-right:8px;">Cancel</button>
+                <button type="submit" class="action-button">Update</button>
+            </div>
+        </form>
+    </div>
+</div>
 
                 <!-- Cancel Order -->
                 @if($canCancelOrder)
@@ -192,6 +212,14 @@
             }, 400);
         }, Number.isFinite(timeout) ? timeout : 3000);
     });
+</script>
+<script>
+function openStatusModal() {
+    document.getElementById('statusModal').style.display = 'flex';
+}
+function closeStatusModal() {
+    document.getElementById('statusModal').style.display = 'none';
+}
 </script>
 
 @endsection

@@ -11,8 +11,8 @@ class AdminSeeder extends Seeder
     public function run(): void
     {
         DB::table('admins')->insert([
-            'admin_fname'     => 'System',
-            'admin_lname'     => 'Administrator',
+            'admin_fname'     => 'Maria',
+            'admin_lname'     => 'Greta',
             'admin_contactNo' => env('ADMIN_CONTACT', '09512347433'),
             'admin_email'     => env('ADMIN_EMAIL', 'bcmn.capstone@gmail.com'),
             'admin_username'  => env('ADMIN_USERNAME', 'admin'),

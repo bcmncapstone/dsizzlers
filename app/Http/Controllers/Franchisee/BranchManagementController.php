@@ -32,17 +32,30 @@ class BranchManagementController extends Controller
                 ->with('error', 'No active branch found for your account.');
         }
 
-        // Get basic performance metrics for the dashboard overview
-        $totalOrders = Order::where('franchisee_id', $franchisee->franchisee_id)
-                            ->count();
 
-        $totalSales = Order::where('franchisee_id', $franchisee->franchisee_id)
-                          ->sum('total_amount');
+        // Total Orders (count of adjustment transactions with quantity < 0)
+        $totalOrders = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->count();
 
-        $salesThisMonth = Order::where('franchisee_id', $franchisee->franchisee_id)
-                              ->whereMonth('order_date', Carbon::now()->month)
-                              ->whereYear('order_date', Carbon::now()->year)
-                              ->sum('total_amount');
+        // Total Sales (sum of ABS(quantity) * price for all time)
+        $totalSales = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
+            ->value('revenue');
+
+        // Sales This Month (same logic, but filter by current month/year)
+        $salesThisMonth = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->whereMonth('stock_transactions.created_at', Carbon::now()->month)
+            ->whereYear('stock_transactions.created_at', Carbon::now()->year)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
+            ->value('revenue');
 
         return view('franchisee.branch.dashboard', compact(
             'branch',
@@ -149,6 +162,7 @@ class BranchManagementController extends Controller
                 'item_id' => $stock->item_id,
                 'item_name' => $stock->item->item_name,
                 'item_category' => $stock->item->item_category,
+                'price' => $stock->item->price,
                 'current_stock' => $stock->current_quantity,
                 'minimum_quantity' => $stock->minimum_quantity,
                 'status' => $stock->status,
@@ -189,32 +203,38 @@ class BranchManagementController extends Controller
         $startDate = request('start_date');
         $endDate = request('end_date');
 
-        // Calculate total revenue (filtered by date if provided)
-        $revenueQuery = Order::where('franchisee_id', $franchisee->franchisee_id);
-        
+
+        // Calculate total revenue (filtered by date if provided) using stock adjustment logic
+        $salesQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id');
+
         if ($startDate && $endDate) {
-            $revenueQuery->whereBetween('order_date', [$startDate, $endDate]);
-            $totalRevenue = $revenueQuery->sum('total_amount');
+            $salesQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             $dateRangeLabel = Carbon::parse($startDate)->format('M d, Y') . ' - ' . Carbon::parse($endDate)->format('M d, Y');
         } else {
-            $totalRevenue = $revenueQuery->sum('total_amount');
             $dateRangeLabel = 'All Time';
         }
 
+        $totalRevenue = $salesQuery->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')->value('revenue');
+
         // Get sales data grouped by date
-        $salesQuery = Order::where('franchisee_id', $franchisee->franchisee_id)
-                          ->selectRaw('DATE(order_date) as date, SUM(total_amount) as total')
-                          ->groupBy('date')
-                          ->orderBy('date', 'desc');
-        
+        $trendQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->selectRaw('DATE(stock_transactions.created_at) as date, COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as total')
+            ->groupBy('date')
+            ->orderBy('date', 'desc');
+
         if ($startDate && $endDate) {
-            $salesQuery->whereBetween('order_date', [$startDate, $endDate]);
+            $trendQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         } else {
-            // Default to last 30 days if no filter
-            $salesQuery->where('order_date', '>=', Carbon::now()->subDays(30));
+            $trendQuery->where('stock_transactions.created_at', '>=', Carbon::now()->subDays(30));
         }
-        
-        $salesData = $salesQuery->get()->map(function($item) {
+
+        $salesData = $trendQuery->get()->map(function($item) {
             return [
                 'date' => Carbon::parse($item->date)->format('M d, Y'),
                 'total' => $item->total
@@ -222,10 +242,14 @@ class BranchManagementController extends Controller
         });
 
         // Current month stats
-        $currentMonthRevenue = Order::where('franchisee_id', $franchisee->franchisee_id)
-                                    ->whereMonth('order_date', Carbon::now()->month)
-                                    ->whereYear('order_date', Carbon::now()->year)
-                                    ->sum('total_amount');
+        $currentMonthRevenue = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'adjustment')
+            ->where('stock_transactions.quantity', '<', 0)
+            ->whereMonth('stock_transactions.created_at', Carbon::now()->month)
+            ->whereYear('stock_transactions.created_at', Carbon::now()->year)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
+            ->value('revenue');
 
         return view('franchisee.branch.financial', compact(
             'totalRevenue',
@@ -241,7 +265,7 @@ class BranchManagementController extends Controller
     public function adjustInventory($itemId)
     {
         $franchisee = Auth::guard('franchisee')->user();
-        $stock = \App\Models\FranchiseeStock::where('franchisee_id', $franchisee->franchisee_id)
+        $stock = FranchiseeStock::where('franchisee_id', $franchisee->franchisee_id)
             ->where('item_id', $itemId)
             ->first();
 
@@ -251,7 +275,6 @@ class BranchManagementController extends Controller
 
         $direction = request('direction'); // 'add' or 'deduct'
         $adjustBy = request('adjust_by');
-        $notes = request('notes');
 
         if (!in_array($direction, ['add', 'deduct'])) {
             return redirect()->back()->with('error', 'Invalid adjustment direction.');
@@ -259,9 +282,7 @@ class BranchManagementController extends Controller
         if (!is_numeric($adjustBy) || (int)$adjustBy < 1) {
             return redirect()->back()->with('error', 'Adjustment quantity must be a positive number.');
         }
-        if (!$notes || strlen($notes) > 255) {
-            return redirect()->back()->with('error', 'Notes are required and must be less than 255 characters.');
-        }
+        // Notes validation removed
 
         $qty = (int)$adjustBy;
         if ($direction === 'deduct') {
@@ -275,12 +296,11 @@ class BranchManagementController extends Controller
         $stock->save();
 
         // Log the adjustment in StockTransaction table, including balance_after
-        \App\Models\StockTransaction::create([
+        StockTransaction::create([
             'franchisee_id' => $franchisee->franchisee_id,
             'item_id' => $itemId,
             'quantity' => $direction === 'deduct' ? -$qty : $qty,
             'transaction_type' => 'adjustment',
-            'notes' => $notes,
             'balance_after' => $stock->current_quantity,
         ]);
 
