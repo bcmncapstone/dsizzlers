@@ -28,6 +28,7 @@ use App\Http\Controllers\Franchisee\ReportController as FranchiseeReportControll
 use App\Models\Franchisee;
 use App\Models\Item;
 use App\Models\Order;
+use App\Http\Controllers\MarketingDownloadController;
 
 // ADMIN ROUTES
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login');
@@ -568,8 +569,12 @@ Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {
         ->name('communication.restore');
 });
 
+// Proxy download for marketing images (Cloudinary or local)
+Route::get('/marketing-download', [MarketingDownloadController::class, 'download'])->name('marketing.download');
+
 // Fetch messages without middleware for polling to work
 Route::get('/communication/{conversation}/messages', [ChatController::class, 'fetchMessages']);
+
 
 
 

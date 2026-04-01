@@ -248,7 +248,7 @@
                             <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
                             <div class="button-group" style="margin-top:8px;">
                                 <button onclick="adminDashViewImage({{ $post->id }})" class="btn btn-gallery">View</button>
-                                <a href="{{ media_url($post->image_path) }}" download="marketing-{{ $post->id }}.jpg" class="btn btn-camera">Download</a>
+                                <a href="{{ route('marketing.download', ['url' => urlencode(is_object($post) && isset($post->image_path) ? media_url($post->image_path) : ''), 'filename' => 'marketing-' . ($post->id ?? 'image') . '.jpg']) }}" class="btn btn-camera">Download</a>
                                 <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display:inline;" onsubmit="return confirm('Archive this post?');">
                                     @csrf
                                     @method('DELETE')

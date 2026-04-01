@@ -239,7 +239,7 @@
                                 @endif
                             @endif
 
-                            <a href="{{ media_url($post->image_path) }}" download="marketing-{{ $post->id }}.jpg" class="btn btn-camera">Download</a>
+                            <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera">Download</a>
                         </div>
                     </div>
                 @empty
@@ -278,7 +278,7 @@
 
                         <div class="button-group">
                             <button onclick="viewFullImage({{ $post->id }}, 'franchisee')" class="btn btn-gallery">View</button>
-                            <a href="{{ media_url($post->image_path) }}" download="marketing-{{ $post->id }}.jpg" class="btn btn-camera">Download</a>
+                            <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera">Download</a>
                         </div>
                     </div>
                 @empty

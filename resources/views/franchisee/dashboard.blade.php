@@ -148,7 +148,7 @@
                         <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
                         <div class="button-group">
                             <button onclick="dashFranchiseeViewImage({{ $post->id }})" class="btn btn-gallery">View</button>
-                            <a href="{{ media_url($post->image_path) }}" download="marketing-{{ $post->id }}.jpg" class="btn btn-camera">Download</a>
+                            <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera">Download</a>
                         </div>
                     </div>
                 @empty
