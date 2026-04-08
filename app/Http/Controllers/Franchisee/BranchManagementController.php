@@ -76,27 +76,45 @@ class BranchManagementController extends Controller
         $startDate = request('start_date');
         $endDate = request('end_date');
 
-        // Sales: sum of ABS(quantity) * price for adjustment transactions (franchisee only)
-        $salesQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id');
+        // Sales & Orders: include both adjustment (franchisee) and out (franchisee_staff) transactions
+        $baseQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            });
         if ($startDate && $endDate) {
-            $salesQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+            $baseQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
-        $totalSales = $salesQuery->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')->value('revenue');
 
-        // Total orders: count of unique adjustment transactions (or you may want to count unique days or another logic)
-        $totalOrders = (clone $salesQuery)->count();
+        // Total Sales
+        $totalSales = (clone $baseQuery)
+            ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
+            ->value('revenue');
 
-        // Average order value (if you want to show it)
+        // Total Orders (count of transactions)
+        $totalOrders = (clone $baseQuery)->count();
+
+        // Average order value
         $averageOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
 
         // Sales trend: group by date, sum revenue
         $trendQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
             ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            })
             ->selectRaw('DATE(stock_transactions.created_at) as date, COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as sales')
             ->groupBy('date')
             ->orderBy('date', 'desc');
@@ -114,9 +132,16 @@ class BranchManagementController extends Controller
 
         // Top selling items: sum of ABS(quantity) and revenue by item
         $topSellingQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id');
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            });
         if ($startDate && $endDate) {
             $topSellingQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
         }
@@ -204,11 +229,18 @@ class BranchManagementController extends Controller
         $endDate = request('end_date');
 
 
-        // Calculate total revenue (filtered by date if provided) using stock adjustment logic
+        // Calculate total revenue (filtered by date if provided) using both adjustment (franchisee) and out (franchisee_staff) logic
         $salesQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id');
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            });
 
         if ($startDate && $endDate) {
             $salesQuery->whereBetween('stock_transactions.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
@@ -221,9 +253,16 @@ class BranchManagementController extends Controller
 
         // Get sales data grouped by date
         $trendQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
             ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            })
             ->selectRaw('DATE(stock_transactions.created_at) as date, COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as total')
             ->groupBy('date')
             ->orderBy('date', 'desc');
@@ -243,11 +282,18 @@ class BranchManagementController extends Controller
 
         // Current month stats
         $currentMonthRevenue = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            })
             ->whereMonth('stock_transactions.created_at', Carbon::now()->month)
             ->whereYear('stock_transactions.created_at', Carbon::now()->year)
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
             ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
             ->value('revenue');
 

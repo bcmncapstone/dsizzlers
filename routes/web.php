@@ -547,6 +547,10 @@ Route::post('/logout', function () {
     return redirect('/');
 })->name('logout');
 
+
+// Communication chat-list for modal/partial chat UI
+Route::get('/communication/chat-list', [CommunicationController::class, 'chatList'])->name('communication.chat-list');
+
 // FOR CHAT AND DIGITAL MARKETING 
 // Allow any authenticated guard (admin, franchisor_staff, franchisee, franchisee_staff)
 Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {

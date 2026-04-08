@@ -8,6 +8,16 @@
         <p>Browse and purchase available menu items</p>
     </div>
 
+    <!-- Search Form (Admin-style) -->
+    <div class="filter-section" style="margin-bottom: 18px;">
+        <form method="GET" action="{{ route(request()->route()->getName()) }}" class="filter-form" style="grid-template-columns: 1fr auto;">
+            <div class="filter-group">
+                <input type="text" name="search" class="filter-select" placeholder="Search items by name or description..." value="{{ request('search') }}">
+            </div>
+            <button type="submit" class="btn btn-info">Search</button>
+        </form>
+    </div>
+
     {{-- Filter Section --}}
     <div class="items-filter-section">
         <h3>Filter & Sort</h3>

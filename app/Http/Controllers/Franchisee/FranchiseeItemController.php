@@ -16,6 +16,8 @@ class FranchiseeItemController extends Controller
     {
         $archivedIds = $this->getArchivedItemIds();
 
+        $search = $request->get('search', '');
+
         // Sort mapping from UI keys to database columns
         $sortMap = [
             'name'     => 'item_name',
@@ -32,6 +34,14 @@ class FranchiseeItemController extends Controller
 
         if (!empty($archivedIds)) {
             $query->whereNotIn('item_id', $archivedIds);
+        }
+
+        // Apply search filter
+        if (!empty($search)) {
+                        $query->where(function ($q) use ($search) {
+                                $q->where('item_name', 'ILIKE', "%$search%")
+                                    ->orWhere('item_description', 'ILIKE', "%$search%");
+                        });
         }
 
         // Apply category filter if selected
