@@ -13,6 +13,8 @@ class FranchiseeStaffItemController extends Controller
     {
         $archivedIds = $this->getArchivedItemIds();
 
+        $search = $request->get('search', '');
+
         $sortMap = [
             'name'     => 'item_name',
             'price'    => 'price',
@@ -27,6 +29,14 @@ class FranchiseeStaffItemController extends Controller
 
         if (!empty($archivedIds)) {
             $query->whereNotIn('item_id', $archivedIds);
+        }
+
+        // Apply search filter
+        if (!empty($search)) {
+                        $query->where(function ($q) use ($search) {
+                                $q->where('item_name', 'ILIKE', "%$search%")
+                                    ->orWhere('item_description', 'ILIKE', "%$search%");
+                        });
         }
 
         if (!empty($selectedCategory)) {

@@ -181,7 +181,67 @@ class CommunicationController extends Controller
             }
         }
 
+        // If AJAX, return the chat view directly for modal
+        if ($request->ajax() || $request->wantsJson()) {
+            $actor = $this->resolveActor();
+            $guard = $actor['type'];
+            $currentUser = auth()->guard($guard)->user();
+            $currentUserId = $currentUser ? $currentUser->getKey() : null;
+            $currentUserType = $guard;
+            $messages = $conversation->messages()->get();
+            $messages->transform(function ($message) {
+                $senderName = ucfirst(str_replace('_', ' ', $message->sender_type));
+                if ($message->sender_type === 'admin') {
+                    $sender = \App\Models\Admin::find($message->sender_id);
+                    $senderName = $sender
+                        ? trim(($sender->admin_fname ?? '') . ' ' . ($sender->admin_lname ?? '')) ?: 'System Administrator'
+                        : 'System Administrator';
+                } elseif ($message->sender_type === 'franchisee') {
+                    $sender = \App\Models\Franchisee::find($message->sender_id);
+                    $senderName = $sender ? ($sender->franchisee_name ?: 'Franchisee') : 'Franchisee';
+                }
+                $message->sender_name = $senderName;
+                return $message;
+            });
+            return response()->view('communication.chat', [
+                'conversation' => $conversation,
+                'messages' => $messages,
+                'currentUser' => $currentUser,
+                'currentUserId' => $currentUserId,
+                'currentUserType' => $currentUserType,
+            ]);
+        }
         return redirect('/communication/' . $conversation->id);
+    }
+
+    public function chatList()
+    {
+        $actor = $this->resolveActor();
+        $conversationView = request()->query('conversation_view', 'active') === 'archived' ? 'archived' : 'active';
+        $announcementView = request()->query('announcement_view', 'active') === 'archived' ? 'archived' : 'active';
+
+        if ($actor['type'] === 'admin') {
+            $conversationsQuery = Conversation::with(['admin', 'franchisee'])
+                ->where('admin_id', $actor['id']);
+        } else {
+            $conversationsQuery = Conversation::with(['admin', 'franchisee'])
+                ->where('franchisee_id', $actor['id']);
+        }
+
+        $archivedConversationIds = $this->getArchivedConversationIds($actor['archive_key']);
+        if ($conversationView === 'archived') {
+            if (! empty($archivedConversationIds)) {
+                $conversationsQuery->whereIn('id', $archivedConversationIds);
+            } else {
+                $conversationsQuery->whereRaw('1 = 0');
+            }
+        } elseif (! empty($archivedConversationIds)) {
+            $conversationsQuery->whereNotIn('id', $archivedConversationIds);
+        }
+
+        $conversations = $conversationsQuery->get();
+
+        return view('communication._chat-list', compact('conversations', 'conversationView', 'announcementView'));
     }
 
     protected function resolveActor(): array

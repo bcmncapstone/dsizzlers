@@ -90,6 +90,7 @@
     {{-- FORM --}}
     <div class="chat-form-wrapper">
         <form id="chat-form" class="chat-form" enctype="multipart/form-data">
+            <input type="hidden" name="conversation_id" value="{{ $conversation->id }}">
             @csrf
             <button type="button" class="chat-file-btn" id="file-btn" title="Attach">
                 ➕
@@ -322,8 +323,14 @@ function appendMessage(message) {
 }
 
 function appendTempMessage(tempId, text, preview) {
+    // Always inject spinner animation CSS if missing (for modal/AJAX context)
+    if (!document.getElementById('chat-spinner-style')) {
+        const style = document.createElement('style');
+        style.id = 'chat-spinner-style';
+        style.innerHTML = `@keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }`;
+        document.head.appendChild(style);
+    }
     const timeStr = formatTime(new Date().toISOString());
-
     messagesBox.insertAdjacentHTML('beforeend', `
         <div class="chat-message sent" data-temp-id="${tempId}">
             <div class="chat-avatar">
@@ -336,7 +343,10 @@ function appendTempMessage(tempId, text, preview) {
                     <div class="chat-sender-name">${currentUserName}</div>
                     ${text ? `<div class="chat-message-text">${text}</div>` : ''}
                     ${preview ? `<img src="${preview}" class="chat-image">` : ''}
-                    <small class="chat-sending-status">Sending…</small>
+                    <small class="chat-sending-status" style="display:flex;align-items:center;gap:6px;color:#888;">
+                        <span class="chat-spinner" style="display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top:2px solid #ff9800;border-radius:50%;animation:spin 1s linear infinite;"></span>
+                        Sending…
+                    </small>
                 </div>
                 <span class="chat-message-time">${timeStr}</span>
             </div>

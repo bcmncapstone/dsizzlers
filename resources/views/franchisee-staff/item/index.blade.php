@@ -12,6 +12,10 @@
     <div class="items-filter-section">
         <h3>Filter & Sort</h3>
         <form method="GET" action="{{ route(request()->route()->getName()) }}" class="items-filter-form">
+                        <div class="items-filter-group">
+                            <label for="search" class="items-filter-label">Search</label>
+                            <input type="text" name="search" id="search" class="items-filter-input" placeholder="Search items..." value="{{ request('search') }}" onkeydown="if(event.key==='Enter'){this.form.submit();}">
+                        </div>
             <div class="items-filter-group">
                 <label for="item_category" class="items-filter-label">Category</label>
                 <select name="item_category" id="item_category" class="items-filter-select" onchange="this.form.submit()">

@@ -7,7 +7,7 @@
             <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
             <path d="m22 7-10 5L2 7"></path>
         </svg>
-        <h2 style="margin: 0;">Communication Management</h2>
+        <h2 style="margin: 0;">Communication</h2>
     </div>
 
     <hr>

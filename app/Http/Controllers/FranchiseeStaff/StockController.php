@@ -65,19 +65,22 @@ class StockController extends Controller
         $staff = Auth::guard('franchisee_staff')->user();
 
         $request->validate([
-            'new_quantity' => 'required|integer|min:0',
-            'notes' => 'nullable|string|max:500'
+            'adjust_by' => 'required|integer|min:1',
+            'direction' => 'required|in:add,deduct',
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $stock = FranchiseeStock::with('item')
             ->where('franchisee_id', $staff->franchisee_id)
             ->findOrFail($stockId);
-            
-        $oldQuantity = $stock->current_quantity;
-        $newQuantity = $request->new_quantity;
-        $difference = $newQuantity - $oldQuantity;
 
-        // Check if trying to sell more than available
+        $oldQuantity = $stock->current_quantity;
+        $adjustBy = (int) $request->adjust_by;
+        $direction = $request->direction;
+        $newQuantity = $direction === 'add'
+            ? $oldQuantity + $adjustBy
+            : $oldQuantity - $adjustBy;
+
         if ($newQuantity < 0) {
             return redirect()->back()
                 ->with('error', 'Invalid quantity. Stock cannot be negative.')
@@ -86,18 +89,16 @@ class StockController extends Controller
 
         DB::beginTransaction();
         try {
-            // Update stock
             $stock->current_quantity = $newQuantity;
             $stock->save();
 
-            // Create transaction record
-            $transactionType = $difference > 0 ? 'in' : ($difference < 0 ? 'out' : 'adjustment');
-            
+            $transactionType = $direction === 'add' ? 'in' : 'out';
+
             StockTransaction::create([
                 'franchisee_id' => $stock->franchisee_id,
                 'item_id' => $stock->item_id,
                 'transaction_type' => $transactionType,
-                'quantity' => abs($difference),
+                'quantity' => $adjustBy,
                 'balance_after' => $newQuantity,
                 'reference_type' => null,
                 'reference_id' => null,

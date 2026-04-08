@@ -251,6 +251,14 @@
                 <p>View detailed analytics and business reports</p>
                 <div class="card-arrow">View →</div>
             </a>
+                <!-- Communication Card -->
+            <a href="{{ route('communication.index') }}" class="card card-pink">
+                <div class="card-icon-wrapper">
+                </div>
+                <h3>Communication</h3>
+                <p>Manage conversations and announcements</p>
+                <div class="card-arrow">View →</div>
+            </a>
     </div>
 </div>
 
