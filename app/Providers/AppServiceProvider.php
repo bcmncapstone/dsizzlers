@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Support\MediaStorage;
 use Cloudinary\Cloudinary;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,8 +27,11 @@ class AppServiceProvider extends ServiceProvider
         });
     }
 
-    public function boot(): void
-    {
-        //
+   
+public function boot()
+{
+    if (app()->environment('production')) {
+        URL::forceScheme('https');
     }
+}
 }
