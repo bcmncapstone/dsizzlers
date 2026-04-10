@@ -241,5 +241,18 @@ function toggleFifo(itemId) {
         btn.innerText = 'Stock Batches';
     }
 }
+
+document.querySelectorAll('.admin-stock-adjust-form').forEach(function(form) {
+    form.addEventListener('submit', function(e) {
+        var qty = form.querySelector('input[name="adjust_by"]').value;
+        var btn = e.submitter;
+        var direction = btn ? btn.value : 'adjust';
+        var action = direction === 'add' ? 'add' : 'deduct';
+
+        if (!confirm('Are you sure you want to ' + action + ' ' + qty + ' item(s)?')) {
+            e.preventDefault();
+        }
+    });
+});
 </script>
 @endsection

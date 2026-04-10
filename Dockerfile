@@ -38,5 +38,5 @@ RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 # Expose port 8000
 EXPOSE 8000
 
-# Start Laravel server
-CMD php artisan migrate --force && php artisan config:cache && php artisan serve --host=0.0.0.0 --port=8000
+# Start scheduler in background, then Laravel server
+CMD php artisan migrate --force && php artisan config:cache && (while true; do php artisan schedule:run --no-interaction >> /dev/null 2>&1; sleep 60; done &) && php artisan serve --host=0.0.0.0 --port=8000

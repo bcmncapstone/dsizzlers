@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class BranchController extends Controller
 {
+
     // Show active branches
     public function index(Request $request)
     {
@@ -88,9 +89,7 @@ class BranchController extends Controller
 
         if ($request->hasFile('contract_file')) {
             $file = $request->file('contract_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('public/contracts', $filename);
-            $validated['contract_file'] = $filename;
+            $validated['contract_file'] = $this->storeContractFile($file);
         }
 
         // Create the branch without branch_status first
@@ -133,10 +132,10 @@ class BranchController extends Controller
         ]);
 
         if ($request->hasFile('contract_file')) {
+            MediaStorage::delete($branch->contract_file);
+
             $file = $request->file('contract_file');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $file->storeAs('public/contracts', $filename);
-            $validated['contract_file'] = $filename;
+            $validated['contract_file'] = $this->storeContractFile($file);
         }
 
         $branch->update($validated);
@@ -184,8 +183,8 @@ class BranchController extends Controller
         $branch = Branch::findOrFail($id);
 
         if (! $branch->contract_file) {
-            return back()
-                ->with('error', 'File not found.')
+            return redirect()->route('admin.branches.index')
+                ->with('error', 'No contract file attached to this branch.')
                 ->with('flash_timeout', 3000);
         }
 
@@ -199,10 +198,11 @@ class BranchController extends Controller
             return MediaStorage::previewResponse($branch->contract_file);
         }
 
-        $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
+        // Local file path — only works on localhost, not on cloud hosts like Render
+        $filePath = $this->resolveLocalContractPath($branch->contract_file);
 
-        if (! file_exists($filePath)) {
-            return back()
+        if ($filePath === null) {
+            return redirect()->route('admin.branches.index')
                 ->with('error', 'File not found.')
                 ->with('flash_timeout', 3000);
         }
@@ -238,5 +238,31 @@ class BranchController extends Controller
         // Ensure unique, numeric IDs
         $ids = array_values(array_unique(array_map('intval', $ids)));
         Storage::disk('local')->put('archived_branches.json', json_encode($ids));
+    }
+
+    protected function storeContractFile($file): string
+    {
+        return MediaStorage::upload($file, 'contracts');
+    }
+
+    protected function resolveLocalContractPath(string $contractFile): ?string
+    {
+        $candidates = [
+            'public/contracts/' . ltrim($contractFile, '/'),
+            ltrim($contractFile, '/'),
+            'contracts/' . ltrim($contractFile, '/'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return Storage::disk('local')->path($candidate);
+            }
+
+            if (Storage::disk('public')->exists($candidate)) {
+                return Storage::disk('public')->path($candidate);
+            }
+        }
+
+        return null;
     }
 }

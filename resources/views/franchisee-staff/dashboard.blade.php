@@ -45,7 +45,7 @@
             <a href="{{ route('franchisee-staff.account.show') }}" class="card card-yellow">
                 <div class="card-icon-wrapper">
                 </div>
-                <h3>View Profile</h3>
+                <h3>Edit Profile</h3>
                 <p>View or update account information</p>
                 <div class="card-arrow">View →</div>
             </a>

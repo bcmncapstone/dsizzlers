@@ -73,9 +73,9 @@ class FranchiseeController extends Controller
             return MediaStorage::previewResponse($branch->contract_file);
         }
 
-        $filePath = storage_path('app/private/public/contracts/' . $branch->contract_file);
+        $filePath = $this->resolveLocalContractPath($branch->contract_file);
 
-        if (! file_exists($filePath)) {
+        if ($filePath === null) {
             return back()
                 ->with('error', 'Contract file not found.')
                 ->with('flash_timeout', 3000);
@@ -86,5 +86,26 @@ class FranchiseeController extends Controller
         }
 
         return MediaStorage::previewResponse($branch->contract_file, $filePath);
+    }
+
+    protected function resolveLocalContractPath(string $contractFile): ?string
+    {
+        $candidates = [
+            'public/contracts/' . ltrim($contractFile, '/'),
+            ltrim($contractFile, '/'),
+            'contracts/' . ltrim($contractFile, '/'),
+        ];
+
+        foreach ($candidates as $candidate) {
+            if (Storage::disk('local')->exists($candidate)) {
+                return Storage::disk('local')->path($candidate);
+            }
+
+            if (Storage::disk('public')->exists($candidate)) {
+                return Storage::disk('public')->path($candidate);
+            }
+        }
+
+        return null;
     }
 }

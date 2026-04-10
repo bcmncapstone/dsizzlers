@@ -100,5 +100,16 @@
             }, 500);
         }, 3000);
     });
+
+ const passwordForm = document.querySelector('.password-form');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(event) {
+            const confirmed = window.confirm('Are you sure you want to update your password?');
+
+            if (!confirmed) {
+                event.preventDefault();
+            }
+        });
+    }
 </script>
 @endsection

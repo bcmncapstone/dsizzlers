@@ -220,9 +220,12 @@ Route::middleware('auth:franchisor_staff')->group(function () {
 
 // Franchisor Staff Stock Routes
 Route::middleware(['auth:franchisor_staff'])->prefix('franchisor-staff/stock')->name('franchisor-staff.stock.')->group(function () {
-    Route::get('/', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'index'])->name('index');
+    Route::match(['get', 'post'], '/', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'index'])->name('index');
     Route::get('/{stockId}/edit', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'edit'])->name('edit');
     Route::post('/{stockId}', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'update'])->name('update');
+    Route::post('/{itemId}/adjust', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'adjustQuantity'])
+        ->whereNumber('itemId')
+        ->name('adjust');
     Route::post('/{stockId}/cancel', [\App\Http\Controllers\FranchisorStaff\StockController::class, 'cancel'])->name('cancel');
 });
 
@@ -321,6 +324,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items', [ItemController::class, 'index'])->name('items.index');
     Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
+    Route::post('/items/check-duplicate', [ItemController::class, 'checkDuplicate'])->name('items.check-duplicate');
     Route::post('/items', [ItemController::class, 'store'])->name('items.store');
     Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
     Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');
@@ -338,6 +342,7 @@ Route::prefix('franchisor-staff')
     ->group(function () {
         Route::get('/items', [ItemController::class, 'index'])->name('items.index');
         Route::get('/items/create', [ItemController::class, 'create'])->name('items.create');
+        Route::post('/items/check-duplicate', [ItemController::class, 'checkDuplicate'])->name('items.check-duplicate');
         Route::post('/items', [ItemController::class, 'store'])->name('items.store');
         Route::get('/items/{id}/edit', [ItemController::class, 'edit'])->name('items.edit');
         Route::put('/items/{id}', [ItemController::class, 'update'])->name('items.update');

@@ -330,24 +330,38 @@ class ReportController extends Controller
 
         $franchisees = Franchisee::orderBy('franchisee_name')->get();
 
-        $query = Order::query()
-            ->select('franchisee_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total_amount) as total_sales'))
-            ->whereNotNull('franchisee_id')
-            ->where('order_status', 'Delivered')
+        // Actual sales = adjustment (qty < 0) + out by franchisee_staff
+        $query = StockTransaction::query()
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->select(
+                'stock_transactions.franchisee_id',
+                DB::raw('COUNT(*) as orders_count'),
+                DB::raw('SUM(ABS(stock_transactions.quantity) * items.price) as total_sales')
+            )
+            ->whereNotNull('stock_transactions.franchisee_id')
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('transaction_type', 'adjustment')
+                        ->where('quantity', '<', 0);
+                })->orWhere(function ($sub) {
+                    $sub->where('transaction_type', 'out')
+                        ->where('performed_by_type', 'franchisee_staff');
+                });
+            })
             ->when($request->franchisee_id, function ($q) use ($request) {
-                $q->where('franchisee_id', $request->franchisee_id);
+                $q->where('stock_transactions.franchisee_id', $request->franchisee_id);
             })
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->end_date);
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
             })
-            ->groupBy('franchisee_id');
+            ->groupBy('stock_transactions.franchisee_id');
 
         $rows = $query->get();
         $noData = $rows->isEmpty();
-        $availableRange = $noData ? $this->getOrderDateRange($request->franchisee_id, true) : null;
+        $availableRange = $noData ? $this->getStockDateRange($request->franchisee_id) : null;
 
         $franchiseeMap = $franchisees->keyBy('franchisee_id');
 
@@ -390,20 +404,33 @@ class ReportController extends Controller
             ->with('flash_timeout', 3000);
         }
 
-        $query = Order::query()
-            ->select('franchisee_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total_amount) as total_sales'))
-            ->whereNotNull('franchisee_id')
-            ->where('order_status', 'Delivered')
+        $query = StockTransaction::query()
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->select(
+                'stock_transactions.franchisee_id',
+                DB::raw('COUNT(*) as orders_count'),
+                DB::raw('SUM(ABS(stock_transactions.quantity) * items.price) as total_sales')
+            )
+            ->whereNotNull('stock_transactions.franchisee_id')
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->where('transaction_type', 'adjustment')
+                        ->where('quantity', '<', 0);
+                })->orWhere(function ($sub) {
+                    $sub->where('transaction_type', 'out')
+                        ->where('performed_by_type', 'franchisee_staff');
+                });
+            })
             ->when($request->franchisee_id, function ($q) use ($request) {
-                $q->where('franchisee_id', $request->franchisee_id);
+                $q->where('stock_transactions.franchisee_id', $request->franchisee_id);
             })
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->end_date);
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
             })
-            ->groupBy('franchisee_id');
+            ->groupBy('stock_transactions.franchisee_id');
 
         $rows = $query->get();
 

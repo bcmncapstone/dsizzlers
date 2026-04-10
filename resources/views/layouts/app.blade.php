@@ -6,6 +6,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
         <title>{{ config('app.name', 'D-Sizzlers') }}</title>
+        <link rel="icon" type="image/jpeg" href="https://res.cloudinary.com/drhw4lbzz/image/upload/v1773841657/Logo1_q5e2hk.jpg">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
