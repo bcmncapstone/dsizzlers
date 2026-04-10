@@ -65,6 +65,9 @@ class FranchiseeController extends Controller
 
         if (MediaStorage::isRemote($branch->contract_file)) {
             $downloadName = basename(parse_url($branch->contract_file, PHP_URL_PATH) ?: 'contract');
+            if (pathinfo($downloadName, PATHINFO_EXTENSION) === '') {
+                $downloadName .= '.pdf';
+            }
 
             if (request()->query('mode') === 'download') {
                 return MediaStorage::downloadResponse($branch->contract_file, null, $downloadName);
