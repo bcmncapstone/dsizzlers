@@ -39,6 +39,43 @@ class ItemController extends Controller
         return view('items.create');
     }
 
+    /**
+     * Check if an item with the given name already exists (AJAX endpoint).
+     */
+    public function checkDuplicate(Request $request)
+    {
+        $name = trim((string) $request->input('item_name', ''));
+
+        if ($name === '') {
+            return response()->json(['exists' => false]);
+        }
+
+        $archivedIds = $this->getArchivedItemIds();
+
+        $existing = Item::query()
+            ->whereRaw('LOWER(item_name) = ?', [mb_strtolower($name)])
+            ->when(!empty($archivedIds), fn($q) => $q->whereNotIn('item_id', $archivedIds))
+            ->first();
+
+        if (!$existing) {
+            return response()->json(['exists' => false]);
+        }
+
+        $prefix = auth()->guard('franchisor_staff')->check() ? 'franchisor-staff' : 'admin';
+
+        return response()->json([
+            'exists' => true,
+            'item'   => [
+                'item_id'        => $existing->item_id,
+                'item_name'      => $existing->item_name,
+                'stock_quantity' => $existing->stock_quantity,
+                'price'          => $existing->price,
+                'item_category'  => $existing->item_category,
+            ],
+            'edit_url' => route($prefix . '.items.edit', $existing->item_id),
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

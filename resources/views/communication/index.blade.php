@@ -210,36 +210,36 @@
                             </form>
                         @endif
 
-                        <div id="description-display-{{ $post->id }}">
+                        <div id="description-display-{{ $post->id }}" style="padding: 12px;">
                             @if($post->description)
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <p class="marketing-post-description" id="desc-{{ $post->id }}" style="margin-bottom: 0;">{{ $post->description }}</p>
-                                    <button type="button" class="btn btn-edit" onclick="copyDescription({{ $post->id }})" title="Copy Description">Copy</button>
-                                </div>
+                                <p class="marketing-post-description" id="desc-{{ $post->id }}" style="margin: 0 0 4px 0; padding: 0;">{{ $post->description }}</p>
                             @endif
-                            <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
-                        </div>
+                            <small class="marketing-post-date" style="padding: 0; margin-bottom: 10px; display: block;">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
 
-                        <div class="button-group">
-                            <button onclick="viewFullImage({{ $post->id }}, 'admin')" class="btn btn-gallery">View</button>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                <button type="button" onclick="viewFullImage({{ $post->id }}, 'admin')" class="btn btn-gallery" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">View</button>
+                                <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Download</a>
 
-                            @if(auth()->guard('admin')->check())
-                                @if(($announcementView ?? 'active') === 'archived')
-                                    <form method="POST" action="{{ route('digital-marketing.restore', $post->id) }}" class="form-inline" onsubmit="return confirm('Restore this post?');">
-                                        @csrf
-                                        <button type="submit" class="btn btn-camera">Restore</button>
-                                    </form>
-                                @else
-                                    <button onclick="editPost({{ $post->id }})" class="btn btn-edit">Edit</button>
-                                    <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" class="form-inline" onsubmit="return confirm('Archive this post?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-remove">Archive</button>
-                                    </form>
+                                @if(auth()->guard('admin')->check())
+                                    @if(($announcementView ?? 'active') === 'archived')
+                                        <form method="POST" action="{{ route('digital-marketing.restore', $post->id) }}" style="display:inline; margin: 0;" onsubmit="return confirm('Restore this post?');">
+                                            @csrf
+                                            <button type="submit" class="btn btn-camera" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Restore</button>
+                                        </form>
+                                    @else
+                                        <button type="button" onclick="editPost({{ $post->id }})" class="btn btn-edit" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Edit</button>
+                                        <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display:inline; margin: 0;" onsubmit="return confirm('Archive this post?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-remove" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px; margin: 0;">Archive</button>
+                                        </form>
+                                    @endif
                                 @endif
-                            @endif
 
-                            <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera">Download</a>
+                                @if($post->description)
+                                    <button type="button" class="btn btn-edit" onclick="copyDescription({{ $post->id }})" title="Copy Description" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Copy</button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -268,17 +268,19 @@
                             onclick="viewFullImage({{ $post->id }}, 'franchisee')"
                             title="Click to view full size"
                         >
-                        @if($post->description)
-                            <div style="display: flex; align-items: center; gap: 8px;">
-                                <p class="marketing-post-description" id="franchisee-desc-{{ $post->id }}" style="margin-bottom: 0;">{{ $post->description }}</p>
-                                <button type="button" class="btn btn-edit" onclick="copyFranchiseeDescription({{ $post->id }})" title="Copy Description">Copy</button>
-                            </div>
-                        @endif
-                        <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
+                        <div style="padding: 12px;">
+                            @if($post->description)
+                                <p class="marketing-post-description" id="franchisee-desc-{{ $post->id }}" style="margin: 0 0 4px 0; padding: 0;">{{ $post->description }}</p>
+                            @endif
+                            <small class="marketing-post-date" style="padding: 0; margin-bottom: 10px; display: block;">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
 
-                        <div class="button-group">
-                            <button onclick="viewFullImage({{ $post->id }}, 'franchisee')" class="btn btn-gallery">View</button>
-                            <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera">Download</a>
+                            <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                <button type="button" onclick="viewFullImage({{ $post->id }}, 'franchisee')" class="btn btn-gallery" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">View</button>
+                                <a href="{{ route('marketing.download', ['url' => urlencode(media_url($post->image_path)), 'filename' => 'marketing-' . $post->id . '.jpg']) }}" class="btn btn-camera" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Download</a>
+                                @if($post->description)
+                                    <button type="button" class="btn btn-edit" onclick="copyFranchiseeDescription({{ $post->id }})" title="Copy Description" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Copy</button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty

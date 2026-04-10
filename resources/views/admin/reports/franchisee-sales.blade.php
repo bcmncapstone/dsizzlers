@@ -67,7 +67,7 @@
 
                 <div class="franchisee-stat-card">
                     <div class="franchisee-stat-content">
-                        <div class="franchisee-stat-label">Total Orders</div>
+                        <div class="franchisee-stat-label">Total Transactions</div>
                         <div class="franchisee-stat-value">{{ $totalOrders }}</div>
                     </div>
                 </div>
@@ -103,7 +103,7 @@
                     <thead>
                         <tr>
                             <th>Franchisee</th>
-                            <th>Orders</th>
+                            <th>Transactions</th>
                             <th>Total Sales</th>
                         </tr>
                     </thead>

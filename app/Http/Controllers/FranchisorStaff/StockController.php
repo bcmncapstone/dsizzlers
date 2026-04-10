@@ -157,6 +157,61 @@ class StockController extends Controller
     }
 
     /**
+     * Adjust item quantity inline (+/-)
+     */
+    public function adjustQuantity(Request $request, $itemId)
+    {
+        $validated = $request->validate([
+            'adjust_by' => 'required|integer|min:1|max:100000',
+            'direction' => 'required|in:add,deduct',
+            'notes' => 'nullable|string|max:255',
+        ]);
+
+        $item = Item::findOrFail($itemId);
+
+        $adjustBy = (int) $validated['adjust_by'];
+        $newQuantity = $validated['direction'] === 'add'
+            ? (int) $item->stock_quantity + $adjustBy
+            : (int) $item->stock_quantity - $adjustBy;
+
+        if ($newQuantity < 0) {
+            return redirect()->back()
+                ->with('error', 'Deduction is too high. Stock quantity cannot go below zero.')
+                ->with('flash_timeout', 3000);
+        }
+
+        DB::beginTransaction();
+        try {
+            $item->stock_quantity = $newQuantity;
+            $item->save();
+
+            if ($validated['direction'] === 'add' && $adjustBy > 0) {
+                StockIn::create([
+                    'item_id' => $item->item_id,
+                    'quantity_received' => $adjustBy,
+                    'received_date' => now(),
+                    'supplier_name' => $validated['notes'] ?? 'Franchisor staff adjustment',
+                    'restocked_by' => Auth::guard('franchisor_staff')->id() ?? 0,
+                ]);
+            }
+
+            DB::commit();
+
+            $query = $request->only(['search', 'category', 'stock_status']);
+
+            return redirect()
+                ->route('franchisor-staff.stock.index', $query)
+                ->with('success', 'Stock updated for ' . $item->item_name . '. New quantity: ' . $newQuantity . '.')
+                ->with('flash_timeout', 3000);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->with('error', 'Failed to adjust stock: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
+        }
+    }
+
+    /**
      * Cancel/reverse adjustment
      */
     public function cancel($itemId)

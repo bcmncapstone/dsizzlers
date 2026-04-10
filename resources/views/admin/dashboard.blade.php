@@ -239,21 +239,23 @@
                                 title="Click to view full size"
                                 style="cursor:pointer;"
                             >
-                            @if($post->description)
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <p class="marketing-post-description" id="admin-dash-desc-{{ $post->id }}" style="margin-bottom: 0;">{{ $post->description }}</p>
-                                    <button type="button" class="btn btn-edit" onclick="adminDashCopyDescription({{ $post->id }})" title="Copy Description">Copy</button>
+                            <div style="padding: 12px;">
+                                @if($post->description)
+                                    <p class="marketing-post-description" id="admin-dash-desc-{{ $post->id }}" style="margin: 0 0 4px 0; padding: 0;">{{ $post->description }}</p>
+                                @endif
+                                <small class="marketing-post-date" style="padding: 0; margin-bottom: 10px; display: block;">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
+                                <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                                    <button type="button" onclick="adminDashViewImage({{ $post->id }})" class="btn btn-gallery" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">View</button>
+                                    <a href="{{ route('marketing.download', ['url' => urlencode(is_object($post) && isset($post->image_path) ? media_url($post->image_path) : ''), 'filename' => 'marketing-' . ($post->id ?? 'image') . '.jpg']) }}" class="btn btn-camera" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Download</a>
+                                    <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display:inline; margin: 0;" onsubmit="return confirm('Archive this post?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-remove" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px; margin: 0;">Archive</button>
+                                    </form>
+                                    @if($post->description)
+                                        <button type="button" class="btn btn-edit" onclick="adminDashCopyDescription({{ $post->id }})" title="Copy Description" style="padding: 6px 14px; font-size: 13px; border-radius: 5px; min-width: 70px;">Copy</button>
+                                    @endif
                                 </div>
-                            @endif
-                            <small class="marketing-post-date">Posted on {{ $post->created_at->format('M d, Y h:i A') }}</small>
-                            <div class="button-group" style="margin-top:8px;">
-                                <button onclick="adminDashViewImage({{ $post->id }})" class="btn btn-gallery">View</button>
-                                <a href="{{ route('marketing.download', ['url' => urlencode(is_object($post) && isset($post->image_path) ? media_url($post->image_path) : ''), 'filename' => 'marketing-' . ($post->id ?? 'image') . '.jpg']) }}" class="btn btn-camera">Download</a>
-                                <form method="POST" action="{{ route('digital-marketing.destroy', $post->id) }}" style="display:inline;" onsubmit="return confirm('Archive this post?');">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-remove">Archive</button>
-                                </form>
                             </div>
                         </div>
                     @empty

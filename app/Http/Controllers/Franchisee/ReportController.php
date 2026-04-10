@@ -370,23 +370,30 @@ class ReportController extends Controller
             ->orderBy('fstaff_fname')
             ->get();
 
-        $performance = Order::query()
-            ->select('fstaff_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total_amount) as total_sales'))
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->whereNotNull('fstaff_id')
+        $performance = StockTransaction::query()
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'out')
+            ->where('stock_transactions.performed_by_type', 'franchisee_staff')
+            ->whereNotNull('stock_transactions.performed_by_id')
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->end_date);
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
             })
-            ->groupBy('fstaff_id')
+            ->select(
+                'stock_transactions.performed_by_id as fstaff_id',
+                DB::raw('COUNT(*) as orders_count'),
+                DB::raw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as total_sales')
+            )
+            ->groupBy('stock_transactions.performed_by_id')
             ->get()
             ->keyBy('fstaff_id');
 
         $noData = $staff->isEmpty();
         $noPerformanceData = $performance->isEmpty() && ($request->start_date || $request->end_date);
-        $availableRange = $this->getOrderDateRange($franchisee->franchisee_id);
+        $availableRange = $this->getStaffSalesDateRange($franchisee->franchisee_id);
 
         // Prepare chart data for staff performance
         $staffChartData = [];
@@ -436,17 +443,24 @@ class ReportController extends Controller
             ->with('flash_timeout', 3000);
         }
 
-        $performance = Order::query()
-            ->select('fstaff_id', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total_amount) as total_sales'))
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->whereNotNull('fstaff_id')
+        $performance = StockTransaction::query()
+            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
+            ->where('stock_transactions.transaction_type', 'out')
+            ->where('stock_transactions.performed_by_type', 'franchisee_staff')
+            ->whereNotNull('stock_transactions.performed_by_id')
             ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '>=', $request->start_date);
+                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
             })
             ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('order_date', '<=', $request->end_date);
+                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
             })
-            ->groupBy('fstaff_id')
+            ->select(
+                'stock_transactions.performed_by_id as fstaff_id',
+                DB::raw('COUNT(*) as orders_count'),
+                DB::raw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as total_sales')
+            )
+            ->groupBy('stock_transactions.performed_by_id')
             ->get()
             ->keyBy('fstaff_id');
 
@@ -493,6 +507,17 @@ class ReportController extends Controller
     {
         return StockTransaction::query()
             ->where('franchisee_id', $franchiseeId)
+            ->selectRaw('MIN(created_at) as min_date, MAX(created_at) as max_date')
+            ->first();
+    }
+
+    private function getStaffSalesDateRange(int $franchiseeId)
+    {
+        return StockTransaction::query()
+            ->where('franchisee_id', $franchiseeId)
+            ->where('transaction_type', 'out')
+            ->where('performed_by_type', 'franchisee_staff')
+            ->whereNotNull('performed_by_id')
             ->selectRaw('MIN(created_at) as min_date, MAX(created_at) as max_date')
             ->first();
     }

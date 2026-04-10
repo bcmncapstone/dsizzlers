@@ -49,7 +49,7 @@
                 <div class="summary-value">{{ $rows->count() }}</div>
             </div>
             <div class="summary-item">
-                <div class="summary-label">Total Orders</div>
+                <div class="summary-label">Total Transactions</div>
                 <div class="summary-value">{{ $totalOrders }}</div>
             </div>
             <div class="summary-item">
@@ -65,7 +65,7 @@
         <thead>
             <tr>
                 <th style="text-align: left;">Franchisee</th>
-                <th style="text-align: center;">Orders</th>
+                <th style="text-align: center;">Transactions</th>
                 <th style="text-align: right;">Total Sales</th>
             </tr>
         </thead>
@@ -89,7 +89,7 @@
         <thead>
             <tr>
                 <th style="text-align: left;">Franchisee</th>
-                <th style="text-align: center;">Orders</th>
+                <th style="text-align: center;">Transactions</th>
                 <th style="text-align: right;">Total Sales</th>
             </tr>
         </thead>
