@@ -26,6 +26,9 @@ WORKDIR /var/www
 # Copy project files
 COPY . .
 
+# Copy deploy env so artisan can boot during composer install
+RUN cp .env.deploy .env
+
 # Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
 
