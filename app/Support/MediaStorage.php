@@ -116,12 +116,8 @@ class MediaStorage
     public function createPreviewResponse(string $path, ?string $absoluteLocalPath = null)
     {
         if ($this->isRemoteUrl($path)) {
-            $signedUrl = $this->cloudinarySignedDownloadUrl($path);
-
-            if ($signedUrl !== null) {
-                return redirect()->away($signedUrl);
-            }
-
+            // Redirect directly to the Cloudinary URL for inline viewing.
+            // Do NOT use privateDownloadUrl here — it forces a download.
             return redirect()->away($path);
         }
 
