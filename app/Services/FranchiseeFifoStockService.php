@@ -16,14 +16,11 @@ class FranchiseeFifoStockService
     {
         $snapshot = $this->buildRemainingLotsSnapshot($stock, false);
 
-        $lots = array_values(array_filter($snapshot['lots'], function (array $lot) {
-            return ($lot['quantity_remaining'] ?? 0) > 0;
-        }));
-
         return [
             'stock_quantity' => max((int) $stock->current_quantity, 0),
             'fifo_available' => (int) $snapshot['available'],
-            'lots' => $lots,
+            // Keep exhausted lots visible so fully consumed items still show their batch history.
+            'lots' => array_values($snapshot['lots']),
         ];
     }
 
