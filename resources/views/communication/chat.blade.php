@@ -31,7 +31,13 @@
     {{ $conversationTitle }}
 </div>
 
-<div class="chat-container">
+<div
+    class="chat-container"
+    data-conversation-id="{{ $conversation->id }}"
+    data-current-user-id="{{ $currentUserId }}"
+    data-current-user-type="{{ $currentUserType }}"
+    data-current-user-name="{{ $currentUserType === 'admin' ? $adminName : $franchiseeName }}"
+>
     {{-- MESSAGES --}}
     <div id="messages" class="chat-messages">
         @foreach($messages as $msg)
@@ -90,7 +96,7 @@
 
     {{-- FORM --}}
     <div class="chat-form-wrapper">
-        <form id="chat-form" class="chat-form" enctype="multipart/form-data">
+        <form id="chat-form" class="chat-form" enctype="multipart/form-data" data-conversation-id="{{ $conversation->id }}">
             <input type="hidden" name="conversation_id" value="{{ $conversation->id }}">
             @csrf
             <button type="button" class="chat-file-btn" id="file-btn" title="Attach">
@@ -131,6 +137,16 @@ const fileNameDisplay = document.getElementById('file-name-display');
 const messagesBox = document.getElementById('messages');
 
 let selectedFile = null;
+let initialSyncStarted = false;
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 // File button
 fileBtn.addEventListener('click', (e) => {
@@ -186,7 +202,9 @@ function sendForm(formData, tempId) {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
         }
     })
     .then(response => {
@@ -236,7 +254,13 @@ function sendForm(formData, tempId) {
 }
 
 function fetchNewMessages() {
-    fetch(`/communication/{{ $conversation->id }}/messages?after=${lastMessageId}`)
+    fetch(`/communication/{{ $conversation->id }}/messages?after=${lastMessageId}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
+    })
         .then(res => {
             if (!res.ok) throw new Error('Failed to fetch messages');
             return res.json();
@@ -257,6 +281,41 @@ function fetchNewMessages() {
         })
         .catch(err => {
             console.error('Fetch messages error:', err);
+        });
+}
+
+function syncMessagesFromServer() {
+    fetch(`/communication/{{ $conversation->id }}/messages`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store'
+    })
+        .then(res => {
+            if (!res.ok) throw new Error('Failed to sync messages');
+            return res.json();
+        })
+        .then(messages => {
+            const pendingMessages = Array.from(messagesBox.querySelectorAll('[data-temp-id]'))
+                .map(node => node.cloneNode(true));
+
+            messagesBox.innerHTML = '';
+            lastMessageId = 0;
+
+            messages.forEach(message => {
+                appendMessage(message);
+            });
+
+            pendingMessages.forEach(node => {
+                messagesBox.appendChild(node);
+            });
+
+            scrollToBottomAfterRender();
+        })
+        .catch(err => {
+            console.error('Initial message sync error:', err);
+            scrollToBottomAfterRender();
         });
 }
 
@@ -282,7 +341,7 @@ function appendMessage(message) {
         currentUserType === message.sender_type;
 
     const className = isMe ? 'sent' : 'received';
-    const senderName = message.sender_name || 'User';
+    const senderName = escapeHtml(message.sender_name || 'User');
     const fileUrl = message.file_path
         ? ((message.file_path.startsWith('http://') || message.file_path.startsWith('https://'))
             ? message.file_path
@@ -292,11 +351,11 @@ function appendMessage(message) {
 
     let attachment = '';
     if (message.file_path && message.file_type?.startsWith('image/')) {
-        attachment = `<img src="${fileUrl}" class="chat-image">`;
+        attachment = `<img src="${escapeHtml(fileUrl)}" class="chat-image" alt="Attachment">`;
     } else if (message.file_path) {
         attachment = `
             <div class="chat-attachment">
-                <a href="${fileUrl}" download="${message.file_name}">
+                <a href="${escapeHtml(fileUrl)}" download="${escapeHtml(message.file_name || 'Attachment')}">
                     📎 ${message.file_name}
                 </a>
             </div>`;
@@ -312,7 +371,7 @@ function appendMessage(message) {
             <div class="chat-message-content">
                 <div class="chat-bubble">
                     <div class="chat-sender-name">${senderName}</div>
-                    ${message.message_text ? `<div class="chat-message-text">${message.message_text}</div>` : ''}
+                    ${message.message_text ? `<div class="chat-message-text">${escapeHtml(message.message_text)}</div>` : ''}
                     ${attachment}
                 </div>
                 <span class="chat-message-time">${timeStr}</span>
@@ -363,7 +422,26 @@ function previewImage(file, callback) {
 }
 
 function scrollToBottom() {
-    messagesBox.scrollTop = messagesBox.scrollHeight;
+    messagesBox.scrollTo({ top: messagesBox.scrollHeight, behavior: 'auto' });
+
+    const lastMessage = messagesBox.querySelector('.chat-message:last-child');
+    if (lastMessage) {
+        lastMessage.scrollIntoView({ block: 'end', inline: 'nearest' });
+    }
+}
+
+function scrollToBottomAfterRender() {
+    scrollToBottom();
+    requestAnimationFrame(scrollToBottom);
+    setTimeout(scrollToBottom, 120);
+    setTimeout(scrollToBottom, 320);
+    setTimeout(scrollToBottom, 600);
+
+    messagesBox.querySelectorAll('img').forEach(img => {
+        if (img.complete) return;
+        img.addEventListener('load', scrollToBottom, { once: true });
+        img.addEventListener('error', scrollToBottom, { once: true });
+    });
 }
 
 if (window.Echo) {
@@ -377,7 +455,19 @@ if (window.Echo) {
 }
 
 setInterval(fetchNewMessages, 3000);
-window.onload = scrollToBottom;
+
+function initializeChatView() {
+    if (initialSyncStarted) return;
+    initialSyncStarted = true;
+    scrollToBottomAfterRender();
+    syncMessagesFromServer();
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeChatView, { once: true });
+} else {
+    initializeChatView();
+}
 </script>
 
 </body>

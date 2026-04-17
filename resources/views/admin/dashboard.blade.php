@@ -332,7 +332,7 @@
             <a href="{{ route('admin.stock.index') }}" class="card card-purple">
                 <div class="card-icon-wrapper">
                 </div>
-                <h3>Stock Management</h3>
+                <h3>Stock</h3>
                 <p>Monitor inventory levels and stock transactions</p>
                 <div class="card-arrow">View →</div>
             </a>

@@ -198,7 +198,7 @@ class BranchController extends Controller
                 return MediaStorage::downloadResponse($branch->contract_file, null, $downloadName);
             }
 
-            return MediaStorage::previewResponse($branch->contract_file);
+            return MediaStorage::previewResponse($branch->contract_file, null, $downloadName);
         }
 
         // Local file path — only works on localhost, not on cloud hosts like Render
