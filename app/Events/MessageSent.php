@@ -6,19 +6,21 @@ use App\Models\Message;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessageSent implements ShouldBroadcast
+class MessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $message;
+    public $senderName;
 
-    public function __construct(Message $message)
+    public function __construct(Message $message, ?string $senderName = null)
     {
         $this->message = $message;
+        $this->senderName = $senderName;
     }
 
     public function broadcastOn()
@@ -29,17 +31,7 @@ class MessageSent implements ShouldBroadcast
 
     public function broadcastWith()
     {
-        // Prepare sender name
-        $senderName = 'User';
-        if ($this->message->sender_type === 'admin') {
-            $sender = \App\Models\Admin::find($this->message->sender_id);
-            $senderName = $sender
-                ? trim(($sender->admin_fname ?? '') . ' ' . ($sender->admin_lname ?? '')) ?: 'Admin'
-                : 'Admin';
-        } elseif ($this->message->sender_type === 'franchisee') {
-            $sender = \App\Models\Franchisee::find($this->message->sender_id);
-            $senderName = $sender ? ($sender->franchisee_name ?: 'Franchisee') : 'Franchisee';
-        }
+        $senderName = $this->senderName ?: 'User';
 
         // Return full message with all needed data
         return [

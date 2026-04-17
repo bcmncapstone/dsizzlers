@@ -54,7 +54,7 @@
                     }
                 @endphp
                 <li style="margin-bottom: var(--spacing-md);">
-                    <div class="conversation-card-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--dsizzlers-gray-light); border-radius: var(--radius-md); padding: var(--spacing-md) var(--spacing-lg); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.2s, color 0.2s;">
+                    <div class="conversation-card-row" data-chat-url="{{ url('/communication/' . $conversation->id) }}" style="display: flex; align-items: center; justify-content: space-between; background: var(--dsizzlers-gray-light); border-radius: var(--radius-md); padding: var(--spacing-md) var(--spacing-lg); box-shadow: var(--shadow-sm); cursor: pointer; transition: background 0.2s, color 0.2s;">
                         <a href="{{ url('/communication/' . $conversation->id) }}" class="open-chat-link conversation-name" data-chat-url="{{ url('/communication/' . $conversation->id) }}" style="color: var(--dsizzlers-orange); font-weight: 600; font-size: 16px; letter-spacing: 0.2px; user-select: none; background: transparent; border-radius: var(--radius-md); padding: 8px 18px; transition: background 0.2s, color 0.2s; text-decoration: none; display: inline-block;">{{ $displayName }}</a>
                         <div>
                             @if(($conversationView ?? 'active') === 'archived')
@@ -130,3 +130,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+

@@ -1,6 +1,5 @@
 import 'alpinejs';
 import './bootstrap';
-import './echo';
 
 // Only keep non-nav JS (e.g., flash alert)
 document.addEventListener('DOMContentLoaded', () => {

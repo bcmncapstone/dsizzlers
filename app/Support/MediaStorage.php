@@ -35,9 +35,9 @@ class MediaStorage
         return app(self::class)->isRemoteUrl($path);
     }
 
-    public static function previewResponse(string $path, ?string $absoluteLocalPath = null)
+    public static function previewResponse(string $path, ?string $absoluteLocalPath = null, ?string $previewName = null)
     {
-        return app(self::class)->createPreviewResponse($path, $absoluteLocalPath);
+        return app(self::class)->createPreviewResponse($path, $absoluteLocalPath, $previewName);
     }
 
     public static function downloadResponse(string $path, ?string $absoluteLocalPath = null, ?string $downloadName = null)
@@ -113,12 +113,12 @@ class MediaStorage
         return is_string($path) && filter_var($path, FILTER_VALIDATE_URL) !== false;
     }
 
-    public function createPreviewResponse(string $path, ?string $absoluteLocalPath = null)
+    public function createPreviewResponse(string $path, ?string $absoluteLocalPath = null, ?string $previewName = null)
     {
         if ($this->isRemoteUrl($path)) {
             // Redirect directly to the Cloudinary URL for inline viewing.
             // Do NOT use privateDownloadUrl here — it forces a download.
-            return redirect()->away($path);
+            return $this->previewRemoteFile($path, $previewName);
         }
 
         if ($absoluteLocalPath === null || ! file_exists($absoluteLocalPath)) {
@@ -156,9 +156,44 @@ class MediaStorage
         $filename = str_replace('"', '', $filename);
 
         return response($remoteResponse->body(), 200, [
-            'Content-Type' => $remoteResponse->header('Content-Type') ?? 'application/octet-stream',
+            'Content-Type' => $this->resolveContentType($filename, $remoteResponse->header('Content-Type')),
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    private function previewRemoteFile(string $url, ?string $previewName = null)
+    {
+        $remoteResponse = Http::timeout(60)->get($url);
+
+        if (! $remoteResponse->successful()) {
+            abort(404, 'File not found.');
+        }
+
+        $filename = $previewName ?: basename(parse_url($url, PHP_URL_PATH) ?: 'preview');
+        $filename = str_replace('"', '', $filename);
+
+        return response($remoteResponse->body(), 200, [
+            'Content-Type' => $this->resolveContentType($filename, $remoteResponse->header('Content-Type')),
+            'Content-Disposition' => 'inline; filename="' . $filename . '"',
+        ]);
+    }
+
+    private function resolveContentType(string $filename, ?string $headerContentType = null): string
+    {
+        $headerContentType = is_string($headerContentType)
+            ? trim(strtolower(explode(';', $headerContentType)[0]))
+            : null;
+
+        if ($headerContentType !== null && $headerContentType !== '' && $headerContentType !== 'application/octet-stream') {
+            return $headerContentType;
+        }
+
+        return match (strtolower((string) pathinfo($filename, PATHINFO_EXTENSION))) {
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            default => 'application/octet-stream',
+        };
     }
 
     private function buildFolder(string $folder): string

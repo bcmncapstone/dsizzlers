@@ -9,6 +9,7 @@ use App\Events\MessageSent;
 use App\Services\CloudinaryService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class ChatController extends Controller
 {
@@ -16,115 +17,144 @@ class ChatController extends Controller
     {
     }
 
-    protected function ensureAdminOrFranchisee()
+    protected function resolveChatActor(): array
     {
         if (auth()->guard('admin')->check()) {
-            return ['guard' => 'admin', 'user' => auth()->guard('admin')->user()];
+            return ['guard' => 'admin', 'user' => auth()->guard('admin')->user(), 'type' => 'admin'];
+        }
+
+        if (auth()->guard('franchisor_staff')->check()) {
+            $user = auth()->guard('franchisor_staff')->user();
+            return ['guard' => 'franchisor_staff', 'user' => $user, 'type' => 'admin'];
         }
 
         if (auth()->guard('franchisee')->check()) {
-            return ['guard' => 'franchisee', 'user' => auth()->guard('franchisee')->user()];
+            return ['guard' => 'franchisee', 'user' => auth()->guard('franchisee')->user(), 'type' => 'franchisee'];
+        }
+
+        if (auth()->guard('franchisee_staff')->check()) {
+            $user = auth()->guard('franchisee_staff')->user();
+            return ['guard' => 'franchisee_staff', 'user' => $user, 'type' => 'franchisee'];
         }
 
         abort(403, 'Unauthorized');
     }
 
-    public function show(Conversation $conversation)
+    protected function getActorKey(array $actor): int
     {
-        $actor = $this->ensureAdminOrFranchisee();
-        $guard = $actor['guard'];
-        $currentUser = $actor['user'];
-        $currentUserType = $guard;
+        $user = $actor['user'];
 
-        if ($guard === 'admin' && $conversation->admin_id != $currentUser->getKey()) {
-            abort(403, 'Forbidden');
+        if ($actor['type'] === 'admin') {
+            return (int) ($user->admin_id ?? $user->getKey());
         }
 
-        if ($guard === 'franchisee' && $conversation->franchisee_id != $currentUser->getKey()) {
-            abort(403, 'Forbidden');
-        }
-
-        $messages = $conversation->messages()->get();
-
-        $messages->transform(function ($message) {
-            $senderName = ucfirst(str_replace('_', ' ', $message->sender_type));
-
-            if ($message->sender_type === 'admin') {
-                $sender = \App\Models\Admin::find($message->sender_id);
-                $senderName = $sender
-                    ? trim(($sender->admin_fname ?? '') . ' ' . ($sender->admin_lname ?? '')) ?: 'System Administrator'
-                    : 'System Administrator';
-            } elseif ($message->sender_type === 'franchisee') {
-                $sender = \App\Models\Franchisee::find($message->sender_id);
-                $senderName = $sender ? ($sender->franchisee_name ?: 'Franchisee') : 'Franchisee';
-            }
-
-            $message->sender_name = $senderName;
-            return $message;
-        });
-
-        $currentUserId = $currentUser ? $currentUser->getKey() : null;
-
-        return view('communication.chat', [
-            'conversation' => $conversation,
-            'messages' => $messages,
-            'currentUser' => $currentUser,
-            'currentUserId' => $currentUserId,
-            'currentUserType' => $currentUserType,
-        ]);
+        return (int) ($user->franchisee_id ?? $user->getKey());
     }
 
-    public function fetchMessages(Request $request, Conversation $conversation)
+    protected function getActorDisplayName(array $actor): string
     {
-        $actor = $this->ensureAdminOrFranchisee();
-        $guard = $actor['guard'];
-        $currentUser = $actor['user'];
+        $user = $actor['user'];
 
-        if ($guard === 'admin' && $conversation->admin_id != $currentUser->getKey()) {
-            return response()->json([], 403);
+        if ($actor['type'] === 'admin') {
+            return trim(($user->admin_fname ?? $user->astaff_fname ?? '') . ' ' . ($user->admin_lname ?? $user->astaff_lname ?? ''))
+                ?: 'System Administrator';
         }
 
-        if ($guard === 'franchisee' && $conversation->franchisee_id != $currentUser->getKey()) {
-            return response()->json([], 403);
+        return $user->franchisee_name
+            ?? trim(($user->fstaff_fname ?? '') . ' ' . ($user->fstaff_lname ?? ''))
+            ?: 'Franchisee';
+    }
+
+    protected function authorizeConversationAccess(Conversation $conversation): array
+    {
+        $actor = $this->resolveChatActor();
+        $actorId = $this->getActorKey($actor);
+
+        if ($actor['type'] === 'admin' && (int) $conversation->admin_id !== $actorId) {
+            abort(403, 'Forbidden');
         }
 
-        $lastMessageId = $request->query('after', 0);
-        $messages = $conversation->messages()->where('id', '>', $lastMessageId)->get();
+        if ($actor['type'] === 'franchisee' && (int) $conversation->franchisee_id !== $actorId) {
+            abort(403, 'Forbidden');
+        }
 
-        $messages->transform(function ($message) {
-            $senderName = ucfirst(str_replace('_', ' ', $message->sender_type));
-            if ($message->sender_type === 'admin') {
-                $sender = \App\Models\Admin::find($message->sender_id);
-                $senderName = $sender
-                    ? trim(($sender->admin_fname ?? '') . ' ' . ($sender->admin_lname ?? '')) ?: 'System Administrator'
-                    : 'System Administrator';
-            } elseif ($message->sender_type === 'franchisee') {
-                $sender = \App\Models\Franchisee::find($message->sender_id);
-                $senderName = $sender ? ($sender->franchisee_name ?: 'Franchisee') : 'Franchisee';
-            }
-            $message->sender_name = $senderName;
+        $actor['actor_id'] = $actorId;
+
+        return $actor;
+    }
+
+    protected function buildMessagesPayload(Conversation $conversation, int $afterId = 0)
+    {
+        $query = $conversation->messages()
+            ->orderBy('id');
+
+        if ($afterId > 0) {
+            $query->where('id', '>', $afterId);
+        }
+
+        return $query->get()->map(function ($message) {
+            $message->sender_name = $this->getSenderName($message->sender_type, $message->sender_id);
             $message->formatted_time = $message->created_at->format('h:i A');
             return $message;
         });
-
-        return response()->json($messages);
     }
 
-    public function send(Request $request, Conversation $conversation)
+    protected function resolveConversationRecord(int|string $conversationId): Conversation
+    {
+        return Conversation::query()->findOrFail((int) $conversationId);
+    }
+
+    public function show($conversation)
+    {
+        $conversation = $this->resolveConversationRecord($conversation);
+        $actor = $this->authorizeConversationAccess($conversation);
+        $messages = $this->buildMessagesPayload($conversation);
+
+        return response()->view('communication.chat', [
+            'conversation' => $conversation,
+            'messages' => $messages,
+            'currentUser' => $actor['user'],
+            'currentUserId' => $actor['actor_id'],
+            'currentUserType' => $actor['type'],
+        ])->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    }
+
+    public function fetchMessages(Request $request, $conversation)
     {
         try {
+            $conversation = $this->resolveConversationRecord($conversation);
+            $this->authorizeConversationAccess($conversation);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Conversation not found.'], 404);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+            return response()->json([], $e->getStatusCode());
+        } catch (\Exception $e) {
+            Log::error('Fetch messages failed', [
+                'conversation_id' => $conversation,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'error' => 'Unable to load messages right now.',
+                'message' => 'Please try again in a moment.'
+            ], 500);
+        }
+
+        $lastMessageId = (int) $request->query('after', 0);
+        $messages = $this->buildMessagesPayload($conversation, $lastMessageId);
+
+        return response()
+            ->json($messages)
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    }
+
+    public function send(Request $request, $conversation)
+    {
+        try {
+            $conversation = $this->resolveConversationRecord($conversation);
+
             // AUTH
-            $actor = $this->ensureAdminOrFranchisee();
-            $guard = $actor['guard'];
-            $currentUser = $actor['user'];
-
-            if ($guard === 'admin' && $conversation->admin_id != $currentUser->getKey()) {
-                return response()->json(['error' => 'Forbidden'], 403);
-            }
-
-            if ($guard === 'franchisee' && $conversation->franchisee_id != $currentUser->getKey()) {
-                return response()->json(['error' => 'Forbidden'], 403);
-            }
+            $actor = $this->authorizeConversationAccess($conversation);
 
             // VALIDATION - FIXED TO MATCH ACCEPTED FILE TYPES
             $validated = $request->validate([
@@ -132,8 +162,9 @@ class ChatController extends Controller
                 'file' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,doc,docx,txt|max:5120', // 5MB max
             ]);
 
-            $senderType = $guard === 'admin' ? 'admin' : 'franchisee';
-            $senderId   = $currentUser->getKey();
+            $senderType = $actor['type'];
+            $senderId   = $actor['actor_id'];
+            $senderName = $this->getActorDisplayName($actor);
 
             // HANDLE FILE
             $filePath = null;
@@ -173,7 +204,7 @@ class ChatController extends Controller
 
             // BROADCAST
             try {
-                broadcast(new MessageSent($message))->toOthers();
+                broadcast(new MessageSent($message, $senderName))->toOthers();
             } catch (\Exception $e) {
                 Log::error('Broadcast failed', ['error' => $e->getMessage()]);
             }
@@ -184,7 +215,7 @@ class ChatController extends Controller
                 'conversation_id' => $message->conversation_id,
                 'sender_id' => $message->sender_id,
                 'sender_type' => $message->sender_type,
-                'sender_name' => $this->getSenderName($senderType, $senderId),
+                'sender_name' => $senderName,
                 'message_text' => $message->message_text,
                 'file_path' => $message->file_path,
                 'file_name' => $message->file_name,
@@ -200,6 +231,12 @@ class ChatController extends Controller
                 'message' => 'Invalid input',
                 'errors' => $e->errors()
             ], 422);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Conversation not found',
+                'message' => 'This conversation could not be found.'
+            ], 404);
             
         } catch (\Exception $e) {
             Log::error('Message send failed', [

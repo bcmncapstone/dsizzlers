@@ -581,8 +581,7 @@ Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {
 // Proxy download for marketing images (Cloudinary or local)
 Route::get('/marketing-download', [MarketingDownloadController::class, 'download'])->name('marketing.download');
 
-// Fetch messages without middleware for polling to work
-Route::get('/communication/{conversation}/messages', [ChatController::class, 'fetchMessages']);
+
 
 
 

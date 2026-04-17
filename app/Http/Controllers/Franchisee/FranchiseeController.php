@@ -73,7 +73,7 @@ class FranchiseeController extends Controller
                 return MediaStorage::downloadResponse($branch->contract_file, null, $downloadName);
             }
 
-            return MediaStorage::previewResponse($branch->contract_file);
+            return MediaStorage::previewResponse($branch->contract_file, null, $downloadName);
         }
 
         $filePath = $this->resolveLocalContractPath($branch->contract_file);
