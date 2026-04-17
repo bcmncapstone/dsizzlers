@@ -128,11 +128,11 @@
             <div class="form-group">
                 <label for="contract_file" class="form-label">Upload Contract</label>
                 <div class="file-input-wrapper">
-                    <input type="file" name="contract_file" id="contract_file" class="file-input" required>
+                    <input type="file" name="contract_file" id="contract_file" class="file-input" accept="application/pdf,.pdf" required>
                     <span class="file-input-label" id="contract_filename">Choose file or drag and drop</span>
                     <button type="button" id="contract_clear_btn" title="Remove selected file" style="margin-left:8px; background:transparent; border:1px solid #e5e7eb; border-radius:6px; padding:6px 8px; cursor:pointer;">✕</button>
                 </div>
-                <p class="field-help">Supported formats: PDF, DOC, DOCX (Max 5MB)</p>
+                <p class="field-help">Supported format: PDF only (Max 5MB)</p>
                 @error('contract_file')<span class="field-error">{{ $message }}</span>@enderror
             </div>
 

@@ -81,10 +81,11 @@ class BranchController extends Controller
                 }
             ],
             'contact_number' => 'required|string|max:20',
-            'contract_file' => 'required|file|mimes:pdf,docx,doc|max:5120',
+            'contract_file' => 'required|file|mimes:pdf|max:5120',
             'contract_expiration' => 'required|date',
         ], [
             'contract_file.max' => 'The contract file must not be greater than 5MB.',
+            'contract_file.mimes' => 'The contract file must be a PDF only.',
         ]);
 
         if ($request->hasFile('contract_file')) {
@@ -125,10 +126,11 @@ class BranchController extends Controller
                 }
             ],
             'contact_number' => 'required|string|max:20',
-            'contract_file' => 'nullable|file|mimes:pdf,docx,doc|max:5120',
+            'contract_file' => 'nullable|file|mimes:pdf|max:5120',
             'contract_expiration' => 'required|date',
         ], [
             'contract_file.max' => 'The contract file must not be greater than 5MB.',
+            'contract_file.mimes' => 'The contract file must be a PDF only.',
         ]);
 
         if ($request->hasFile('contract_file')) {
