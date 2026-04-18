@@ -8,6 +8,7 @@ use App\Models\Branch;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -110,6 +111,13 @@ class SendBranchContractExpiryReminders extends Command
                 $archivedBranchIds[] = $branchId;
                 $expiredArchivedCount++;
             }
+
+            $branch->newQuery()
+                ->whereKey($branch->getKey())
+                ->update([
+                    'branch_status' => DB::raw('false'),
+                    'archived' => DB::raw('true'),
+                ]);
 
             $expirationDate = optional($branch->contract_expiration)->toDateString() ?? $today->toDateString();
             $notificationKey = $this->buildExpiredCacheKey($branchId, $expirationDate);

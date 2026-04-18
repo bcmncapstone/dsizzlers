@@ -7,7 +7,10 @@ use App\Models\Branch;
 use App\Models\Franchisee;
 use App\Support\MediaStorage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class BranchController extends Controller
 {
@@ -159,20 +162,73 @@ class BranchController extends Controller
             $this->saveArchivedBranchIds($archivedIds);
         }
 
+        $branch->newQuery()
+            ->whereKey($branch->getKey())
+            ->update([
+                'branch_status' => DB::raw('false'),
+                'archived' => DB::raw('true'),
+            ]);
+
+        $message = 'Branch archived successfully.';
+
+        if (! empty($branch->email)) {
+            try {
+                $recipientName = trim(($branch->first_name ?? '') . ' ' . ($branch->last_name ?? ''));
+                $recipientName = $recipientName !== '' ? $recipientName : 'Franchisee';
+                $expirationDate = optional($branch->contract_expiration)?->format('F j, Y') ?? 'N/A';
+
+                Mail::mailer(config('mail.default'))->raw(
+                    "Hi {$recipientName},\n\n" .
+                    "Your D Sizzlers franchisee account has been archived by the admin.\n" .
+                    "You can no longer log in while this account remains archived.\n\n" .
+                    "Branch Location: " . ($branch->location ?: 'N/A') . "\n" .
+                    "Email: " . ($branch->email ?: 'N/A') . "\n" .
+                    "Contract Expiration: {$expirationDate}\n\n" .
+                    "If this was unexpected, please contact the admin for assistance.",
+                    function ($message) use ($branch) {
+                        $location = $branch->location ?: 'Your Branch';
+
+                        $message->to($branch->email)
+                            ->subject("Account Archived - {$location}");
+                    }
+                );
+
+                $message = 'Branch archived and notification email sent successfully.';
+            } catch (Throwable $exception) {
+                Log::error('Manual branch archive email failed.', [
+                    'branch_id' => $branch->branch_id,
+                    'branch_email' => $branch->email,
+                    'mailer' => config('mail.default'),
+                    'error' => $exception->getMessage(),
+                ]);
+
+                $message = 'Branch archived successfully, but the email notification could not be sent. Check storage/logs/laravel.log for the mail error.';
+            }
+        }
+
         return redirect()->route('admin.branches.index')
-            ->with('success', 'Branch archived successfully.')
+            ->with('success', $message)
             ->with('flash_timeout', 3000);
     }
 
     // Restore branch
     public function restore($id)
     {
+        $branch = Branch::findOrFail($id);
+
         // Remove the branch ID from the archived list
         $archivedIds = $this->getArchivedBranchIds();
         $archivedIds = array_values(array_filter($archivedIds, function ($archivedId) use ($id) {
             return (int) $archivedId !== (int) $id;
         }));
         $this->saveArchivedBranchIds($archivedIds);
+
+        $branch->newQuery()
+            ->whereKey($branch->getKey())
+            ->update([
+                'branch_status' => DB::raw('true'),
+                'archived' => DB::raw('false'),
+            ]);
 
         return redirect()->route('admin.branches.archived')
             ->with('success', 'Branch restored successfully.')

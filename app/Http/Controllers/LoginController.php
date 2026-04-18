@@ -2,11 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\BranchContractExpiredNotification;
+use App\Models\Branch;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use App\Models\Admin;
+use App\Models\Franchisee;
 use App\Models\FranchiseeStaff;
+use Carbon\Carbon;
+use Throwable;
 
 class LoginController extends Controller
 {
@@ -22,6 +31,16 @@ class LoginController extends Controller
             'username' => 'required',
             'password' => 'required',
         ]);
+
+        $franchisee = Franchisee::where('franchisee_username', $credentials['username'])->first();
+        if ($franchisee) {
+            $loginError = $this->getFranchiseeLoginBlockMessage($franchisee);
+            if ($loginError !== null) {
+                return back()
+                    ->withInput($request->only('username'))
+                    ->withErrors(['login_error' => $loginError]);
+            }
+        }
 
         if (Auth::guard('franchisee')->attempt([
             'franchisee_username' => $credentials['username'],
@@ -118,6 +137,16 @@ class LoginController extends Controller
 
         // Franchisee login
         if ($role === 'franchisee') {
+            $franchisee = Franchisee::where('franchisee_username', $username)->first();
+            if ($franchisee) {
+                $loginError = $this->getFranchiseeLoginBlockMessage($franchisee);
+                if ($loginError !== null) {
+                    return back()
+                        ->withInput($request->only('username', 'role_type'))
+                        ->withErrors(['login_error' => $loginError]);
+                }
+            }
+
             if (Auth::guard('franchisee')->attempt([
                 'franchisee_username' => $username,
                 'password' => $password,
@@ -156,5 +185,113 @@ class LoginController extends Controller
         return back()
             ->withInput($request->only('username', 'role_type'))
             ->withErrors(['login_error' => 'Invalid username or password for the selected role.']);
+    }
+
+    protected function getFranchiseeLoginBlockMessage(Franchisee $franchisee): ?string
+    {
+        $today = Carbon::today();
+        $archivedBranchIds = $this->getArchivedBranchIds();
+        $expiredBranchArchived = false;
+
+        $branches = Branch::query()
+            ->whereRaw('LOWER(TRIM(email)) = LOWER(TRIM(?))', [$franchisee->franchisee_email])
+            ->orderByDesc('contract_expiration')
+            ->orderByDesc('branch_id')
+            ->get();
+
+        foreach ($branches as $branch) {
+            if (in_array((int) $branch->branch_id, $archivedBranchIds, true)) {
+                continue;
+            }
+
+            if ($branch->contract_expiration !== null && $branch->contract_expiration->lte($today)) {
+                $archivedBranchIds = $this->archiveExpiredBranch($branch, $archivedBranchIds);
+                $expiredBranchArchived = true;
+            }
+        }
+
+        $activeBranch = $branches->first(function (Branch $branch) use ($archivedBranchIds, $today) {
+            return ! in_array((int) $branch->branch_id, $archivedBranchIds, true)
+                && $branch->contract_expiration !== null
+                && $branch->contract_expiration->gt($today);
+        });
+
+        if ($activeBranch) {
+            return null;
+        }
+
+        $latestBranch = $branches->first();
+        if (! $latestBranch) {
+            return null;
+        }
+
+        if ($expiredBranchArchived) {
+            return 'Your contract has expired and your account has been archived. Please contact the admin for renewal.';
+        }
+
+        if (in_array((int) $latestBranch->branch_id, $archivedBranchIds, true)) {
+            return 'Your account has been archived. Please contact the admin for assistance.';
+        }
+
+        return null;
+    }
+
+    protected function archiveExpiredBranch(Branch $branch, array $archivedBranchIds): array
+    {
+        $branchId = (int) $branch->branch_id;
+
+        if (! in_array($branchId, $archivedBranchIds, true)) {
+            $archivedBranchIds[] = $branchId;
+        }
+
+        $branch->newQuery()
+            ->whereKey($branch->getKey())
+            ->update([
+                'branch_status' => DB::raw('false'),
+                'archived' => DB::raw('true'),
+            ]);
+
+        $expirationDate = optional($branch->contract_expiration)->toDateString() ?? Carbon::today()->toDateString();
+        $notificationKey = $this->buildExpiredCacheKey($branchId, $expirationDate);
+
+        if (! empty($branch->email) && ! Cache::has($notificationKey)) {
+            try {
+                Mail::to($branch->email)->send(new BranchContractExpiredNotification($branch));
+                Cache::put($notificationKey, now()->toDateTimeString(), now()->addDays(30));
+            } catch (Throwable $exception) {
+                // Keep login flow working even if email delivery fails.
+            }
+        }
+
+        $this->saveArchivedBranchIds($archivedBranchIds);
+
+        return array_values(array_unique(array_map('intval', $archivedBranchIds)));
+    }
+
+    protected function getArchivedBranchIds(): array
+    {
+        if (! Storage::disk('local')->exists('archived_branches.json')) {
+            return [];
+        }
+
+        $raw = Storage::disk('local')->get('archived_branches.json');
+        $decoded = json_decode($raw, true);
+
+        if (! is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $decoded)));
+    }
+
+    protected function saveArchivedBranchIds(array $ids): void
+    {
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        Storage::disk('local')->put('archived_branches.json', json_encode($ids));
+    }
+
+    protected function buildExpiredCacheKey(int $branchId, string $expirationDate): string
+    {
+        return "contract-expired-notification:branch:{$branchId}:{$expirationDate}";
     }
 }
