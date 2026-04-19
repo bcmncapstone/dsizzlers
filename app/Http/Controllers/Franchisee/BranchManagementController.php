@@ -33,27 +33,29 @@ class BranchManagementController extends Controller
         }
 
 
-        // Total Orders (count of adjustment transactions with quantity < 0)
-        $totalOrders = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
-            ->count();
-
-        // Total Sales (sum of ABS(quantity) * price for all time)
-        $totalSales = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
+        // Keep dashboard totals aligned with the Performance and Financial pages.
+        $salesBaseQuery = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
             ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
+            ->where(function ($q) {
+                $q->where(function ($manual) {
+                    $manual->where('stock_transactions.transaction_type', 'adjustment')
+                        ->where('stock_transactions.quantity', '<', 0);
+                })->orWhere(function ($staffOut) {
+                    $staffOut->where('stock_transactions.transaction_type', 'out')
+                        ->where('stock_transactions.performed_by_type', 'franchisee_staff');
+                });
+            });
+
+        // Total Orders/Sales use the same transaction set as branch performance and financial reports.
+        $totalOrders = (clone $salesBaseQuery)->count();
+
+        $totalSales = (clone $salesBaseQuery)
             ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
             ->value('revenue');
 
-        // Sales This Month (same logic, but filter by current month/year)
-        $salesThisMonth = StockTransaction::where('stock_transactions.franchisee_id', $franchisee->franchisee_id)
-            ->where('stock_transactions.transaction_type', 'adjustment')
-            ->where('stock_transactions.quantity', '<', 0)
+        $salesThisMonth = (clone $salesBaseQuery)
             ->whereMonth('stock_transactions.created_at', Carbon::now()->month)
             ->whereYear('stock_transactions.created_at', Carbon::now()->year)
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
             ->selectRaw('COALESCE(SUM(ABS(stock_transactions.quantity) * items.price), 0) as revenue')
             ->value('revenue');
 

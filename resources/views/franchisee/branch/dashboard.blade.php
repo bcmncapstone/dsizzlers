@@ -21,13 +21,13 @@
 
             <div class="reports-card">
                 <h2 class="reports-card-title">Total Sales</h2>
-                <p class="reports-card-description">Sales from stock decreases</p>
+                <p class="reports-card-description">Sales based on branch stock-out transactions</p>
                 <div class="reports-card-link">₱{{ number_format($totalSales, 2) }}</div>
             </div>
 
             <div class="reports-card">
                 <h2 class="reports-card-title">Sales This Month</h2>
-                <p class="reports-card-description">Current month stock-decrease sales</p>
+                <p class="reports-card-description">Current month branch stock-out sales</p>
                 <div class="reports-card-link">₱{{ number_format($salesThisMonth, 2) }}</div>
             </div>
         </div>
@@ -70,7 +70,7 @@
                     <h3 class="text-sm font-medium text-yellow-800">Inventory Management Note</h3>
                     <div class="mt-2 text-sm text-yellow-700">
                         <p>
-                            Delivered items increase your stock. Sales are counted when stock is manually decreased by franchisee or franchisee staff.
+                            Delivered items increase your stock. Sales are counted from franchisee stock decreases and franchisee staff stock-out transactions.
                         </p>
                     </div>
                 </div>
