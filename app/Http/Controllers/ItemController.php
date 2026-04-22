@@ -17,6 +17,7 @@ class ItemController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $perPage = 10;
 
         // Load archived item IDs from a small JSON file (no DB change)
         $archivedIds = $this->getArchivedItemIds();
@@ -29,7 +30,9 @@ class ItemController extends Controller
             ->when(!empty($archivedIds), function ($query) use ($archivedIds) {
                 return $query->whereNotIn('item_id', $archivedIds);
             })
-            ->get();
+            ->orderBy('item_name')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('items.index', compact('items', 'search'));
     }

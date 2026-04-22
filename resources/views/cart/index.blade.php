@@ -160,11 +160,14 @@
     }
 
     // Remove Selected → auto-create POST forms for each item
-    removeSelectedBtn?.addEventListener('click', function() {
+    removeSelectedBtn?.addEventListener('click', async function() {
         const selectedItems = [...document.querySelectorAll('input[name="selected_items[]"]:checked')].map(cb => cb.value);
 
         if (selectedItems.length === 0) return alert('No items selected.');
-        if (!confirm('Remove selected items from cart?')) return;
+        const confirmed = await window.showConfirmModal('Remove selected items from cart?', {
+            confirmText: 'Remove',
+        });
+        if (!confirmed) return;
 
         selectedItems.forEach(id => {
             const form = document.createElement('form');

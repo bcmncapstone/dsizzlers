@@ -12,7 +12,7 @@
                 </p>
             </div>
             <a href="{{ route('franchisee.branch.dashboard') }}" 
-               class="text-sm font-medium text-orange-600 hover:text-orange-700 transition">
+               class="text-sm font-medium text-[#ffb347] hover:text-[#f2a33a] transition">
                 ← Back to Dashboard
             </a>
         </div>
@@ -84,7 +84,7 @@
                         </div>
                         <div class="flex items-end gap-2">
                             <button type="submit" 
-                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                    class="px-4 py-2 bg-[#9396DB] text-white rounded-md hover:bg-[#9396DB] focus:outline-none focus:ring-2 focus:ring-[#9396DB] focus:ring-offset-2">
                                 Filter
                             </button>
                             <a href="{{ route('franchisee.branch.financial') }}" 
@@ -144,3 +144,4 @@
     </div>
 </div>
 @endsection
+

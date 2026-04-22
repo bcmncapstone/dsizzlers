@@ -64,6 +64,8 @@
         </div>
         @include('communication._floating-chat-modal-script')
         @endif
+
+        @include('layouts.confirm-modal')
         @stack('scripts')
         <!-- Footer -->
         <footer class="w-full bg-gray-800 text-white text-center py-4 mt-8">

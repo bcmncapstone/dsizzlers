@@ -207,6 +207,8 @@ Route::get('/', fn () => view('welcome'));
 
 // Franchisor Staff Password Routes
 Route::middleware('auth:franchisor_staff')->group(function () {
+    Route::get('franchisor-staff/account-center', [StaffAccountController::class, 'showFranchisorStaffPortal'])
+        ->name('franchisor-staff.account-center');
     Route::get('franchisor-staff/password', [AccountSettingsController::class, 'editFranchisorStaffPassword'])
         ->name('franchisor-staff.password');
     Route::post('franchisor-staff/password', [AccountSettingsController::class, 'updateFranchisorStaffPassword'])
@@ -231,6 +233,8 @@ Route::middleware(['auth:franchisor_staff'])->prefix('franchisor-staff/stock')->
 
 // Franchisee Staff Password Routes
 Route::middleware(['auth:franchisee_staff', 'franchisee_staff.active'])->group(function () {
+    Route::get('franchisee-staff/account-center', [StaffAccountController::class, 'showFranchiseeStaffPortal'])
+        ->name('franchisee-staff.account-center');
     Route::get('franchisee-staff/password', [AccountSettingsController::class, 'editFranchiseeStaffPassword'])
         ->name('franchisee-staff.password');
     Route::post('franchisee-staff/password', [AccountSettingsController::class, 'updateFranchiseeStaffPassword'])
@@ -298,6 +302,7 @@ Route::middleware(['auth:franchisee'])->prefix('franchisee/branch')->name('franc
 // Stock Management for Franchisee
 Route::middleware(['auth:franchisee'])->prefix('franchisee/stock')->name('franchisee.stock.')->group(function () {
     Route::get('/', [\App\Http\Controllers\Franchisee\StockController::class, 'index'])->name('index');
+    Route::get('/{stockId}/edit', [\App\Http\Controllers\Franchisee\StockController::class, 'edit'])->name('edit');
     Route::post('/{stockId}', [\App\Http\Controllers\Franchisee\StockController::class, 'update'])->name('update');
     Route::get('/history', [\App\Http\Controllers\Franchisee\StockController::class, 'history'])->name('history');
     Route::get('/staff-orders', [\App\Http\Controllers\Franchisee\StockController::class, 'staffOrders'])->name('staff-orders');
@@ -442,8 +447,6 @@ Route::prefix('admin')
         Route::get('/reports/sales/pdf', [AdminReportController::class, 'salesPdf'])->name('reports.sales.pdf');
         Route::get('/reports/inventory', [AdminReportController::class, 'inventory'])->name('reports.inventory');
         Route::get('/reports/inventory/pdf', [AdminReportController::class, 'inventoryPdf'])->name('reports.inventory.pdf');
-        Route::get('/reports/franchisee-sales', [AdminReportController::class, 'franchiseeSales'])->name('reports.franchisee-sales');
-        Route::get('/reports/franchisee-sales/pdf', [AdminReportController::class, 'franchiseeSalesPdf'])->name('reports.franchisee-sales.pdf');
 
         // View all orders
         Route::get('manageOrder', [ManageOrderController::class, 'index'])
@@ -472,6 +475,12 @@ Route::prefix('admin')
         // Stock Management
         Route::get('/stock', [\App\Http\Controllers\Admin\StockController::class, 'index'])
             ->name('stock.index');
+        Route::get('/stock/{itemId}/edit', [\App\Http\Controllers\Admin\StockController::class, 'edit'])
+            ->whereNumber('itemId')
+            ->name('stock.edit');
+        Route::post('/stock/{itemId}', [\App\Http\Controllers\Admin\StockController::class, 'update'])
+            ->whereNumber('itemId')
+            ->name('stock.update');
         Route::post('/stock/{itemId}/adjust', [\App\Http\Controllers\Admin\StockController::class, 'adjustQuantity'])
             ->whereNumber('itemId')
             ->name('stock.adjust');
@@ -580,9 +589,4 @@ Route::middleware([\App\Http\Middleware\MultiAuth::class])->group(function () {
 
 // Proxy download for marketing images (Cloudinary or local)
 Route::get('/marketing-download', [MarketingDownloadController::class, 'download'])->name('marketing.download');
-
-
-
-
-
 

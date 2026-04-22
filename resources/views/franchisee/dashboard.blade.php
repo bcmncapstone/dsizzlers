@@ -159,8 +159,8 @@
 
         <!-- Full Image Modal -->
         <div id="dash-franchisee-image-modal" class="camera-modal" onclick="dashFranchiseeCloseModal()">
-            <div class="camera-modal-content" onclick="event.stopPropagation()">
-                <button onclick="dashFranchiseeCloseModal()" class="btn btn-close">Close</button>
+            <div class="camera-modal-content image-modal-content" onclick="event.stopPropagation()">
+                <button type="button" onclick="dashFranchiseeCloseModal()" class="image-modal-close" aria-label="Close image preview">&times;</button>
                 <img id="dash-franchisee-modal-img" src="" alt="Full Size" class="modal-image">
                 <div class="modal-download-container">
                     <a id="dash-franchisee-download-btn" href="" download class="btn btn-camera">Download Image</a>
@@ -170,16 +170,7 @@
 
         <!-- Dashboard Cards Grid -->
         <div class="card-grid">
-            
-            <!-- Update Password Card -->
-            <a href="{{ route('franchisee.password.update') }}" class="card card-orange">
-                <div class="card-icon-wrapper">
-                </div>
-                <h3>Update Profile</h3>
-                <p>Secure your account with a new password and username</p>
-                <div class="card-arrow">View →</div>
-            </a>
-
+        
               <!-- Add Staff Card -->
             <a href="{{ route('franchisee.staff.index') }}" class="card card-red">
                 <div class="card-icon-wrapper">

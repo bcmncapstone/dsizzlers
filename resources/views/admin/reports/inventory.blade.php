@@ -58,7 +58,7 @@
                         <span class="inventory-legend-value">{{ $inStock->count() }} items</span>
                     </div>
                     <div class="inventory-legend-item">
-                        <span class="inventory-legend-label" style="color: #f59e0b;">Low Stock (1-10)</span>
+                        <span class="inventory-legend-label" style="color: #ffb347;">Low Stock (1-10)</span>
                         <span class="inventory-legend-value">{{ $lowStock->count() }} items</span>
                     </div>
                     <div class="inventory-legend-item">
@@ -200,6 +200,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($items->hasPages())
+                <div style="margin-top: 16px;">
+                    {{ $items->appends(request()->query())->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -214,7 +219,7 @@
             labels: ['In Stock (>10)', 'Low Stock (1-10)', 'Out of Stock (0)'],
             datasets: [{
                 data: [{{ $inStock->count() }}, {{ $lowStock->count() }}, {{ $outOfStock->count() }}],
-                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                backgroundColor: ['#10b981', '#ffb347', '#ef4444'],
                 borderColor: '#fff',
                 borderWidth: 2,
             }]
@@ -274,3 +279,4 @@
 </script>
 
 @endsection
+

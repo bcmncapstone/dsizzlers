@@ -44,7 +44,7 @@
                                 <td class="py-3 text-sm text-gray-900">{{ $item['name'] }}</td>
                                 <td class="py-3 text-sm text-gray-900 text-center">{{ $item['quantity'] }}</td>
                                 <td class="py-3 text-sm text-gray-900 text-right">₱{{ number_format($item['price'], 2) }}</td>
-                                <td class="py-3 text-sm font-semibold text-orange-600 text-right">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
+                                <td class="py-3 text-sm font-semibold text-[#ffb347] text-right">₱{{ number_format($item['price'] * $item['quantity'], 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -52,7 +52,7 @@
             </div>
 
             <div class="border-t border-gray-200 mt-4 pt-4 text-right">
-                <p class="text-lg font-bold text-gray-900">Total: <span class="text-orange-600">₱{{ number_format($total, 2) }}</span></p>
+                <p class="text-lg font-bold text-gray-900">Total: <span class="text-[#ffb347]">₱{{ number_format($total, 2) }}</span></p>
             </div>
         </div>
 
@@ -70,13 +70,13 @@
             <!-- Full Name -->
             <div class="mb-6">
                 <label for="name" class="block text-sm font-semibold text-gray-900 mb-2">Full Name <span class="text-red-500">*</span></label>
-                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="name" id="name" value="{{ old('name', $checkoutPrefill['name'] ?? '') }}" required>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" name="name" id="name" value="{{ old('name', $checkoutPrefill['name'] ?? '') }}" required>
             </div>
 
             <!-- Contact Number -->
             <div class="mb-6">
                 <label for="contact" class="block text-sm font-semibold text-gray-900 mb-2">Contact Number <span class="text-red-500">*</span></label>
-                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="contact" id="contact" value="{{ old('contact', $checkoutPrefill['contact'] ?? '') }}" required>
+                <input type="text" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" name="contact" id="contact" value="{{ old('contact', $checkoutPrefill['contact'] ?? '') }}" required>
             </div>
 
             <!-- Delivery Address -->
@@ -86,35 +86,35 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="region" class="block text-sm font-semibold text-gray-900 mb-2">Region <span class="text-red-500">*</span></label>
-                        <select id="region" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" required>
+                        <select id="region" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" required>
                             <option value="">Select Region</option>
                         </select>
                     </div>
 
                     <div>
                         <label for="province" class="block text-sm font-semibold text-gray-900 mb-2">Province <span class="text-red-500">*</span></label>
-                        <select id="province" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" disabled required>
+                        <select id="province" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" disabled required>
                             <option value="">Select Province</option>
                         </select>
                     </div>
 
                     <div>
                         <label for="city" class="block text-sm font-semibold text-gray-900 mb-2">City / Municipality <span class="text-red-500">*</span></label>
-                        <select id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" disabled required>
+                        <select id="city" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" disabled required>
                             <option value="">Select City</option>
                         </select>
                     </div>
 
                     <div>
                         <label for="barangay" class="block text-sm font-semibold text-gray-900 mb-2">Barangay <span class="text-red-500">*</span></label>
-                        <select id="barangay" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" disabled required>
+                        <select id="barangay" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" disabled required>
                             <option value="">Select Barangay</option>
                         </select>
                     </div>
 
                     <div class="md:col-span-2">
                         <label for="street" class="block text-sm font-semibold text-gray-900 mb-2">Street Address <span class="text-red-500">*</span></label>
-                        <input type="text" id="street" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" placeholder="House No. / Street Name" required>
+                        <input type="text" id="street" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" placeholder="House No. / Street Name" required>
                     </div>
                 </div>
 
@@ -129,7 +129,7 @@
             <!-- Payment Receipt -->
             <div class="mb-6">
                 <label for="payment_receipt" class="block text-sm font-semibold text-gray-900 mb-2">Upload Payment Receipt <span class="text-red-500">*</span></label>
-                <input type="file" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent" name="payment_receipt" id="payment_receipt" accept="image/*" required onchange="previewReceipt(event)">
+                <input type="file" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#ffb347] focus:border-transparent" name="payment_receipt" id="payment_receipt" accept="image/*" required onchange="previewReceipt(event)">
                 <p class="text-xs text-gray-500 mt-2">Accepted formats: JPG, PNG, GIF (Max 5MB)</p>
             </div>
 
@@ -143,7 +143,7 @@
                 <a href="{{ route($cartKey . '.cart.index') }}" class="flex-1 px-6 py-3 border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 text-center">
                     Back to Cart
                 </a>
-                <button type="submit" class="flex-1 px-6 py-3 bg-orange-600 text-white font-semibold rounded-lg hover:bg-orange-700">
+                <button type="submit" class="flex-1 px-6 py-3 bg-[#ffb347] text-black font-semibold rounded-lg hover:bg-[#f2a33a]">
                     Place Order
                 </button>
             </div>
@@ -283,3 +283,4 @@ if (prefilledAddress) {
 }
 </script>
 @endsection
+

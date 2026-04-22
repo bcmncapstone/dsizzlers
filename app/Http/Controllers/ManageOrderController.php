@@ -12,11 +12,22 @@ use Illuminate\Support\Facades\Log;
 
 class ManageOrderController extends Controller
 {
+    protected function redirectToOrderShowWithFragment(int|string $id, string $fragment)
+    {
+        $routeName = auth('admin')->check()
+            ? 'admin.manageOrder.show'
+            : 'franchisor-staff.manageOrder.show';
+
+        return redirect()->to(route($routeName, $id) . '#' . ltrim($fragment, '#'));
+    }
+
     // Display all orders
     public function index(Request $request)
     {
         // Keep status choices consistent with the update dropdown in show.blade.
         $availableStatuses = collect(['Pending', 'Preparing', 'Shipped', 'Delivered']);
+        $availablePaymentStatuses = collect(['Pending', 'Confirmed']);
+        $perPageOptions = collect(['10', 'all']);
 
         $selectedStatus = trim((string) $request->query('status', $request->query('order_status', '')));
         if ($selectedStatus !== '') {
@@ -27,17 +38,41 @@ class ManageOrderController extends Controller
             $selectedStatus = '';
         }
 
-        $orders = Order::query()
+        $selectedPaymentStatus = trim((string) $request->query('payment_status', ''));
+        if ($selectedPaymentStatus !== '') {
+            $selectedPaymentStatus = ucfirst(strtolower($selectedPaymentStatus));
+        }
+
+        if ($selectedPaymentStatus !== '' && ! $availablePaymentStatuses->contains($selectedPaymentStatus)) {
+            $selectedPaymentStatus = '';
+        }
+
+        $selectedPerPage = strtolower((string) $request->query('per_page', '10'));
+        if (! $perPageOptions->contains($selectedPerPage)) {
+            $selectedPerPage = '10';
+        }
+
+        $ordersQuery = Order::query()
             ->when($selectedStatus !== '', function ($query) use ($selectedStatus) {
                 $query->whereRaw('LOWER(order_status) = ?', [strtolower($selectedStatus)]);
             })
-            ->latest('created_at')
-            ->get();
+            ->when($selectedPaymentStatus !== '', function ($query) use ($selectedPaymentStatus) {
+                $query->whereRaw('LOWER(payment_status) = ?', [strtolower($selectedPaymentStatus)]);
+            })
+            ->latest('created_at');
+
+        $perPage = $selectedPerPage === 'all'
+            ? max((clone $ordersQuery)->count(), 1)
+            : (int) $selectedPerPage;
+
+        $orders = $ordersQuery
+            ->paginate($perPage)
+            ->withQueryString();
 
         if (auth('admin')->check()) {
-            return view('admin.manageOrder.index', compact('orders', 'availableStatuses', 'selectedStatus'));
+            return view('admin.manageOrder.index', compact('orders', 'availableStatuses', 'availablePaymentStatuses', 'selectedStatus', 'selectedPaymentStatus', 'selectedPerPage'));
         } elseif (auth('franchisor_staff')->check()) {
-            return view('franchisor-staff.manageOrder.index', compact('orders', 'availableStatuses', 'selectedStatus'));
+            return view('franchisor-staff.manageOrder.index', compact('orders', 'availableStatuses', 'availablePaymentStatuses', 'selectedStatus', 'selectedPaymentStatus', 'selectedPerPage'));
         }
 
         abort(403, 'Unauthorized action.');
@@ -153,11 +188,11 @@ class ManageOrderController extends Controller
 
         if (strcasecmp((string) ($order->order_status ?? ''), 'Cancelled') === 0) {
             if (auth('admin')->check()) {
-                return redirect()->route('admin.manageOrder.show', $id)
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('error', 'Cancelled orders can no longer be updated.')
                     ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('error', 'Cancelled orders can no longer be updated.')
                     ->with('flash_timeout', 3000);
             }
@@ -165,11 +200,11 @@ class ManageOrderController extends Controller
 
         if (! in_array(strtolower((string) ($order->payment_status ?? '')), ['confirmed', 'paid'], true)) {
             if (auth('admin')->check()) {
-                return redirect()->route('admin.manageOrder.show', $id)
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('error', 'Confirm payment before updating the order status.')
                     ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('error', 'Confirm payment before updating the order status.')
                     ->with('flash_timeout', 3000);
             }
@@ -196,11 +231,11 @@ class ManageOrderController extends Controller
             DB::commit();
 
             if (auth('admin')->check()) {
-                return redirect()->route('admin.manageOrder.show', $id)
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('success', 'Order status updated.')
                     ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->route('franchisor-staff.manageOrder.show', $id)
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('success', 'Order status updated.')
                     ->with('flash_timeout', 3000);
             }
@@ -211,11 +246,11 @@ class ManageOrderController extends Controller
             Log::error('Failed to update order status: ' . $e->getMessage());
             
             if (auth('admin')->check()) {
-                return redirect()->back()
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('error', 'Failed to update order: ' . $e->getMessage())
                     ->with('flash_timeout', 3000);
             } elseif (auth('franchisor_staff')->check()) {
-                return redirect()->back()
+                return $this->redirectToOrderShowWithFragment($id, 'actions-section')
                     ->with('error', 'Failed to update order: ' . $e->getMessage())
                     ->with('flash_timeout', 3000);
             }

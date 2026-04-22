@@ -10,25 +10,16 @@
         </div>
 
         <div class="reports-grid">
-            <!-- Sales Report -->
             <a href="{{ route('admin.reports.sales') }}" class="report-card">
                 <h2>Sales Report</h2>
                 <p>Filter sales by date range and franchisee</p>
-                <span class="report-link">View Report →</span>
+                <span class="report-link">View Report -&gt;</span>
             </a>
 
-            <!-- Inventory Report -->
             <a href="{{ route('admin.reports.inventory') }}" class="report-card">
                 <h2>Inventory Report</h2>
                 <p>Track stock movements by date range</p>
-                <span class="report-link">View Report →</span>
-            </a>
-
-            <!-- Franchisee Sales Report -->
-            <a href="{{ route('admin.reports.franchisee-sales') }}" class="report-card">
-                <h2>Franchisee Sales</h2>
-                <p>Compare sales performance per franchisee</p>
-                <span class="report-link">View Report →</span>
+                <span class="report-link">View Report -&gt;</span>
             </a>
         </div>
     </div>

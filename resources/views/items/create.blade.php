@@ -124,7 +124,7 @@
         </div>
         <p style="margin:0 0 16px; color:#4b5563; font-size:14px;">What would you like to do?</p>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <a id="modal-edit-btn" href="#" class="btn btn-primary" style="flex:1; text-align:center; padding:10px 16px; text-decoration:none; background:#2563eb; color:#fff; border-radius:6px; font-weight:600; font-size:14px;">
+            <a id="modal-edit-btn" href="#" class="btn btn-primary" style="flex:1; text-align:center; padding:10px 16px; text-decoration:none; background:#9396DB; color:#fff; border-radius:6px; font-weight:600; font-size:14px;">
                 Update Existing Item
             </a>
             <button type="button" id="modal-create-btn" class="btn btn-secondary" style="flex:1; padding:10px 16px; border-radius:6px; font-weight:600; font-size:14px; background:#f3f4f6; color:#374151; border:1px solid #d1d5db; cursor:pointer;">

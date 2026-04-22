@@ -4,15 +4,17 @@ namespace App\Http\Controllers\Franchisee;
 
 use App\Http\Controllers\Controller;
 use App\Models\FranchiseeStaff;
-use App\Models\Order;
 use App\Models\StockTransaction;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
+    private const REPORTS_PER_PAGE = 10;
+
     public function index()
     {
         return view('franchisee.reports.index');
@@ -20,12 +22,20 @@ class ReportController extends Controller
 
     public function sales(Request $request)
     {
+        $franchisee = Auth::guard('franchisee')->user();
+        $dateBounds = $this->normalizeDateBounds($this->getManualSalesDateRange($franchisee->franchisee_id));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
         }
 
-        $franchisee = Auth::guard('franchisee')->user();
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
+        }
 
         $query = StockTransaction::query()
             ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
@@ -65,7 +75,7 @@ class ReportController extends Controller
         });
         $totalOrders = $summaryQuery->count();
 
-        $salesEntries = $query->orderBy('stock_transactions.created_at', 'desc')->paginate(50);
+        $salesEntries = $query->orderBy('stock_transactions.created_at', 'desc')->paginate(self::REPORTS_PER_PAGE)->withQueryString();
 
         $salesEntries->getCollection()->transform(function ($entry) {
             $entry->quantity_sold = $this->normalizeSoldQuantity($entry->quantity, $entry->performed_by_type);
@@ -75,7 +85,7 @@ class ReportController extends Controller
             return $entry;
         });
         $noData = $salesEntries->isEmpty();
-        $availableRange = $noData ? $this->getManualSalesDateRange($franchisee->franchisee_id) : null;
+        $availableRange = $noData ? $dateBounds : null;
 
         // Get chart data using separate method
         $chartQuery = $this->getChartQueryData($franchisee->franchisee_id, $request);
@@ -89,6 +99,7 @@ class ReportController extends Controller
             'totalOrders',
             'noData',
             'availableRange',
+            'dateBounds',
             'topItems',
             'salesByCategory',
             'dailySales'
@@ -198,12 +209,20 @@ class ReportController extends Controller
 
     public function salesPdf(Request $request)
     {
+        $franchisee = Auth::guard('franchisee')->user();
+        $dateBounds = $this->normalizeDateBounds($this->getManualSalesDateRange($franchisee->franchisee_id));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
         }
 
-        $franchisee = Auth::guard('franchisee')->user();
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
+        }
 
         $salesEntries = StockTransaction::query()
             ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
@@ -271,12 +290,20 @@ class ReportController extends Controller
 
     public function inventory(Request $request)
     {
+        $franchisee = Auth::guard('franchisee')->user();
+        $dateBounds = $this->normalizeDateBounds($this->getStockDateRange($franchisee->franchisee_id));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
         }
 
-        $franchisee = Auth::guard('franchisee')->user();
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
+        }
 
         $query = StockTransaction::with(['franchisee', 'item'])
             ->where('franchisee_id', $franchisee->franchisee_id)
@@ -287,9 +314,9 @@ class ReportController extends Controller
                 $q->whereDate('created_at', '<=', $request->end_date);
             });
 
-        $transactions = $query->orderBy('created_at', 'desc')->paginate(50);
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(self::REPORTS_PER_PAGE)->withQueryString();
         $noData = $transactions->isEmpty();
-        $availableRange = $noData ? $this->getStockDateRange($franchisee->franchisee_id) : null;
+        $availableRange = $noData ? $dateBounds : null;
 
         // Get franchisee items for stock status summary
         $franchiseeItems = DB::table('franchisee_stock')
@@ -313,6 +340,7 @@ class ReportController extends Controller
             'transactions',
             'noData',
             'availableRange',
+            'dateBounds',
             'inStock',
             'lowStock',
             'outOfStock',
@@ -325,12 +353,20 @@ class ReportController extends Controller
 
     public function inventoryPdf(Request $request)
     {
+        $franchisee = Auth::guard('franchisee')->user();
+        $dateBounds = $this->normalizeDateBounds($this->getStockDateRange($franchisee->franchisee_id));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
         }
 
-        $franchisee = Auth::guard('franchisee')->user();
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
+        }
 
         $transactions = StockTransaction::with(['franchisee', 'item'])
             ->where('franchisee_id', $franchisee->franchisee_id)
@@ -358,17 +394,28 @@ class ReportController extends Controller
 
     public function staff(Request $request)
     {
+        $franchisee = Auth::guard('franchisee')->user();
+        $dateBounds = $this->normalizeDateBounds($this->getStaffSalesDateRange($franchisee->franchisee_id));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
         }
 
-        $franchisee = Auth::guard('franchisee')->user();
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
+        }
 
-        $staff = FranchiseeStaff::where('franchisee_id', $franchisee->franchisee_id)
+        $staffQuery = FranchiseeStaff::where('franchisee_id', $franchisee->franchisee_id)
             ->orderBy('fstaff_lname')
-            ->orderBy('fstaff_fname')
-            ->get();
+            ->orderBy('fstaff_fname');
+
+        $staff = $staffQuery
+            ->paginate(self::REPORTS_PER_PAGE)
+            ->withQueryString();
 
         $performance = StockTransaction::query()
             ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
@@ -393,11 +440,11 @@ class ReportController extends Controller
 
         $noData = $staff->isEmpty();
         $noPerformanceData = $performance->isEmpty() && ($request->start_date || $request->end_date);
-        $availableRange = $this->getStaffSalesDateRange($franchisee->franchisee_id);
+        $availableRange = $dateBounds;
 
         // Prepare chart data for staff performance
         $staffChartData = [];
-        foreach ($staff as $member) {
+        foreach ($staff->items() as $member) {
             $perf = $performance[$member->fstaff_id] ?? null;
             $staffChartData[] = [
                 'name' => $member->fstaff_fname . ' ' . $member->fstaff_lname,
@@ -419,6 +466,7 @@ class ReportController extends Controller
             'noData',
             'noPerformanceData',
             'availableRange',
+            'dateBounds',
             'topStaffBySales',
             'staffChartData'
         ));
@@ -426,12 +474,20 @@ class ReportController extends Controller
 
     public function staffPdf(Request $request)
     {
+        $franchisee = Auth::guard('franchisee')->user();
+        $dateBounds = $this->normalizeDateBounds($this->getStaffSalesDateRange($franchisee->franchisee_id));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
         }
 
-        $franchisee = Auth::guard('franchisee')->user();
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
+        }
 
         $staff = FranchiseeStaff::where('franchisee_id', $franchisee->franchisee_id)
             ->orderBy('fstaff_lname')
@@ -478,12 +534,36 @@ class ReportController extends Controller
         return $request->start_date && $request->end_date && $request->end_date < $request->start_date;
     }
 
-    private function getOrderDateRange(int $franchiseeId)
+    private function getUnavailableDateMessage(Request $request, ?array $dateBounds): ?string
     {
-        return Order::query()
-            ->where('franchisee_id', $franchiseeId)
-            ->selectRaw('MIN(order_date) as min_date, MAX(order_date) as max_date')
-            ->first();
+        if (!$dateBounds || !$dateBounds['min'] || !$dateBounds['max']) {
+            return null;
+        }
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if (($startDate && $startDate < $dateBounds['min']) || ($endDate && $endDate > $dateBounds['max'])) {
+            return 'Please select dates between '
+                . Carbon::parse($dateBounds['min'])->format('M d, Y')
+                . ' and '
+                . Carbon::parse($dateBounds['max'])->format('M d, Y')
+                . '.';
+        }
+
+        return null;
+    }
+
+    private function normalizeDateBounds($range): ?array
+    {
+        if (!$range || !$range->min_date || !$range->max_date) {
+            return null;
+        }
+
+        return [
+            'min' => Carbon::parse($range->min_date)->toDateString(),
+            'max' => Carbon::parse($range->max_date)->toDateString(),
+        ];
     }
 
     private function getManualSalesDateRange(int $franchiseeId)

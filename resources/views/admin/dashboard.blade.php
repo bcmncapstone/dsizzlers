@@ -266,8 +266,8 @@
 
             <!-- Full Image Modal -->
             <div id="admin-dash-image-modal" class="camera-modal" onclick="adminDashCloseModal()">
-                <div class="camera-modal-content" onclick="event.stopPropagation()">
-                    <button onclick="adminDashCloseModal()" class="btn btn-close">Close</button>
+                <div class="camera-modal-content image-modal-content" onclick="event.stopPropagation()">
+                    <button type="button" onclick="adminDashCloseModal()" class="image-modal-close" aria-label="Close image preview">&times;</button>
                     <img id="admin-dash-modal-img" src="" alt="Full Size" class="modal-image">
                     <div class="modal-download-container">
                         <a id="admin-dash-download-btn" href="" download class="btn btn-camera">Download Image</a>
@@ -289,15 +289,6 @@
                 </div>
                 <h3>Account</h3>
                 <p>Add new user accounts and manage permissions</p>
-                <div class="card-arrow">View →</div>
-            </a>
-
-               <!-- Update Password Card -->
-            <a href="{{ route('admin.password.update') }}" class="card card-orange">
-                <div class="card-icon-wrapper">
-                </div>
-                <h3>Update Profile</h3>
-                <p>Secure your account with a new password</p>
                 <div class="card-arrow">View →</div>
             </a>
 
@@ -378,7 +369,7 @@
                     {
                         label: 'Sales (₱)',
                         data: salesData,
-                        borderColor: '#f97316',
+                        borderColor: '#ffb347',
                         backgroundColor: 'rgba(249, 115, 22, 0.14)',
                         fill: true,
                         tension: 0.35,
@@ -547,3 +538,4 @@
     }
 </script>
 @endpush
+

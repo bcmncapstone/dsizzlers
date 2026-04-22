@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Support\MediaStorage;
 use Cloudinary\Cloudinary;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\URL;
 
@@ -28,10 +29,13 @@ class AppServiceProvider extends ServiceProvider
     }
 
    
-public function boot()
-{
-    if (app()->environment('production')) {
-        URL::forceScheme('https');
+    public function boot(): void
+    {
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
+        Paginator::defaultView('vendor.pagination.default');
+        Paginator::defaultSimpleView('vendor.pagination.simple-default');
     }
-}
 }

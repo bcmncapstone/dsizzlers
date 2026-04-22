@@ -24,6 +24,8 @@ class StockController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = 10;
+
         // Exclude archived items (same JSON file used by ItemController)
         $archivedIds = [];
         if (Storage::disk('local')->exists('archived_items.json')) {
@@ -36,7 +38,7 @@ class StockController extends Controller
         $selectedCategory = trim((string) $request->get('category', ''));
         $stockStatus = $request->get('stock_status', 'all');
 
-        $items = Item::query()
+        $itemsQuery = Item::query()
             ->when(!empty($archivedIds), fn($q) => $q->whereNotIn('item_id', $archivedIds))
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($subQuery) use ($search) {
@@ -48,8 +50,16 @@ class StockController extends Controller
             ->when($stockStatus === 'in_stock', fn($q) => $q->where('stock_quantity', '>', 10))
             ->when($stockStatus === 'low_stock', fn($q) => $q->whereBetween('stock_quantity', [1, 10]))
             ->when($stockStatus === 'out_of_stock', fn($q) => $q->where('stock_quantity', '<=', 0))
-            ->orderBy('item_name')
-            ->get();
+            ->orderBy('item_name');
+
+        $totalItems = (clone $itemsQuery)->count();
+        $inStockCount = (clone $itemsQuery)->where('stock_quantity', '>', 10)->count();
+        $lowStockCount = (clone $itemsQuery)->whereBetween('stock_quantity', [1, 10])->count();
+        $outOfStockCount = (clone $itemsQuery)->where('stock_quantity', '<=', 0)->count();
+
+        $items = $itemsQuery
+            ->paginate($perPage)
+            ->withQueryString();
 
         $storedCategories = Item::query()
             ->when(!empty($archivedIds), fn($q) => $q->whereNotIn('item_id', $archivedIds))
@@ -65,13 +75,6 @@ class StockController extends Controller
             ->merge($storedCategories)
             ->unique()
             ->values();
-
-        $totalItems = $items->count();
-        $inStockCount = $items->where('stock_quantity', '>', 10)->count();
-        $lowStockCount = $items->filter(function ($item) {
-            return $item->stock_quantity > 0 && $item->stock_quantity <= 10;
-        })->count();
-        $outOfStockCount = $items->where('stock_quantity', '<=', 0)->count();
 
         // Build FIFO lot snapshots keyed by item_id for inline display
         $fifoSnapshots = [];
@@ -92,6 +95,66 @@ class StockController extends Controller
             'outOfStockCount',
             'fifoSnapshots'
         ));
+    }
+
+    /**
+     * Show the form to update a catalog item's stock quantity.
+     */
+    public function edit($itemId)
+    {
+        $item = Item::findOrFail($itemId);
+
+        return view('admin.stock.edit', compact('item'));
+    }
+
+    /**
+     * Update a catalog item's stock quantity.
+     */
+    public function update(Request $request, $itemId)
+    {
+        $request->validate([
+            'new_quantity' => 'required|integer|min:0',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $item = Item::findOrFail($itemId);
+        $oldQuantity = (int) $item->stock_quantity;
+        $newQuantity = (int) $request->input('new_quantity');
+
+        DB::beginTransaction();
+        try {
+            $item->stock_quantity = $newQuantity;
+            $item->save();
+
+            if ($newQuantity > $oldQuantity) {
+                $source = trim((string) $request->input('notes', ''));
+                if ($source === '') {
+                    $source = 'Admin adjustment';
+                }
+
+                StockIn::create([
+                    'item_id' => $item->item_id,
+                    'quantity_received' => $newQuantity - $oldQuantity,
+                    'received_date' => now(),
+                    'supplier_name' => mb_substr($source, 0, 50),
+                    'restocked_by' => auth('admin')->id() ?? 0,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.stock.index')
+                ->with('success', 'Item quantity updated successfully.')
+                ->with('flash_timeout', 3000);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to update item: ' . $e->getMessage())
+                ->with('flash_timeout', 3000);
+        }
     }
 
     /**
@@ -204,26 +267,30 @@ class StockController extends Controller
      */
     public function show($franchiseeId, Request $request)
     {
+        $perPage = 10;
         $franchisee = Franchisee::findOrFail($franchiseeId);
-        
-        $stocks = FranchiseeStock::with('item')
-            ->where('franchisee_id', $franchiseeId)
-            ->get();
 
-        // Statistics for this franchisee
-        $totalItems = $stocks->count();
-        $inStock = $stocks->where('current_quantity', '>', 0)->count();
-        $lowStock = $stocks->filter(function($s) { 
-            return $s->current_quantity > 0 && $s->current_quantity <= $s->minimum_quantity; 
-        })->count();
-        $outOfStock = $stocks->filter(function($s) { 
-            return $s->current_quantity <= 0; 
-        })->count();
+        $stocksQuery = FranchiseeStock::with('item')
+            ->where('franchisee_id', $franchiseeId);
 
-        // Highlight low stock items
-        $lowStockItems = $stocks->filter(function($s) { 
-            return $s->current_quantity > 0 && $s->current_quantity <= $s->minimum_quantity; 
-        })->values();
+        $totalItems = (clone $stocksQuery)->count();
+        $inStock = (clone $stocksQuery)->where('current_quantity', '>', 0)->count();
+        $lowStock = (clone $stocksQuery)
+            ->where('current_quantity', '>', 0)
+            ->whereColumn('current_quantity', '<=', 'minimum_quantity')
+            ->count();
+        $outOfStock = (clone $stocksQuery)->where('current_quantity', '<=', 0)->count();
+
+        $lowStockItems = (clone $stocksQuery)
+            ->where('current_quantity', '>', 0)
+            ->whereColumn('current_quantity', '<=', 'minimum_quantity')
+            ->get()
+            ->values();
+
+        $stocks = $stocksQuery
+            ->orderByDesc('updated_at')
+            ->paginate($perPage)
+            ->withQueryString();
 
         return view('admin.stock.show', compact(
             'franchisee',
@@ -268,7 +335,7 @@ class StockController extends Controller
                 ->with('flash_timeout', 3000);
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')->paginate(50);
+        $transactions = $query->orderBy('created_at', 'desc')->paginate(50)->withQueryString();
 
         // Check if no data available
         $noData = $transactions->isEmpty();

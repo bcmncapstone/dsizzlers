@@ -16,10 +16,22 @@ class OrderController extends Controller
     }
 
     // Display list of orders
-    public function index()
+    public function index(Request $request)
     {
         $query = Order::with('orderDetails.item');
         $viewPath = '';
+        $availableStatuses = collect(['Pending', 'Preparing', 'Shipped', 'Delivered', 'Cancelled']);
+        $selectedStatus = trim((string) $request->query('order_status', ''));
+        if ($selectedStatus !== '') {
+            $selectedStatus = ucfirst(strtolower($selectedStatus));
+        }
+
+        if ($selectedStatus !== '' && ! $availableStatuses->contains($selectedStatus)) {
+            $selectedStatus = '';
+        }
+
+        $selectedPerPage = strtolower((string) $request->query('per_page', '10'));
+        $selectedPerPage = in_array($selectedPerPage, ['10', 'all'], true) ? $selectedPerPage : '10';
 
         if (auth()->guard('franchisee')->check()) {
             $query->where('franchisee_id', auth()->guard('franchisee')->id());
@@ -32,8 +44,20 @@ class OrderController extends Controller
             abort(403, 'Unauthorized');
         }
 
-        $orders = $query->latest()->get();
-        return view($viewPath, compact('orders'));
+        $query->when($selectedStatus !== '', function ($builder) use ($selectedStatus) {
+            $builder->whereRaw('LOWER(order_status) = ?', [strtolower($selectedStatus)]);
+        });
+
+        $perPage = $selectedPerPage === 'all'
+            ? max((clone $query)->count(), 1)
+            : (int) $selectedPerPage;
+
+        $orders = $query
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return view($viewPath, compact('orders', 'selectedPerPage', 'availableStatuses', 'selectedStatus'));
     }
 
     // Show available items (if needed)

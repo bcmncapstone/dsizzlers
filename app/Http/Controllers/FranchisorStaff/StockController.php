@@ -23,6 +23,7 @@ class StockController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = 10;
 
         // Exclude archived items (same as admin)
         $archivedIds = [];
@@ -36,7 +37,7 @@ class StockController extends Controller
         $selectedCategory = trim((string) $request->get('category', ''));
         $stockStatus = $request->get('stock_status', 'all');
 
-        $items = Item::with(['stockIns' => function($q) {
+        $itemsQuery = Item::with(['stockIns' => function($q) {
                 $q->orderBy('received_date', 'desc');
             }])
             ->when(!empty($archivedIds), fn($q) => $q->whereNotIn('item_id', $archivedIds))
@@ -50,8 +51,16 @@ class StockController extends Controller
             ->when($stockStatus === 'in_stock', fn($q) => $q->where('stock_quantity', '>', 10))
             ->when($stockStatus === 'low_stock', fn($q) => $q->whereBetween('stock_quantity', [1, 10]))
             ->when($stockStatus === 'out_of_stock', fn($q) => $q->where('stock_quantity', '<=', 0))
-            ->orderBy('item_name')
-            ->get();
+            ->orderBy('item_name');
+
+        $totalItems = (clone $itemsQuery)->count();
+        $inStockCount = (clone $itemsQuery)->where('stock_quantity', '>', 10)->count();
+        $lowStockCount = (clone $itemsQuery)->whereBetween('stock_quantity', [1, 10])->count();
+        $outOfStockCount = (clone $itemsQuery)->where('stock_quantity', '<=', 0)->count();
+
+        $items = $itemsQuery
+            ->paginate($perPage)
+            ->withQueryString();
         // Force hydration if stdClass is returned
         if ($items->isNotEmpty() && get_class($items->first()) === 'stdClass') {
             $items = Item::hydrate($items->toArray());
@@ -70,13 +79,6 @@ class StockController extends Controller
             ->merge($storedCategories)
             ->unique()
             ->values();
-
-        $totalItems = $items->count();
-        $inStockCount = $items->where('stock_quantity', '>', 10)->count();
-        $lowStockCount = $items->filter(function ($item) {
-            return $item->stock_quantity > 0 && $item->stock_quantity <= 10;
-        })->count();
-        $outOfStockCount = $items->where('stock_quantity', '<=', 0)->count();
 
         // Build FIFO lot snapshots keyed by item_id for inline display (use FifoStockService for accuracy)
         $fifoSnapshots = [];

@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('content')
 
@@ -21,6 +21,9 @@
             @endphp
             <div class="flex justify-between items-start">
                 <div>
+                    <a href="{{ route('admin.manageOrder.index') }}" class="inline-flex items-center text-sm font-medium text-[#ffb347] hover:text-[#f2a33a] mb-4">
+                        ? Back to Orders
+                    </a>
                     <h1>Order #{{ $order->order_id }}</h1>
                     <p class="order-customer">{{ $order->name }}</p>
                     <p class="order-contact">Phone: {{ $order->contact }}</p>
@@ -76,7 +79,7 @@
         </div>
 
         <!-- Ordered Items Section -->
-        <div class="bg-white shadow-sm p-8 rounded-lg mt-6">
+        <div id="actions-section" class="bg-white shadow-sm p-8 rounded-lg mt-6">
             <h2>Ordered Items</h2>
 
             @if($order->orderDetails->isNotEmpty())
@@ -94,9 +97,9 @@
                             @foreach($order->orderDetails as $detail)
                                 <tr>
                                     <td class="px-4 py-3 text-sm text-gray-900">{{ $detail->item->item_name ?? 'Item Deleted' }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900 text-right">₱{{ number_format($detail->price, 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-900 text-right">?{{ number_format($detail->price, 2) }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-900 text-center">{{ $detail->quantity }}</td>
-                                    <td class="px-4 py-3 text-sm font-semibold text-orange-600 text-right">₱{{ number_format($detail->subtotal, 2) }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold text-[#ffb347] text-right">?{{ number_format($detail->subtotal, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -105,7 +108,7 @@
 
                 <div class="mt-4 text-right">
                     <p class="text-base font-semibold text-gray-900">Total Amount:
-                        <span class="text-orange-600">₱{{ number_format($order->total_amount, 2) }}</span>
+                        <span class="text-[#ffb347]">?{{ number_format($order->total_amount, 2) }}</span>
                     </p>
                 </div>
             @else
@@ -150,7 +153,7 @@
 <div id="statusModal" style="display:none; position:fixed; z-index:1000; left:0; top:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); align-items:center; justify-content:center;">
     <div style="background:#fff; padding:2rem; border-radius:8px; min-width:300px; max-width:90vw; margin:auto; position:relative; top:10vh;">
         <h3 style="margin-bottom:1rem;">Update Order Status</h3>
-        <form id="statusForm" action="{{ route('admin.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST">
+        <form id="statusForm" action="{{ route('admin.manageOrder.updateOrderStatus', $order->order_id) }}" method="POST" data-confirm="Are you sure you want to update this order status?" data-confirm-button="Update Status">
             @csrf
             <select name="order_status" class="status-select" style="width:100%; margin-bottom:1rem;">
                 <option value="Pending" {{ ($order->order_status ?? 'Pending') == 'Pending' ? 'selected' : '' }}>Pending</option>
@@ -177,7 +180,7 @@
                 @else
                     <div class="action-form">
                         <button type="button" class="action-button cancel-order opacity-50 cursor-not-allowed" disabled>
-                            ✕ Cancel Order
+                            ? Cancel Order
                         </button>
                         <p class="mt-2 text-xs text-gray-500">
                         </p>
@@ -223,3 +226,4 @@ function closeStatusModal() {
 </script>
 
 @endsection
+

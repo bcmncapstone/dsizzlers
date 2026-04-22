@@ -3,18 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Franchisee;
 use App\Models\Order;
 use App\Models\Item;
-use App\Models\StockTransaction;
 use App\Services\FifoStockService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
+    private const REPORTS_PER_PAGE = 10;
+
     public function __construct(private FifoStockService $fifoStockService)
     {
     }
@@ -26,9 +27,18 @@ class ReportController extends Controller
 
     public function sales(Request $request)
     {
+        $dateBounds = $this->normalizeDateBounds($this->getOrderDateRangeAll(true));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
+        }
+
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
         }
 
         $query = DB::table('order_details')
@@ -56,9 +66,9 @@ class ReportController extends Controller
         $totalSales = $summaryQuery->sum('order_details.subtotal');
         $totalQuantity = $summaryQuery->sum('order_details.quantity');
 
-        $orderDetails = $query->orderBy('orders.order_date', 'desc')->paginate(50);
+        $orderDetails = $query->orderBy('orders.order_date', 'desc')->paginate(self::REPORTS_PER_PAGE);
         $noData = $orderDetails->isEmpty();
-        $availableRange = $noData ? $this->getOrderDateRangeAll(true) : null;
+        $availableRange = $noData ? $dateBounds : null;
 
         // Get data for charts (use full query without pagination)
         $chartQuery = DB::table('order_details')
@@ -132,6 +142,7 @@ class ReportController extends Controller
             'totalQuantity',
             'noData',
             'availableRange',
+            'dateBounds',
             'topItems',
             'salesByCategory',
             'dailySales'
@@ -140,9 +151,18 @@ class ReportController extends Controller
 
     public function salesPdf(Request $request)
     {
+        $dateBounds = $this->normalizeDateBounds($this->getOrderDateRangeAll(true));
+
         if ($this->hasInvalidDateRange($request)) {
             return redirect()->back()
-            ->with('flash_timeout', 3000);
+                ->with('error', 'The end date cannot be earlier than the start date.')
+                ->with('flash_timeout', 3000);
+        }
+
+        if ($invalidMessage = $this->getUnavailableDateMessage($request, $dateBounds)) {
+            return redirect()->back()
+                ->with('error', $invalidMessage)
+                ->with('flash_timeout', 3000);
         }
 
         $query = DB::table('order_details')
@@ -223,14 +243,20 @@ class ReportController extends Controller
     {
         // Get non-archived items with their current stock levels
         $archivedIds = $this->getArchivedItemIds();
-        $items = Item::query()
-            ->when(!empty($archivedIds), fn ($query) => $query->whereNotIn('item_id', $archivedIds))
+        $itemsQuery = Item::query()
+            ->when(!empty($archivedIds), fn ($query) => $query->whereNotIn('item_id', $archivedIds));
+        $inventoryItems = (clone $itemsQuery)
+            ->orderBy('item_name')
             ->get();
+        $items = $itemsQuery
+            ->orderBy('item_name')
+            ->paginate(self::REPORTS_PER_PAGE)
+            ->withQueryString();
 
         // Categorize items by stock status
-        $inStock = $items->filter(function($item) { return $item->stock_quantity > 10; });
-        $lowStock = $items->filter(function($item) { return $item->stock_quantity > 0 && $item->stock_quantity <= 10; });
-        $outOfStock = $items->filter(function($item) { return $item->stock_quantity == 0; });
+        $inStock = $inventoryItems->filter(function($item) { return $item->stock_quantity > 10; });
+        $lowStock = $inventoryItems->filter(function($item) { return $item->stock_quantity > 0 && $item->stock_quantity <= 10; });
+        $outOfStock = $inventoryItems->filter(function($item) { return $item->stock_quantity == 0; });
 
         // Prepare data for pie chart
         $stockDistribution = [
@@ -240,16 +266,16 @@ class ReportController extends Controller
         ];
 
         // Calculate total inventory value and quantity
-        $totalQuantity = $items->sum('stock_quantity');
-        $totalValue = $items->sum(function($item) { return $item->stock_quantity * $item->price; });
-        $averagePrice = $items->count() > 0 ? $items->avg('price') : 0;
+        $totalQuantity = $inventoryItems->sum('stock_quantity');
+        $totalValue = $inventoryItems->sum(function($item) { return $item->stock_quantity * $item->price; });
+        $averagePrice = $inventoryItems->count() > 0 ? $inventoryItems->avg('price') : 0;
 
         // Get top items by stock quantity
-        $topItems = $items->sortByDesc('stock_quantity')->take(10);
+        $topItems = $inventoryItems->sortByDesc('stock_quantity')->take(10);
         $lowStockItems = $lowStock->sortBy('stock_quantity')->take(10);
 
         // FIFO visibility (selected item)
-        $fifoFilterItems = $items->sortBy('item_name')->values();
+        $fifoFilterItems = $inventoryItems->sortBy('item_name')->values();
         $selectedFifoItemId = (int) $request->integer('fifo_item_id');
 
         if ($selectedFifoItemId <= 0 && $fifoFilterItems->isNotEmpty()) {
@@ -321,157 +347,41 @@ class ReportController extends Controller
         return $pdf->download('inventory-report.pdf');
     }
 
-    public function franchiseeSales(Request $request)
-    {
-        if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()
-            ->with('flash_timeout', 3000);
-        }
-
-        $franchisees = Franchisee::orderBy('franchisee_name')->get();
-
-        // Actual sales = adjustment (qty < 0) + out by franchisee_staff
-        $query = StockTransaction::query()
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
-            ->select(
-                'stock_transactions.franchisee_id',
-                DB::raw('COUNT(*) as orders_count'),
-                DB::raw('SUM(ABS(stock_transactions.quantity) * items.price) as total_sales')
-            )
-            ->whereNotNull('stock_transactions.franchisee_id')
-            ->where(function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('transaction_type', 'adjustment')
-                        ->where('quantity', '<', 0);
-                })->orWhere(function ($sub) {
-                    $sub->where('transaction_type', 'out')
-                        ->where('performed_by_type', 'franchisee_staff');
-                });
-            })
-            ->when($request->franchisee_id, function ($q) use ($request) {
-                $q->where('stock_transactions.franchisee_id', $request->franchisee_id);
-            })
-            ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
-            })
-            ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
-            })
-            ->groupBy('stock_transactions.franchisee_id');
-
-        $rows = $query->get();
-        $noData = $rows->isEmpty();
-        $availableRange = $noData ? $this->getStockDateRange($request->franchisee_id) : null;
-
-        $franchiseeMap = $franchisees->keyBy('franchisee_id');
-
-        // Prepare chart data
-        $chartRowsCollection = $rows->map(function($row) use ($franchiseeMap) {
-            return [
-                'name' => $franchiseeMap[$row->franchisee_id]->franchisee_name ?? 'Unknown',
-                'orders' => (int)$row->orders_count,
-                'sales' => (float)$row->total_sales
-            ];
-        })
-        ->sortByDesc('sales')
-        ->values();
-        
-        $chartRows = array_values(array_unique($chartRowsCollection->toArray(), SORT_REGULAR));
-
-        $totalSales = $rows->sum('total_sales');
-        $totalOrders = $rows->sum('orders_count');
-        $averageOrderValue = $totalOrders > 0 ? $totalSales / $totalOrders : 0;
-        $topFranchisee = count($chartRows) > 0 ? $chartRows[0] : null;
-
-        return view('admin.reports.franchisee-sales', compact(
-            'franchisees',
-            'rows',
-            'noData',
-            'availableRange',
-            'franchiseeMap',
-            'chartRows',
-            'totalSales',
-            'totalOrders',
-            'averageOrderValue',
-            'topFranchisee'
-        ));
-    }
-
-    public function franchiseeSalesPdf(Request $request)
-    {
-        if ($this->hasInvalidDateRange($request)) {
-            return redirect()->back()
-            ->with('flash_timeout', 3000);
-        }
-
-        $query = StockTransaction::query()
-            ->join('items', 'stock_transactions.item_id', '=', 'items.item_id')
-            ->select(
-                'stock_transactions.franchisee_id',
-                DB::raw('COUNT(*) as orders_count'),
-                DB::raw('SUM(ABS(stock_transactions.quantity) * items.price) as total_sales')
-            )
-            ->whereNotNull('stock_transactions.franchisee_id')
-            ->where(function ($q) {
-                $q->where(function ($sub) {
-                    $sub->where('transaction_type', 'adjustment')
-                        ->where('quantity', '<', 0);
-                })->orWhere(function ($sub) {
-                    $sub->where('transaction_type', 'out')
-                        ->where('performed_by_type', 'franchisee_staff');
-                });
-            })
-            ->when($request->franchisee_id, function ($q) use ($request) {
-                $q->where('stock_transactions.franchisee_id', $request->franchisee_id);
-            })
-            ->when($request->start_date, function ($q) use ($request) {
-                $q->whereDate('stock_transactions.created_at', '>=', $request->start_date);
-            })
-            ->when($request->end_date, function ($q) use ($request) {
-                $q->whereDate('stock_transactions.created_at', '<=', $request->end_date);
-            })
-            ->groupBy('stock_transactions.franchisee_id');
-
-        $rows = $query->get();
-
-        if ($rows->isEmpty()) {
-            return redirect()->back()
-            ->with('flash_timeout', 3000);
-        }
-
-        $franchisees = Franchisee::orderBy('franchisee_name')->get()->keyBy('franchisee_id');
-
-        // Prepare chart data
-        $chartRowsCollection = $rows->map(function($row) use ($franchisees) {
-            return [
-                'name' => $franchisees[$row->franchisee_id]->franchisee_name ?? 'Unknown',
-                'orders' => (int)$row->orders_count,
-                'sales' => (float)$row->total_sales
-            ];
-        })
-        ->sortByDesc('sales')
-        ->values();
-        
-        $chartRows = array_values(array_unique($chartRowsCollection->toArray(), SORT_REGULAR));
-
-        $totalSales = $rows->sum('total_sales');
-        $totalOrders = $rows->sum('orders_count');
-
-        $pdf = Pdf::loadView('admin.reports.pdf.franchisee-sales', [
-            'rows' => $rows,
-            'franchisees' => $franchisees,
-            'chartRows' => $chartRows,
-            'totalSales' => $totalSales,
-            'totalOrders' => $totalOrders,
-            'filters' => $request->only(['franchisee_id', 'start_date', 'end_date']),
-        ])->setPaper('A4', 'portrait');
-
-        return $pdf->download('franchisee-sales-report.pdf');
-    }
-
     private function hasInvalidDateRange(Request $request): bool
     {
         return $request->start_date && $request->end_date && $request->end_date < $request->start_date;
+    }
+
+    private function getUnavailableDateMessage(Request $request, ?array $dateBounds): ?string
+    {
+        if (!$dateBounds || !$dateBounds['min'] || !$dateBounds['max']) {
+            return null;
+        }
+
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        if (($startDate && $startDate < $dateBounds['min']) || ($endDate && $endDate > $dateBounds['max'])) {
+            return 'Please select dates between '
+                . Carbon::parse($dateBounds['min'])->format('M d, Y')
+                . ' and '
+                . Carbon::parse($dateBounds['max'])->format('M d, Y')
+                . '.';
+        }
+
+        return null;
+    }
+
+    private function normalizeDateBounds($range): ?array
+    {
+        if (!$range || !$range->min_date || !$range->max_date) {
+            return null;
+        }
+
+        return [
+            'min' => Carbon::parse($range->min_date)->toDateString(),
+            'max' => Carbon::parse($range->max_date)->toDateString(),
+        ];
     }
 
     private function getArchivedItemIds(): array
@@ -490,19 +400,6 @@ class ReportController extends Controller
         return array_values(array_unique(array_map('intval', $data)));
     }
 
-    private function getOrderDateRange(?int $franchiseeId, bool $deliveredOnly = false)
-    {
-        return Order::query()
-            ->when($franchiseeId, function ($q) use ($franchiseeId) {
-                $q->where('franchisee_id', $franchiseeId);
-            })
-            ->when($deliveredOnly, function ($q) {
-                $q->where('order_status', 'Delivered');
-            })
-            ->selectRaw('MIN(order_date) as min_date, MAX(order_date) as max_date')
-            ->first();
-    }
-
     private function getOrderDateRangeAll(bool $deliveredOnly = false)
     {
         return Order::query()
@@ -513,13 +410,4 @@ class ReportController extends Controller
             ->first();
     }
 
-    private function getStockDateRange(?int $franchiseeId)
-    {
-        return StockTransaction::query()
-            ->when($franchiseeId, function ($q) use ($franchiseeId) {
-                $q->where('franchisee_id', $franchiseeId);
-            })
-            ->selectRaw('MIN(created_at) as min_date, MAX(created_at) as max_date')
-            ->first();
-    }
 }

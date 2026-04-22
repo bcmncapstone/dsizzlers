@@ -50,6 +50,7 @@
         <div id="chatModalContent" style="height:calc(80vh - 68px); overflow:auto; background:linear-gradient(180deg, #fff7f2 0%, #ffffff 120%);"></div>
     </div>
     @include('communication._floating-chat-modal-script')
+    @include('layouts.confirm-modal')
     @stack('scripts')
     <!-- Footer -->
     <footer class="w-full bg-gray-800 text-white text-center py-4 mt-8">

@@ -12,7 +12,7 @@ class Branch extends Model
     protected $table = 'branches';
     protected $primaryKey = 'branch_id';
 
-       protected $fillable = [
+    protected $fillable = [
         'location',
         'first_name',
         'last_name',
@@ -20,6 +20,7 @@ class Branch extends Model
         'contact_number',
         'branch_status',
         'contract_file',
+        'contract_start_date',
         'contract_expiration',
         'archived'
     ];
@@ -27,6 +28,7 @@ class Branch extends Model
     protected $casts = [
         'branch_status' => 'boolean',
         'archived' => 'boolean',
+        'contract_start_date' => 'date',
         'contract_expiration' => 'date',
     ];
 }

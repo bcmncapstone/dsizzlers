@@ -21,7 +21,7 @@
             <form method="GET" action="{{ route('franchisor-staff.manageOrder.index') }}" class="filter-form">
                 <div class="filter-group">
                     <label for="order_status" class="filter-label">Filter by Order Status</label>
-                    <select name="order_status" id="order_status" class="filter-select">
+                    <select name="order_status" id="order_status" class="filter-select" onchange="this.form.submit()">
                         <option value="">All Statuses</option>
                         @foreach($availableStatuses as $statusOption)
                             <option value="{{ $statusOption }}" {{ $selectedStatus === $statusOption ? 'selected' : '' }}>
@@ -30,14 +30,34 @@
                         @endforeach
                     </select>
                 </div>
-                <div style="grid-column: 2;"></div>
-                <button type="submit" class="btn btn-info">Apply Filter</button>
+                <div class="filter-group">
+                    <label for="payment_status" class="filter-label">Filter by Payment Status</label>
+                    <select name="payment_status" id="payment_status" class="filter-select" onchange="this.form.submit()">
+                        <option value="">All Payment Statuses</option>
+                        @foreach($availablePaymentStatuses as $paymentStatusOption)
+                            <option value="{{ $paymentStatusOption }}" {{ $selectedPaymentStatus === $paymentStatusOption ? 'selected' : '' }}>
+                                {{ $paymentStatusOption }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="per_page" class="filter-label">Orders per page</label>
+                    <select name="per_page" id="per_page" class="filter-select" onchange="this.form.submit()">
+                        <option value="10" {{ $selectedPerPage === '10' ? 'selected' : '' }}>10</option>
+                        <option value="all" {{ $selectedPerPage === 'all' ? 'selected' : '' }}>All</option>
+                    </select>
+                </div>
             </form>
         </div>
 
-        @if(!empty($selectedStatus))
+        @if(!empty($selectedStatus) || !empty($selectedPaymentStatus))
             <div class="alert alert-info">
-                <strong>Filter:</strong> Showing <strong>{{ $selectedStatus }}</strong> orders.
+                <strong>Filter:</strong>
+                Showing
+                <strong>{{ $selectedStatus !== '' ? $selectedStatus : 'All order statuses' }}</strong>
+                and
+                <strong>{{ $selectedPaymentStatus !== '' ? $selectedPaymentStatus : 'All payment statuses' }}</strong>.
                 <a href="{{ route('franchisor-staff.manageOrder.index') }}" style="margin-left: 8px;">Clear</a>
             </div>
         @endif
@@ -112,6 +132,12 @@
                     </tbody>
                 </table>
             </div>
+
+            @if($orders->hasPages())
+                <div class="app-pagination-wrap">
+                    {{ $orders->onEachSide(1)->links('vendor.pagination.orders') }}
+                </div>
+            @endif
         </div>
 
     </div>

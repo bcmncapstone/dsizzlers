@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.franchisor-staff')
 
 @section('content')
 
@@ -12,21 +12,13 @@
 
         <!-- Dashboard Cards Grid -->
         <div class="card-grid">
-            <!-- Update Password Card -->
-            <a href="{{ route('franchisor-staff.password.update') }}" class="card card-orange">
-                <div class="card-icon-wrapper">
-                </div>
-                <h3>Update Password</h3>
-                <p>Secure your account with a new password</p>
-                <div class="card-arrow">View →</div>
-            </a>
 
             <!-- Edit Profile Card -->
-            <a href="{{ route('franchisor-staff.account.show') }}" class="card card-red">
+            <a href="{{ route('franchisor-staff.account-center') }}" class="card card-red">
                 <div class="card-icon-wrapper">
                 </div>
-                <h3>View Profile</h3>
-                <p>View and update your profile information</p>
+                <h3>Account</h3>
+                <p>Choose between updating your profile and password</p>
                 <div class="card-arrow">View →</div>
             </a>
 

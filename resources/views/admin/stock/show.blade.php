@@ -192,6 +192,11 @@
                         </tbody>
                     </table>
                 </div>
+                @if($stocks->hasPages())
+                    <div class="mt-4">
+                        {{ $stocks->appends(request()->query())->links() }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>

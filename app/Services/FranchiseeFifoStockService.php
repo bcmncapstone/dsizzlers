@@ -10,7 +10,7 @@ class FranchiseeFifoStockService
     /**
      * Returns current FIFO lots for display in franchisee stock page.
      *
-     * @return array{stock_quantity:int,fifo_available:int,lots:array<int,array{quantity_remaining:int,received_at:?string,source:string}>}
+     * @return array{stock_quantity:int,fifo_available:int,lots:array<int,array{quantity_remaining:int,received_at:?string,updated_at:?string,source:string}>}
      */
     public function getRemainingLots(FranchiseeStock $stock): array
     {
@@ -76,7 +76,7 @@ class FranchiseeFifoStockService
     }
 
     /**
-     * @return array{available:int,lots:array<int,array{quantity_remaining:int,received_at:?string,source:string}>}
+     * @return array{available:int,lots:array<int,array{quantity_remaining:int,received_at:?string,updated_at:?string,source:string}>}
      */
     private function buildRemainingLotsSnapshot(FranchiseeStock $stock, bool $lockForUpdate): array
     {
@@ -98,11 +98,13 @@ class FranchiseeFifoStockService
 
         foreach ($transactions as $transaction) {
             $quantity = (int) $transaction->quantity;
+            $transactionDate = $transaction->created_at ? (string) $transaction->created_at : null;
 
             if ($transaction->transaction_type === 'in' && $quantity > 0) {
                 $workingLots[] = [
                     'quantity_remaining' => $quantity,
-                    'received_at' => $transaction->created_at ? (string) $transaction->created_at : null,
+                    'received_at' => $transactionDate,
+                    'updated_at' => $transactionDate,
                     'source' => 'stock_in',
                 ];
                 continue;
@@ -111,9 +113,18 @@ class FranchiseeFifoStockService
             if ($transaction->transaction_type === 'adjustment' && $quantity > 0) {
                 $workingLots[] = [
                     'quantity_remaining' => $quantity,
-                    'received_at' => $transaction->created_at ? (string) $transaction->created_at : null,
+                    'received_at' => $transactionDate,
+                    'updated_at' => $transactionDate,
                     'source' => 'manual_add',
                 ];
+                continue;
+            }
+
+            if (
+                ($transaction->transaction_type === 'out' && $quantity > 0) ||
+                ($transaction->transaction_type === 'adjustment' && $quantity < 0)
+            ) {
+                $this->consumeFromOldestLots($workingLots, abs($quantity));
             }
         }
 
@@ -123,13 +134,10 @@ class FranchiseeFifoStockService
             array_unshift($workingLots, [
                 'quantity_remaining' => $currentStock - $totalFromLots,
                 'received_at' => null,
+                'updated_at' => null,
                 'source' => 'legacy_balance',
             ]);
-            $totalFromLots = $currentStock;
         }
-
-        $historicalConsumed = $totalFromLots - $currentStock;
-        $this->consumeFromOldestLots($workingLots, $historicalConsumed);
 
         return [
             'available' => array_sum(array_column($workingLots, 'quantity_remaining')),
@@ -138,7 +146,7 @@ class FranchiseeFifoStockService
     }
 
     /**
-     * @param array<int,array{quantity_remaining:int,received_at:?string,source:string}> $lots
+     * @param array<int,array{quantity_remaining:int,received_at:?string,updated_at:?string,source:string}> $lots
      */
     private function consumeFromOldestLots(array &$lots, int $quantityToConsume): void
     {

@@ -9,7 +9,16 @@
         </p>
     </header>
 
-    <form method="post" action="{{ route('password.update') }}" class="mt-6 space-y-6">
+    @php
+        $passwordUpdateRoute = match (true) {
+            auth('admin')->check() => 'admin.password.update',
+            auth('franchisor_staff')->check() => 'franchisor-staff.password.update',
+            auth('franchisee_staff')->check() => 'franchisee-staff.password.update',
+            default => 'franchisee.password.update',
+        };
+    @endphp
+
+    <form method="post" action="{{ route($passwordUpdateRoute) }}" class="mt-6 space-y-6">
         @csrf
         @method('put')
 

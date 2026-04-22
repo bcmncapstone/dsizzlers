@@ -134,6 +134,12 @@
                 </div>
             @endforeach
         </div>
+
+        @if($items->hasPages())
+            <div style="margin-top: 24px;">
+                {{ $items->appends(request()->query())->links() }}
+            </div>
+        @endif
     @else
         <div class="items-grid-empty">
             <p>No items found.</p>

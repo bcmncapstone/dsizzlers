@@ -16,9 +16,9 @@ class AccountSettingsController extends Controller
     public function updateFranchisorStaffPassword(Request $request)
     {
         $user = auth('franchisor_staff')->user();
-
         $request->validate([
             'username' => 'required|string|max:100|unique:admin_staff,astaff_username,'.$user->astaff_id.',astaff_id',
+            'old_password' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -29,6 +29,10 @@ class AccountSettingsController extends Controller
         ], [
             'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->old_password, $user->astaff_pass)) {
+            return back()->withErrors(['old_password' => 'The old password is incorrect.'])->withInput();
+        }
 
         // Update username and password
         $user->astaff_username = $request->username;
@@ -50,9 +54,9 @@ class AccountSettingsController extends Controller
     public function updateFranchiseeStaffPassword(Request $request)
     {
         $user = auth('franchisee_staff')->user();
-
         $request->validate([
             'username' => 'required|string|max:100|unique:franchisee_staff,fstaff_username,'.$user->fstaff_id.',fstaff_id',
+            'old_password' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -63,6 +67,10 @@ class AccountSettingsController extends Controller
         ], [
             'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->old_password, $user->fstaff_pass)) {
+            return back()->withErrors(['old_password' => 'The old password is incorrect.'])->withInput();
+        }
 
         $user->fstaff_username = $request->username;
         $user->fstaff_pass = Hash::make($request->password);
@@ -82,9 +90,9 @@ class AccountSettingsController extends Controller
     public function updateFranchiseePassword(Request $request)
     {
         $user = auth('franchisee')->user();
-
         $request->validate([
             'username' => 'required|string|max:100|unique:franchisees,franchisee_username,'.$user->franchisee_id.',franchisee_id',
+            'old_password' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -95,6 +103,10 @@ class AccountSettingsController extends Controller
         ], [
             'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->old_password, $user->franchisee_pass)) {
+            return back()->withErrors(['old_password' => 'The old password is incorrect.'])->withInput();
+        }
 
         $user->franchisee_username = $request->username;
         $user->franchisee_pass = Hash::make($request->password);
@@ -114,9 +126,9 @@ class AccountSettingsController extends Controller
     public function updateAdminPassword(Request $request)
     {
         $user = auth('admin')->user();
-
         $request->validate([
             'username' => 'required|string|max:100|unique:admins,admin_username,'.$user->admin_id.',admin_id',
+            'old_password' => 'required|string',
             'password' => [
                 'required',
                 'string',
@@ -127,6 +139,10 @@ class AccountSettingsController extends Controller
         ], [
             'password.regex' => 'Password must contain at least one uppercase letter, one lowercase letter, one number and one special character.',
         ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($request->old_password, $user->admin_pass)) {
+            return back()->withErrors(['old_password' => 'The old password is incorrect.'])->withInput();
+        }
 
         $user->admin_username = $request->username;
         $user->admin_pass = Hash::make($request->password);

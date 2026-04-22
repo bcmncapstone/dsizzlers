@@ -15,6 +15,7 @@ class FranchiseeItemController extends Controller
     public function index(Request $request)
     {
         $archivedIds = $this->getArchivedItemIds();
+        $perPage = 12;
 
         $search = $request->get('search', '');
 
@@ -57,7 +58,9 @@ class FranchiseeItemController extends Controller
         }
 
         // Get items
-        $items = $query->get();
+        $items = $query
+            ->paginate($perPage)
+            ->withQueryString();
 
         // Keep create-form categories visible even if no item exists yet.
         $defaultCategories = collect(['food', 'supplies', 'package']);

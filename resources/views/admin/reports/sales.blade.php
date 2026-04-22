@@ -18,11 +18,11 @@
             <form method="GET" action="{{ route('admin.reports.sales') }}" class="sales-filter-form">
                 <div class="sales-filter-group">
                     <label for="start_date" class="sales-filter-label">Start Date</label>
-                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" class="sales-filter-input" />
+                    <input type="date" name="start_date" id="start_date" value="{{ request('start_date') }}" min="{{ $dateBounds['min'] ?? '' }}" max="{{ $dateBounds['max'] ?? '' }}" class="sales-filter-input" />
                 </div>
                 <div class="sales-filter-group">
                     <label for="end_date" class="sales-filter-label">End Date</label>
-                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" class="sales-filter-input" />
+                    <input type="date" name="end_date" id="end_date" value="{{ request('end_date') }}" min="{{ $dateBounds['min'] ?? '' }}" max="{{ $dateBounds['max'] ?? '' }}" class="sales-filter-input" />
                 </div>
                 <button type="submit" class="sales-filter-btn">Apply Filter</button>
             </form>
@@ -38,8 +38,8 @@
         @if($noData && (request('start_date') || request('end_date')))
             <div class="sales-alert alert-warning">
                 <p>No sales data found for the selected filters.</p>
-                @if($availableRange && $availableRange->min_date && $availableRange->max_date)
-                    <p class="sales-alert-range">Available range: {{ \Carbon\Carbon::parse($availableRange->min_date)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange->max_date)->format('M d, Y') }}</p>
+                @if($availableRange && ($availableRange['min'] ?? null) && ($availableRange['max'] ?? null))
+                    <p class="sales-alert-range">Available range: {{ \Carbon\Carbon::parse($availableRange['min'])->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange['max'])->format('M d, Y') }}</p>
                 @endif
             </div>
         @endif
@@ -191,8 +191,8 @@
                 datasets: [{
                     data: categoryData.map(cat => cat.sales),
                     backgroundColor: [
-                        '#FF5722', '#FF7043', '#FF8A65', '#FFAB91', '#FFCCBC',
-                        '#FF2D00', '#E74C3C', '#D35400', '#C23B1D', '#A93D20'
+                        '#ffb347', '#ffe2b1', '#D89A62', '#E7B68E', '#F2D3BE',
+                        '#f2a33a', '#9A4A30', '#7F3A22', '#6F2918', '#5B2214'
                     ],
                     borderColor: '#fff',
                     borderWidth: 2,
@@ -226,12 +226,12 @@
                 datasets: [{
                     label: 'Daily Sales (₱)',
                     data: dailyData.map(day => day.sales),
-                    borderColor: '#FF5722',
+                    borderColor: '#ffb347',
                     backgroundColor: 'rgba(255, 87, 34, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#FF5722',
+                    pointBackgroundColor: '#ffb347',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5,
@@ -258,3 +258,5 @@
 </script>
 
 @endsection
+
+

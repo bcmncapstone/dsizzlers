@@ -144,6 +144,7 @@ erDiagram
         bigint branch_id PK
         string location
         string email
+        date contract_start_date
         date contract_expiration
         boolean branch_status
     }

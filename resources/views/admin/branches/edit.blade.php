@@ -37,7 +37,7 @@
                     <div id="map" style="height: 400px; width: 100%; background: #e9ecef; position: relative;"></div>
                     <div id="map-loading" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.9); z-index: 1000;">
                         <div style="text-align: center;">
-                            <div style="border: 4px solid #f0f0f0; border-top: 4px solid #FF5722; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div>
+                            <div style="border: 4px solid #f0f0f0; border-top: 4px solid #ffb347; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 12px;"></div>
                             <p style="color: #999; font-size: 14px;">Loading map...</p>
                         </div>
                     </div>
@@ -54,8 +54,8 @@
                 </div>
 
                 <!-- Hidden Fields -->
-                <input type="hidden" name="latitude" id="latitude">
-                <input type="hidden" name="longitude" id="longitude">
+                <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude', $branch->latitude) }}">
+                <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude', $branch->longitude) }}">
                 <!-- Hidden location field required by server validation -->
                 <input type="hidden" name="location" id="location_hidden" value="{{ old('location', $branch->location) }}">
 
@@ -67,7 +67,7 @@
 
             <!-- Franchisee Information Section -->
             <div class="section-divider">
-                <h2 style="font-size: 16px; font-weight: 600; color: #1a1a1a; border-left: 3px solid #FF5722; padding-left: 12px;">
+                <h2 style="font-size: 16px; font-weight: 600; color: #1a1a1a; border-left: 3px solid #ffb347; padding-left: 12px;">
                     Franchisee Information
                 </h2>
             </div>
@@ -124,7 +124,7 @@
 
             <!-- Contract Section -->
             <div class="section-divider">
-                <h2 style="font-size: 16px; font-weight: 600; color: #1a1a1a; border-left: 3px solid #FF5722; padding-left: 12px;">
+                <h2 style="font-size: 16px; font-weight: 600; color: #1a1a1a; border-left: 3px solid #ffb347; padding-left: 12px;">
                     Contract Information
                 </h2>
             </div>
@@ -144,13 +144,20 @@
                 @error('contract_file')<span class="field-error">{{ $message }}</span>@enderror
             </div>
 
-            <!-- Contract Expiration -->
+            <!-- Contract Start Date -->
             <div class="form-group">
-                <label for="contract_expiration" class="form-label">Contract Expiration Date</label>
-                  <input type="date" name="contract_expiration" id="contract_expiration" 
-                      value="{{ old('contract_expiration', \Illuminate\Support\Carbon::parse($branch->contract_expiration)->format('Y-m-d')) }}" class="form-input" required
-                      min="{{ date('Y-m-d') }}">
-                @error('contract_expiration')<span class="field-error">{{ $message }}</span>@enderror
+                <label for="contract_start_date" class="form-label">Contract Start Date</label>
+                  <input type="date" name="contract_start_date" id="contract_start_date"
+                      value="{{ old('contract_start_date', optional($branch->contract_start_date)->format('Y-m-d')) }}" class="form-input" required>
+                <p class="field-help">The contract expiration is automatically set to 3 years from this date.</p>
+                @error('contract_start_date')<span class="field-error">{{ $message }}</span>@enderror
+            </div>
+
+            <div class="form-group">
+                <label for="contract_expiration_preview" class="form-label">Contract Expiration Date</label>
+                <input type="text" id="contract_expiration_preview" class="form-input"
+                    value="{{ old('contract_expiration', optional($branch->contract_expiration)->format('Y-m-d')) }}" readonly>
+                <p class="field-help">This value is computed automatically and saved by the system.</p>
             </div>
 
             <script>
@@ -179,6 +186,34 @@
                     email.value = opt.dataset.email || '';
                     contact.value = opt.dataset.contact || '';
                 }
+
+                function formatComputedExpiration(value) {
+                    if (!value) return '';
+
+                    const [year, month, day] = value.split('-').map(Number);
+                    if (!year || !month || !day) return '';
+
+                    const expiration = new Date(year, month - 1, day);
+                    expiration.setFullYear(expiration.getFullYear() + 3);
+
+                    const yyyy = expiration.getFullYear();
+                    const mm = String(expiration.getMonth() + 1).padStart(2, '0');
+                    const dd = String(expiration.getDate()).padStart(2, '0');
+
+                    return `${yyyy}-${mm}-${dd}`;
+                }
+
+                function updateContractExpirationPreview() {
+                    const startDateInput = document.getElementById('contract_start_date');
+                    const expirationPreview = document.getElementById('contract_expiration_preview');
+
+                    if (!startDateInput || !expirationPreview) return;
+
+                    expirationPreview.value = formatComputedExpiration(startDateInput.value);
+                }
+
+                document.addEventListener('DOMContentLoaded', updateContractExpirationPreview);
+                document.getElementById('contract_start_date')?.addEventListener('input', updateContractExpirationPreview);
             </script>
 
             <!-- Form Buttons -->
@@ -511,3 +546,5 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 </script>
 @endsection
+
+

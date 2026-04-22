@@ -24,6 +24,8 @@
             @yield('content')
         </main>
     </div>
+    @include('layouts.confirm-modal')
 
             {{-- Floating Messages Button removed as per requirement --}}
+    </body>
 </html>

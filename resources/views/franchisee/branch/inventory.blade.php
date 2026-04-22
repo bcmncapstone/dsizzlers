@@ -31,7 +31,7 @@
                 </p>
             </div>
             <a href="{{ route('franchisee.branch.dashboard') }}" 
-               class="text-sm font-medium text-orange-600 hover:text-orange-700 transition">
+               class="text-sm font-medium text-[#ffb347] hover:text-[#f2a33a] transition">
                 ← Back to Dashboard
             </a>
         </div>
@@ -203,12 +203,12 @@
                                                 name="adjust_by"
                                                 min="1"
                                                 step="1"
-                                                class="border rounded px-2 py-1 w-16 text-xs md:text-sm focus:ring-orange-500 focus:border-orange-500"
+                                                class="border rounded px-2 py-1 w-16 text-xs md:text-sm focus:ring-[#ffb347] focus:border-[#ffb347]"
                                                 placeholder="Qty"
                                                 required
                                             >
                                             <div class="flex gap-1">
-                                                <button type="submit" name="direction" value="add" class="bg-green-500 hover:bg-green-600 text-white px-2 py-1 rounded text-xs md:text-sm font-bold">+</button>
+                                                <button type="submit" name="direction" value="add" class="bg-[#A8DB93] hover:bg-[#A8DB93] text-white px-2 py-1 rounded text-xs md:text-sm font-bold">+</button>
                                                 <button type="submit" name="direction" value="deduct" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded text-xs md:text-sm font-bold">-</button>
                                             </div>
                                         </form>
@@ -285,3 +285,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
+

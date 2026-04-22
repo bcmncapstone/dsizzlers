@@ -60,6 +60,7 @@
         <div class="table-section">
             <div class="table-section-header">
                 <h2>Item List</h2>
+                <span class="admin-stock-results-text">{{ $items->total() }} item(s) matched</span>
             </div>
 
             <div class="table-responsive">
@@ -135,6 +136,12 @@
                     </tbody>
                 </table>
             </div>
+
+            @if($items->hasPages())
+                <div style="margin-top: 16px;">
+                    {{ $items->appends(request()->query())->links() }}
+                </div>
+            @endif
         </div>
 
     </div>

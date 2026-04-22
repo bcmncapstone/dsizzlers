@@ -16,10 +16,23 @@ class StockController extends Controller
      */
     public function index()
     {
+        $perPage = 10;
         $staff = Auth::guard('franchisee_staff')->user();
-        $stocks = FranchiseeStock::with('item')
-            ->where('franchisee_id', $staff->franchisee_id)
-            ->get();
+        $stocksQuery = FranchiseeStock::with('item')
+            ->where('franchisee_id', $staff->franchisee_id);
+
+        $totalItems = (clone $stocksQuery)->count();
+        $inStock = (clone $stocksQuery)->where('current_quantity', '>', 0)->count();
+        $lowStock = (clone $stocksQuery)
+            ->where('current_quantity', '>', 0)
+            ->whereColumn('current_quantity', '<=', 'minimum_quantity')
+            ->count();
+        $outOfStock = (clone $stocksQuery)->where('current_quantity', '<=', 0)->count();
+
+        $stocks = $stocksQuery
+            ->orderByDesc('updated_at')
+            ->paginate($perPage)
+            ->withQueryString();
 
         // Add FIFO batch snapshot logic (same as franchisee)
         $fifoSnapshots = [];
@@ -39,7 +52,7 @@ class StockController extends Controller
             $fifoSnapshots[(int) $stock->stock_id] = $fifoService->getRemainingLots($stock);
         }
 
-        return view('franchisee-staff.stock.index', compact('stocks', 'fifoSnapshots'));
+        return view('franchisee-staff.stock.index', compact('stocks', 'fifoSnapshots', 'totalItems', 'inStock', 'lowStock', 'outOfStock'));
     }
 
     /**
@@ -64,22 +77,39 @@ class StockController extends Controller
     {
         $staff = Auth::guard('franchisee_staff')->user();
 
-        $request->validate([
-            'adjust_by' => 'required|integer|min:1',
-            'direction' => 'required|in:add,deduct',
-            'notes' => 'nullable|string|max:500',
-        ]);
+        $isInlineAdjust = $request->filled('adjust_by') && $request->filled('direction');
+
+        if ($isInlineAdjust) {
+            $request->validate([
+                'adjust_by' => 'required|integer|min:1',
+                'direction' => 'required|in:add,deduct',
+                'notes' => 'nullable|string|max:500',
+            ]);
+        } else {
+            $request->validate([
+                'new_quantity' => 'required|integer|min:0',
+                'notes' => 'nullable|string|max:500',
+            ]);
+        }
 
         $stock = FranchiseeStock::with('item')
             ->where('franchisee_id', $staff->franchisee_id)
             ->findOrFail($stockId);
 
-        $oldQuantity = $stock->current_quantity;
-        $adjustBy = (int) $request->adjust_by;
-        $direction = $request->direction;
-        $newQuantity = $direction === 'add'
-            ? $oldQuantity + $adjustBy
-            : $oldQuantity - $adjustBy;
+        $oldQuantity = (int) $stock->current_quantity;
+        $newQuantity = (int) $request->input('new_quantity', $oldQuantity);
+        $transactionType = 'adjustment';
+        $quantityChange = $newQuantity - $oldQuantity;
+
+        if ($isInlineAdjust) {
+            $adjustBy = (int) $request->adjust_by;
+            $direction = $request->direction;
+            $newQuantity = $direction === 'add'
+                ? $oldQuantity + $adjustBy
+                : $oldQuantity - $adjustBy;
+            $transactionType = $direction === 'add' ? 'in' : 'out';
+            $quantityChange = $direction === 'add' ? $adjustBy : -$adjustBy;
+        }
 
         if ($newQuantity < 0) {
             return redirect()->back()
@@ -92,17 +122,15 @@ class StockController extends Controller
             $stock->current_quantity = $newQuantity;
             $stock->save();
 
-            $transactionType = $direction === 'add' ? 'in' : 'out';
-
             StockTransaction::create([
                 'franchisee_id' => $stock->franchisee_id,
                 'item_id' => $stock->item_id,
                 'transaction_type' => $transactionType,
-                'quantity' => $adjustBy,
+                'quantity' => $quantityChange,
                 'balance_after' => $newQuantity,
                 'reference_type' => null,
                 'reference_id' => null,
-                'notes' => $request->notes ?? 'Stock adjustment by franchisee staff',
+                'notes' => $request->notes ?? ($isInlineAdjust ? 'Stock adjustment by franchisee staff' : 'Manual stock adjustment by franchisee staff'),
                 'performed_by_type' => 'franchisee_staff',
                 'performed_by_id' => $staff->fstaff_id
             ]);

@@ -33,6 +33,7 @@
                         <th>Location</th>
                         <th>Email</th>
                         <th>Contract</th>
+                        <th>Contract Start</th>
                         <th>Contract Expiration</th>
                         <th>Actions</th>
                     </tr>
@@ -50,6 +51,7 @@
                                 <span style="color: var(--dsizzlers-gray-dark);">No file</span>
                             @endif
                         </td>
+                        <td>{{ optional($branch->contract_start_date)->format('Y-m-d') ?? 'N/A' }}</td>
                         <td>{{ optional($branch->contract_expiration)->format('Y-m-d') }}</td>
                         <td>
                             <a href="{{ route('admin.branches.edit', $branch->branch_id) }}" class="btn btn-primary" style="padding: 5px 10px; font-size: 12px;">Edit</a>
@@ -61,7 +63,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 30px; color: var(--dsizzlers-gray-dark);">
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--dsizzlers-gray-dark);">
                             No active contract found.
                         </td>
                     </tr>

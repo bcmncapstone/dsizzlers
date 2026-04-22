@@ -6,6 +6,20 @@ use Illuminate\Http\Request;
 
 class StaffAccountController extends Controller
 {
+    public function showFranchisorStaffPortal(Request $request)
+    {
+        $user = auth('franchisor_staff')->user();
+
+        return view('franchisor-staff.account-center', compact('user'));
+    }
+
+    public function showFranchiseeStaffPortal(Request $request)
+    {
+        $user = auth('franchisee_staff')->user();
+
+        return view('franchisee-staff.account-center', compact('user'));
+    }
+
     // Show Franchisor Staff Account
     public function showFranchisorStaff(Request $request)
     {

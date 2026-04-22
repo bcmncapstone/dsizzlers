@@ -1,7 +1,7 @@
 <nav class="navbar" data-navbar>
     <div class="navbar-shell">
         <!-- Logo and Brand -->
-        <a href="{{ route('franchisee.dashboard') }}" class="navbar-brand">
+        <a href="{{ route('franchisee.password') }}" class="navbar-brand">
             <img src="https://res.cloudinary.com/drhw4lbzz/image/upload/v1773841657/Logo1_q5e2hk.jpg" alt="D-Sizzlers Logo" class="navbar-logo">
             <div>
                 <div style="font-size: 16px; font-weight: 700;">D-SIZZLERS</div>
@@ -31,21 +31,5 @@
                 </form>
             </li>
         </ul>
-        <style>
-        @media (max-width: 1024px) {
-            .navbar-nav {
-                display: none;
-            }
-            .navbar-nav.is-open {
-                display: flex !important;
-            }
-            .navbar-nav.is-open a {
-                color: #FF5722 !important; /* dsizzlers orange */
-            }
-            .navbar-nav.is-open a.active {
-                color: #C41C00 !important; /* highlight active link */
-            }
-        }
-        </style>
     </div>
 </nav>

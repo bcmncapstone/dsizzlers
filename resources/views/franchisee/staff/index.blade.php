@@ -106,7 +106,7 @@
                                     </button>
                                     <form action="{{ route('franchisee.staff.restore', $s->fstaff_id) }}" method="POST" style="display:inline-block; margin-left:6px;" onsubmit="return confirm('Restore this staff account? They will be able to log in again.');">
                                         @csrf
-                                        <button type="submit" class="table-action-btn" style="background:#16a34a; color:#fff;">Restore</button>
+                                        <button type="submit" class="table-action-btn" style="background:#A8DB93; color:#fff;">Restore</button>
                                     </form>
                                 </td>
                             </tr>

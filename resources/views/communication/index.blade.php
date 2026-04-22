@@ -12,103 +12,105 @@
 
     <hr>
 
-    <section class="conversation-section">
+    <div class="communication-grid">
+
+    <section class="conversation-section panel">
+        <div class="conversation-content-shell">
         <h3>Conversations</h3>
 
-        <div class="new-conversation-container">
-            <h4>Start a New Conversation</h4>
+        <div class="new-conversation-layout">
+            <div class="new-conversation-container">
+                <div class="form-wrapper-limited">
+                    <h4>Start a New Conversation</h4>
 
-            <form method="POST" action="{{ route('communication.start') }}">
-                @csrf
+                    <form method="POST" action="{{ route('communication.start') }}">
+                        @csrf
+                        <div class="form-group-compact">
+                            <label for="partner_id">Select Franchisee</label>
+                            <select name="partner_id" id="partner_id" required>
+                                <option value="" disabled selected>- Choose a Franchisee -</option>
+                                @foreach(\App\Models\Franchisee::all() as $franchisee)
+                                    <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                @php
-                    $isFranchisor = auth()->guard('admin')->check() || auth()->guard('franchisor_staff')->check();
-                    $isFranchisee = auth()->guard('franchisee')->check() || auth()->guard('franchisee_staff')->check();
-                @endphp
-
-                @if($isFranchisor)
-                    <label for="partner_id">Select Franchisee</label><br>
-                    <select name="partner_id" id="partner_id" required>
-                        <option value="" disabled selected>- Choose a Franchisee -</option>
-                        @foreach(\App\Models\Franchisee::all() as $franchisee)
-                            <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
-                        @endforeach
-                    </select>
-                @elseif($isFranchisee)
-                    <label for="partner_id">Select Franchisor</label><br>
-                    <select name="partner_id" id="partner_id" required>
-                        <option value="" disabled selected>- Choose a Franchisor -</option>
-                        @foreach(\App\Models\Admin::all() as $admin)
-                            <option value="{{ $admin->admin_id }}">{{ $admin->admin_fname }} {{ $admin->admin_lname }}</option>
-                        @endforeach
-                    </select>
-                @else
-                    <label for="partner_id">Select Franchisee</label><br>
-                    <select name="partner_id" id="partner_id" required>
-                        <option value="" disabled selected>- Choose a Franchisee -</option>
-                        @foreach(\App\Models\Franchisee::all() as $franchisee)
-                            <option value="{{ $franchisee->franchisee_id }}">{{ $franchisee->franchisee_name }}</option>
-                        @endforeach
-                    </select>
-                @endif
-
-                <br><br>
-                <button type="submit" class="btn btn-primary">Create</button>
-            </form>
+                        <button type="submit" class="btn btn-primary btn-full-mobile">Create Conversation</button>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <hr>
 
         <h4>Existing Conversations</h4>
         <div class="button-group" style="margin-bottom: 12px;">
-            <a href="{{ route('communication.index', ['conversation_view' => 'active', 'announcement_view' => $announcementView ?? 'active']) }}" class="btn btn-gallery">Active Conversations</a>
-            <a href="{{ route('communication.index', ['conversation_view' => 'archived', 'announcement_view' => $announcementView ?? 'active']) }}" class="btn btn-camera">Archived Conversations</a>
+            <a href="{{ route('communication.index', ['conversation_view' => 'active', 'announcement_view' => $announcementView ?? 'active']) }}" class="btn btn-gallery conversation-toggle" data-view="active" id="conversations-active-link">Active Conversations</a>
+            <a href="{{ route('communication.index', ['conversation_view' => 'archived', 'announcement_view' => $announcementView ?? 'active']) }}" class="btn btn-camera conversation-toggle" data-view="archived" id="conversations-archived-link">Archived Conversations</a>
         </div>
 
-        <ul class="conversations-list">
-            @forelse($conversations as $conversation)
-                @php
+<div id="conversations-container" class="conversation-container">
+    <ul class="conversations-list-refined">
+        @forelse($conversations as $conversation)
+            @php
+                $isCurrentUserAdmin = auth()->guard('admin')->check() || auth()->guard('franchisor_staff')->check();
+                if ($isCurrentUserAdmin) {
+                    $displayName = $conversation->franchisee ? ($conversation->franchisee->franchisee_name ?: 'Franchisee') : 'Franchisee';
+                } else {
                     $admin = $conversation->admin;
-                    $franchisee = $conversation->franchisee;
-                    $isCurrentUserAdmin = auth()->guard('admin')->check() || auth()->guard('franchisor_staff')->check();
+                    $displayName = $admin ? trim(($admin->admin_fname ?? '') . ' ' . ($admin->admin_lname ?? '')) ?: 'System Administrator' : 'System Administrator';
+                }
+                $initial = strtoupper(substr($displayName, 0, 1));
+            @endphp
+            
+            <li class="conversation-row">
+                <div class="user-info">
+                    <div class="user-initial">{{ $initial }}</div>
+                    <div class="user-text">
+                        <a href="{{ url('/communication/' . $conversation->id) }}" class="user-name-link">
+                            {{ $displayName }}
+                        </a>
+                        <span class="user-meta">Last message recently</span>
+                    </div>
+                </div>
 
-                    if ($isCurrentUserAdmin) {
-                        $displayName = $franchisee ? ($franchisee->franchisee_name ?: 'Franchisee') : 'Franchisee';
-                    } else {
-                        $adminName = $admin ? trim(($admin->admin_fname ?? '') . ' ' . ($admin->admin_lname ?? '')) ?: 'System Administrator' : 'System Administrator';
-                        $displayName = $adminName;
-                    }
-                @endphp
-                <li>
-                    <a href="{{ url('/communication/' . $conversation->id) }}">{{ $displayName }}</a>
-
+                <div class="action-buttons">
                     @if(($conversationView ?? 'active') === 'archived')
-                        <form method="POST" action="{{ route('communication.restore', $conversation->id) }}" style="margin-top: 8px;">
+                        <form method="POST" action="{{ route('communication.restore', $conversation->id) }}" class="m-0">
                             @csrf
-                            <button type="submit" class="btn btn-camera" onclick="return confirm('Restore this conversation?');">Restore Conversation</button>
+                            <button type="submit" class="btn-restore-subtle" onclick="return confirm('Restore?');">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                                Restore
+                            </button>
                         </form>
                     @else
-                        <form method="POST" action="{{ route('communication.archive', $conversation->id) }}" style="margin-top: 8px;">
+                        <form method="POST" action="{{ route('communication.archive', $conversation->id) }}" class="m-0">
                             @csrf
-                            <button type="submit" class="btn btn-remove" onclick="return confirm('Archive this conversation?');">Archive Conversation</button>
+                            <button type="submit" class="btn-archive-subtle" onclick="return confirm('Archive?');">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                                Archive
+                            </button>
                         </form>
                     @endif
-                </li>
-            @empty
-                <p class="empty-state">No conversations available.</p>
-            @endforelse
-        </ul>
+                </div>
+            </li>
+        @empty
+            <p class="empty-state">No conversations available.</p>
+        @endforelse
+    </ul>
+</div>
+        </div>
     </section>
 
-    <hr>
+    <hr style="display:none;">
 
     @if(auth()->guard('admin')->check())
-        <section class="marketing-section">
+        <section class="marketing-section panel">
             <h3>Digital Marketing Management</h3>
 
             <div class="button-group" style="margin-bottom: 12px;">
-                <a href="{{ route('communication.index', ['conversation_view' => $conversationView ?? 'active', 'announcement_view' => 'active']) }}" class="btn btn-gallery">Active Announcements</a>
-                <a href="{{ route('communication.index', ['conversation_view' => $conversationView ?? 'active', 'announcement_view' => 'archived']) }}" class="btn btn-camera">Archived Announcements</a>
+                <a href="{{ route('communication.index', ['conversation_view' => $conversationView ?? 'active', 'announcement_view' => 'active']) }}" class="btn btn-gallery announcement-toggle" data-view="active" id="announcements-active-link">Active Announcements</a>
+                <a href="{{ route('communication.index', ['conversation_view' => $conversationView ?? 'active', 'announcement_view' => 'archived']) }}" class="btn btn-camera announcement-toggle" data-view="archived" id="announcements-archived-link">Archived Announcements</a>
             </div>
 
             @if(session('success'))
@@ -172,12 +174,12 @@
 
             <div id="camera-modal" class="camera-modal">
                 <div class="camera-modal-content">
+                    <button type="button" onclick="closeCameraModal()" class="image-modal-close" aria-label="Close camera modal">&times;</button>
                     <h3>Take Photo</h3>
                     <video id="camera-stream" autoplay playsinline class="camera-stream"></video>
                     <canvas id="camera-canvas" class="camera-canvas"></canvas>
                     <div class="modal-button-group">
-                        <button type="button" onclick="capturePhoto()" class="btn btn-camera">Capture</button>
-                        <button type="button" onclick="closeCameraModal()" class="btn btn-close">Close</button>
+                        <button type="button" onclick="capturePhoto()" class="btn btn-primary">Capture</button>
                     </div>
                 </div>
             </div>
@@ -186,7 +188,7 @@
 
             <h4>Uploaded Marketing Materials</h4>
 
-            <div class="marketing-posts-container">
+            <div id="announcements-container" class="marketing-posts-container">
                 @forelse($digitalMarketing as $post)
                     <div class="marketing-post">
                         <img
@@ -250,7 +252,7 @@
     @endif
 
     @if(auth()->guard('franchisee')->check())
-        <section class="marketing-section">
+        <section class="marketing-section panel">
             <h3>Digital Marketing Posts</h3>
 
             <div class="button-group" style="margin-bottom: 12px;">
@@ -290,9 +292,11 @@
         </section>
     @endif
 
+    </div>
+
     <div id="image-modal" class="camera-modal" onclick="closeImageModal()">
         <div class="camera-modal-content" onclick="event.stopPropagation()">
-            <button onclick="closeImageModal()" class="btn btn-close">Close</button>
+                <button type="button" onclick="closeImageModal()" class="image-modal-close" aria-label="Close image preview">&times;</button>
             <img id="modal-image" src="" alt="Full Size" class="modal-image">
             <div class="modal-download-container">
                 <a id="modal-download-btn" href="" download class="btn btn-camera">Download Image</a>
@@ -465,5 +469,143 @@
             closeCameraModal();
         }
     });
+
+    // Conversation list AJAX toggle (smooth switch between active/archived)
+    (function() {
+        const container = document.getElementById('conversations-container');
+        if (!container) return;
+
+        function setActiveButton(view) {
+            document.querySelectorAll('.conversation-toggle').forEach(btn => {
+                if (btn.dataset.view === view) btn.classList.add('is-active');
+                else btn.classList.remove('is-active');
+            });
+        }
+
+        async function loadConversations(url, pushState = true) {
+            const oldList = container.querySelector('.conversations-list-refined');
+            if (oldList) {
+                oldList.style.transition = 'opacity 100ms ease';
+                oldList.style.opacity = '0';
+            }
+
+            try {
+                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const text = await res.text();
+                const doc = new DOMParser().parseFromString(text, 'text/html');
+                const newList = doc.querySelector('.conversations-list-refined');
+                if (newList) {
+                    // Replace list
+                    await new Promise(r => setTimeout(r, 160));
+                    container.innerHTML = '';
+                    container.appendChild(newList.cloneNode(true));
+
+                    // Fade in
+                    const inserted = container.querySelector('.conversations-list-refined');
+                    inserted.style.opacity = '0';
+                    inserted.style.transition = 'opacity 220ms ease';
+                    requestAnimationFrame(() => inserted.style.opacity = '1');
+                } else {
+                    // Fallback to full navigation if partial not found
+                    location.href = url;
+                }
+
+                // Update URL without full reload
+                if (pushState) history.pushState({}, '', url);
+
+                // Update active button state by inspecting query param
+                const params = new URL(url).searchParams;
+                setActiveButton(params.get('conversation_view') || 'active');
+            } catch (err) {
+                console.error('Failed to load conversations', err);
+                location.href = url;
+            }
+        }
+
+        // Attach click handlers
+        document.querySelectorAll('.conversation-toggle').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.href;
+                loadConversations(url);
+            });
+        });
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', function() {
+            loadConversations(location.href, false);
+        });
+
+        // initialize active button state
+        const params = new URL(location.href).searchParams;
+        setActiveButton(params.get('conversation_view') || 'active');
+    })();
+
+    // Announcement AJAX toggle (Active / Archived) — swaps announcement posts without navigating away
+    (function() {
+        const container = document.getElementById('announcements-container');
+        if (!container) return;
+
+        function setActiveButton(view) {
+            document.querySelectorAll('.announcement-toggle').forEach(btn => {
+                if (btn.dataset.view === view) btn.classList.add('is-active');
+                else btn.classList.remove('is-active');
+            });
+        }
+
+        async function loadAnnouncements(url, pushState = true) {
+            // show overlay
+            let overlay = container.querySelector('.conversations-loading-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'conversations-loading-overlay';
+                overlay.innerHTML = '<div class="skeleton-row"></div><div class="skeleton-row short"></div><div class="skeleton-row"></div>';
+                container.appendChild(overlay);
+                getComputedStyle(overlay).opacity;
+            }
+            overlay.style.opacity = '1';
+
+            try {
+                const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const text = await res.text();
+                const doc = new DOMParser().parseFromString(text, 'text/html');
+                const newList = doc.querySelector('#announcements-container');
+
+                if (newList) {
+                    container.innerHTML = newList.innerHTML;
+
+                    // hide overlay
+                    overlay.style.transition = 'opacity 160ms ease';
+                    overlay.style.opacity = '0';
+                    setTimeout(() => { try { overlay.remove(); } catch(e){} }, 180);
+
+                    if (pushState) history.pushState({}, '', url);
+                    const params = new URL(url).searchParams;
+                    setActiveButton(params.get('announcement_view') || 'active');
+                    return;
+                }
+
+                // fallback
+                location.href = url;
+            } catch (err) {
+                console.error('Failed to load announcements', err);
+                location.href = url;
+            }
+        }
+
+        document.querySelectorAll('.announcement-toggle').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                loadAnnouncements(this.href);
+            });
+        });
+
+        window.addEventListener('popstate', function() {
+            loadAnnouncements(location.href, false);
+        });
+
+        const params = new URL(location.href).searchParams;
+        setActiveButton(params.get('announcement_view') || 'active');
+    })();
 </script>
 @endsection

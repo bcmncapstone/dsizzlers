@@ -59,7 +59,10 @@
 
                     <div class="login-form-group">
                         <label for="password" class="login-label">Password:</label>
-                        <input type="password" id="password" name="password" class="login-input" placeholder="Enter your password" required>
+                        <div class="password-toggle-group">
+                            <input type="password" id="password" name="password" class="login-input password-toggle-input" placeholder="Enter your password" required>
+                            <button type="button" class="password-toggle-button" data-password-toggle="password" aria-controls="password" aria-label="Show password" aria-pressed="false">Show</button>
+                        </div>
                     </div>
 
                     <div style="text-align: center; margin-bottom: 16px;">

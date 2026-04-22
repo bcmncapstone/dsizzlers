@@ -11,6 +11,7 @@
             <th>Location</th>
             <th>Email</th>
              <th>Contract</th>
+            <th>Contract Start</th>
             <th>Contract Expiration</th>
             <th>Actions</th>
         </tr>
@@ -29,6 +30,7 @@
                                 <span style="color: var(--dsizzlers-gray-dark);">No file</span>
                             @endif
                         </td>
+            <td>{{ optional($branch->contract_start_date)->format('Y-m-d') ?? 'N/A' }}</td>
             <td>{{ optional($branch->contract_expiration)->format('Y-m-d') }}</td>
             <td>
                 <form method="POST" action="{{ route('admin.branches.restore', $branch->branch_id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to restore this contract?');">

@@ -24,18 +24,24 @@ class StockController extends Controller
      */
     public function index(Request $request)
     {
+        $perPage = 10;
         $franchisee = Auth::guard('franchisee')->user();
-        
-        // Get stock with item details
-        $stocks = FranchiseeStock::with('item')
-            ->where('franchisee_id', $franchisee->franchisee_id)
-            ->get();
 
-        // Calculate statistics
-        $totalItems = $stocks->count();
-        $inStock = $stocks->where('current_quantity', '>', 0)->count();
-        $lowStock = $stocks->filter(fn($s) => $s->isLowStock())->count();
-        $outOfStock = $stocks->filter(fn($s) => $s->isOutOfStock())->count();
+        $stocksQuery = FranchiseeStock::with('item')
+            ->where('franchisee_id', $franchisee->franchisee_id);
+
+        $totalItems = (clone $stocksQuery)->count();
+        $inStock = (clone $stocksQuery)->where('current_quantity', '>', 0)->count();
+        $lowStock = (clone $stocksQuery)
+            ->where('current_quantity', '>', 0)
+            ->whereColumn('current_quantity', '<=', 'minimum_quantity')
+            ->count();
+        $outOfStock = (clone $stocksQuery)->where('current_quantity', '<=', 0)->count();
+
+        $stocks = $stocksQuery
+            ->orderByDesc('updated_at')
+            ->paginate($perPage)
+            ->withQueryString();
 
         $fifoSnapshots = [];
         foreach ($stocks as $stockRow) {
@@ -64,6 +70,21 @@ class StockController extends Controller
             'outOfStock',
             'fifoSnapshots'
         ));
+    }
+
+    /**
+     * Show the edit stock page.
+     */
+    public function edit($stockId)
+    {
+        $franchisee = Auth::guard('franchisee')->user();
+
+        $stock = FranchiseeStock::with('item')
+            ->where('stock_id', $stockId)
+            ->where('franchisee_id', $franchisee->franchisee_id)
+            ->firstOrFail();
+
+        return view('franchisee.stock.edit', compact('stock'));
     }
 
     /**
@@ -179,7 +200,7 @@ class StockController extends Controller
                 ->with('flash_timeout', 3000);
         }
 
-        $transactions = $query->paginate(20);
+        $transactions = $query->paginate(20)->withQueryString();
 
         return view('franchisee.stock.history', compact('transactions'));
     }
@@ -223,8 +244,8 @@ class StockController extends Controller
                 ->with('flash_timeout', 3000);
         }
 
-        $pendingOrders = $pendingQuery->orderBy('created_at', 'desc')->paginate(10, ['*'], 'pending_page');
-        $deliveredOrders = $deliveredQuery->orderBy('updated_at', 'desc')->paginate(10, ['*'], 'delivered_page');
+        $pendingOrders = $pendingQuery->orderBy('created_at', 'desc')->paginate(10, ['*'], 'pending_page')->withQueryString();
+        $deliveredOrders = $deliveredQuery->orderBy('updated_at', 'desc')->paginate(10, ['*'], 'delivered_page')->withQueryString();
 
         return view('franchisee.stock.staff-orders', compact('pendingOrders', 'deliveredOrders'));
     }

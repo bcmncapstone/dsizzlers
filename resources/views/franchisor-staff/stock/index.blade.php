@@ -71,14 +71,14 @@
         <div class="inventory-table-section">
             <div class="inventory-table-header">
                 <h2 class="inventory-table-title">Stock List</h2>
-                <span class="admin-stock-results-text">{{ $items->count() }} item(s) matched</span>
+                <span class="admin-stock-results-text">{{ $items->total() }} item(s) matched</span>
             </div>
             <div class="inventory-overflow">
                 <table class="inventory-table admin-stock-table">
                     <thead>
                         <tr>
                             <th>Item</th>
-                            <th>Stock Adjustment</th>
+                            <th>Stock Details</th>
                             <th>Price</th>
                             <th>Category</th>
                             <th>Actions</th>
@@ -123,14 +123,6 @@
                                         <span class="inventory-status-badge {{ $isOut ? 'inventory-status-out-stock' : ($isLow ? 'inventory-status-low-stock' : 'inventory-status-in-stock') }}">
                                             {{ $isOut ? 'Out of Stock' : ($isLow ? 'Low Stock' : 'In Stock') }}
                                         </span>
-                                        <form action="{{ route('franchisor-staff.stock.adjust', $item->item_id) }}" method="POST" class="admin-stock-adjust-form">
-                                            @csrf
-                                            <div class="admin-stock-adjust-controls">
-                                                <input type="number" name="adjust_by" min="1" class="admin-stock-adjust-input" placeholder="Qty" required>
-                                                <button type="submit" name="direction" value="add" class="admin-stock-adjust-btn admin-stock-adjust-plus">+</button>
-                                                <button type="submit" name="direction" value="deduct" class="admin-stock-adjust-btn admin-stock-adjust-minus">-</button>
-                                            </div>
-                                        </form>
                                     </div>
                                 </td>
                                 <td>
@@ -142,7 +134,7 @@
                                 <td>
                                     <div class="admin-stock-actions-col">
                                         <a href="{{ route('franchisor-staff.stock.edit', $item->item_id) }}" class="table-action-btn table-action-edit">
-                                            Edit
+                                            Edit Stock
                                         </a>
                                         <button type="button"
                                             onclick="toggleFifo({{ $item->item_id }})"
@@ -209,6 +201,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($items->hasPages())
+                <div style="margin-top: 16px;">
+                    {{ $items->appends(request()->query())->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -227,16 +224,4 @@ function toggleFifo(itemId) {
     }
 }
 
-document.querySelectorAll('.admin-stock-adjust-form').forEach(function(form) {
-    form.addEventListener('submit', function(e) {
-        var qty = form.querySelector('input[name="adjust_by"]').value;
-        var btn = e.submitter;
-        var direction = btn ? btn.value : 'adjust';
-        var action = direction === 'add' ? 'add' : 'deduct';
-
-        if (!confirm('Are you sure you want to ' + action + ' ' + qty + ' item(s)?')) {
-            e.preventDefault();
-        }
-    });
-});
 </script>

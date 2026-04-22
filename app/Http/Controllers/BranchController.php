@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Branch;
 use App\Models\Franchisee;
 use App\Support\MediaStorage;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -85,7 +86,7 @@ class BranchController extends Controller
             ],
             'contact_number' => 'required|string|max:20',
             'contract_file' => 'required|file|mimes:pdf|max:5120',
-            'contract_expiration' => 'required|date',
+            'contract_start_date' => 'required|date',
         ], [
             'contract_file.max' => 'The contract file must not be greater than 5MB.',
             'contract_file.mimes' => 'The contract file must be a PDF only.',
@@ -95,6 +96,8 @@ class BranchController extends Controller
             $file = $request->file('contract_file');
             $validated['contract_file'] = $this->storeContractFile($file);
         }
+
+        $validated['contract_expiration'] = $this->calculateContractExpiration($validated['contract_start_date'])->toDateString();
 
         // Create the branch without branch_status first
         $branchData = $validated;
@@ -130,7 +133,7 @@ class BranchController extends Controller
             ],
             'contact_number' => 'required|string|max:20',
             'contract_file' => 'nullable|file|mimes:pdf|max:5120',
-            'contract_expiration' => 'required|date',
+            'contract_start_date' => 'required|date',
         ], [
             'contract_file.max' => 'The contract file must not be greater than 5MB.',
             'contract_file.mimes' => 'The contract file must be a PDF only.',
@@ -142,6 +145,8 @@ class BranchController extends Controller
             $file = $request->file('contract_file');
             $validated['contract_file'] = $this->storeContractFile($file);
         }
+
+        $validated['contract_expiration'] = $this->calculateContractExpiration($validated['contract_start_date'])->toDateString();
 
         $branch->update($validated);
 
@@ -325,5 +330,10 @@ class BranchController extends Controller
         }
 
         return null;
+    }
+
+    protected function calculateContractExpiration(string $contractStartDate): Carbon
+    {
+        return Carbon::parse($contractStartDate)->addYearsNoOverflow(3);
     }
 }

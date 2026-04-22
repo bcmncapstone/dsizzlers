@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.franchisor-staff')
 
 @section('content')
 <div class="py-6">
@@ -72,10 +72,10 @@
                     Save Changes
                 </button>
                 <a 
-                    href="{{ route('franchisor-staff.dashboard') ?? '/' }}" 
+                    href="{{ route('franchisor-staff.account-center') }}" 
                     class="px-6 py-2 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
                 >
-                    Cancel
+                    Back to Account Center
                 </a>
             </div>
         </form>

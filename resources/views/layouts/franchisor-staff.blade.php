@@ -24,6 +24,7 @@
             @yield('content')
         </main>
     </div>
+    @include('layouts.confirm-modal')
 
     <!-- Footer -->
     <footer class="w-full bg-gray-800 text-white text-center py-4 mt-8">

@@ -23,15 +23,6 @@
         <!-- Dashboard Cards Grid -->
         <div class="card-grid">
             
-            <!-- Update Password Card -->
-            <a href="{{ route('franchisee-staff.password') }}" class="card card-orange">
-                <div class="card-icon-wrapper">
-                </div>
-                <h3>Update Password</h3>
-                <p>Change your account password</p>
-                <div class="card-arrow">View →</div>
-            </a>
-
             <!-- Manage Items Card -->
             <a href="{{ route('franchisee_staff.item.index') }}" class="card card-red">
                 <div class="card-icon-wrapper">
@@ -42,11 +33,11 @@
             </a>
 
             <!-- Edit Profile Card -->
-            <a href="{{ route('franchisee-staff.account.show') }}" class="card card-yellow">
+            <a href="{{ route('franchisee-staff.account-center') }}" class="card card-yellow">
                 <div class="card-icon-wrapper">
                 </div>
-                <h3>Edit Profile</h3>
-                <p>View or update account information</p>
+                <h3>Account</h3>
+                <p>Choose between updating your profile and password</p>
                 <div class="card-arrow">View →</div>
             </a>
 
@@ -72,4 +63,3 @@
 </div>
 
 @endsection
-

@@ -17,14 +17,14 @@
             <form method="GET" action="{{ route('franchisee.reports.staff') }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Start Date</label>
-                    <input type="date" name="start_date" value="{{ request('start_date') }}" class="w-full rounded-md border-gray-300 shadow-sm" />
+                    <input type="date" name="start_date" value="{{ request('start_date') }}" min="{{ $dateBounds['min'] ?? '' }}" max="{{ $dateBounds['max'] ?? '' }}" class="w-full rounded-md border-gray-300 shadow-sm" />
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">End Date</label>
-                    <input type="date" name="end_date" value="{{ request('end_date') }}" class="w-full rounded-md border-gray-300 shadow-sm" />
+                    <input type="date" name="end_date" value="{{ request('end_date') }}" min="{{ $dateBounds['min'] ?? '' }}" max="{{ $dateBounds['max'] ?? '' }}" class="w-full rounded-md border-gray-300 shadow-sm" />
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-blue-600 text-white rounded-md text-xs font-semibold uppercase">Apply Filter</button>
+                    <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-[#9396DB] text-white rounded-md text-xs font-semibold uppercase">Apply Filter</button>
                 </div>
             </form>
         </div>
@@ -44,8 +44,8 @@
         @if(!$noData && $noPerformanceData)
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-4">
                 <p class="text-sm text-yellow-700">No staff performance data found for the selected date range.</p>
-                @if($availableRange && $availableRange->min_date && $availableRange->max_date)
-                    <p class="text-xs text-yellow-600 mt-1">Available range: {{ \Carbon\Carbon::parse($availableRange->min_date)->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange->max_date)->format('M d, Y') }}</p>
+                @if($availableRange && ($availableRange['min'] ?? null) && ($availableRange['max'] ?? null))
+                    <p class="text-xs text-yellow-600 mt-1">Available range: {{ \Carbon\Carbon::parse($availableRange['min'])->format('M d, Y') }} to {{ \Carbon\Carbon::parse($availableRange['max'])->format('M d, Y') }}</p>
                 @endif
             </div>
         @endif
@@ -99,6 +99,11 @@
                     </tbody>
                 </table>
             </div>
+            @if($staff->hasPages())
+                <div class="p-4">
+                    {{ $staff->appends(request()->query())->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -126,8 +131,8 @@
                 datasets: [{
                     label: 'Sales (₱)',
                     data: staffSalesData.map(staff => staff.sales),
-                    backgroundColor: '#FF5722',
-                    borderColor: '#FF2D00',
+                    backgroundColor: '#ffb347',
+                    borderColor: '#f2a33a',
                     borderWidth: 1,
                 }]
             },
@@ -159,3 +164,5 @@
     @endif
 </script>
 @endsection
+
+

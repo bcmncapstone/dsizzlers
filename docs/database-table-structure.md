@@ -239,6 +239,7 @@ This table stores branch records and contract information.
 | `email` | `varchar(255)` | Email address of the branch contact. |
 | `contact_number` | `varchar(255)` | Contact number of the branch. |
 | `contract_file` | `varchar(255)` nullable | Uploaded contract file path. |
+| `contract_start_date` | `date` nullable | Start date of the branch contract. |
 | `contract_expiration` | `date` | Expiration date of the branch contract. |
 | `branch_status` | `boolean` | Indicates whether the branch is active. |
 | `archived` | `boolean` | Indicates whether the branch is archived. |
