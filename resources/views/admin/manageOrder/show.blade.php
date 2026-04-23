@@ -22,7 +22,7 @@
             <div class="flex justify-between items-start">
                 <div>
                     <a href="{{ route('admin.manageOrder.index') }}" class="inline-flex items-center text-sm font-medium text-[#ffb347] hover:text-[#f2a33a] mb-4">
-                        ? Back to Orders
+                        &larr; Back to Orders
                     </a>
                     <h1>Order #{{ $order->order_id }}</h1>
                     <p class="order-customer">{{ $order->name }}</p>
@@ -97,9 +97,9 @@
                             @foreach($order->orderDetails as $detail)
                                 <tr>
                                     <td class="px-4 py-3 text-sm text-gray-900">{{ $detail->item->item_name ?? 'Item Deleted' }}</td>
-                                    <td class="px-4 py-3 text-sm text-gray-900 text-right">?{{ number_format($detail->price, 2) }}</td>
+                                    <td class="px-4 py-3 text-sm text-gray-900 text-right">&#8369;{{ number_format($detail->price, 2) }}</td>
                                     <td class="px-4 py-3 text-sm text-gray-900 text-center">{{ $detail->quantity }}</td>
-                                    <td class="px-4 py-3 text-sm font-semibold text-[#ffb347] text-right">?{{ number_format($detail->subtotal, 2) }}</td>
+                                    <td class="px-4 py-3 text-sm font-semibold text-[#ffb347] text-right">&#8369;{{ number_format($detail->subtotal, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -108,7 +108,7 @@
 
                 <div class="mt-4 text-right">
                     <p class="text-base font-semibold text-gray-900">Total Amount:
-                        <span class="text-[#ffb347]">?{{ number_format($order->total_amount, 2) }}</span>
+                        <span class="text-[#ffb347]">&#8369;{{ number_format($order->total_amount, 2) }}</span>
                     </p>
                 </div>
             @else
@@ -180,7 +180,7 @@
                 @else
                     <div class="action-form">
                         <button type="button" class="action-button cancel-order opacity-50 cursor-not-allowed" disabled>
-                            ? Cancel Order
+                            &times; Cancel Order
                         </button>
                         <p class="mt-2 text-xs text-gray-500">
                         </p>
@@ -226,4 +226,3 @@ function closeStatusModal() {
 </script>
 
 @endsection
-

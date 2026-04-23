@@ -8253,7 +8253,7 @@ input[type="submit"].bg-blue-500:hover {
     color: #333 !important;
 }
 
-.py-12 .bg-[#FF9968] {
+.py-12 .bg-\[\#FF9968\] {
     background-color: #FF8C00 !important;
     color: white !important;
 }
@@ -12043,5 +12043,4 @@ table thead th,
 .bg-gray-900.text-white {
     color: #ffffff !important;
 }
-
 
