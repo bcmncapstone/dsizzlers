@@ -184,7 +184,7 @@
             <a href="{{ route('franchisee.account.index') }}" class="card card-purple">
                 <div class="card-icon-wrapper">
                 </div>
-                <h3>View Contract</h3>
+                <h3>Contract</h3>
                 <p>Manage Contract</p>
                 <div class="card-arrow">View →</div>
             </a>

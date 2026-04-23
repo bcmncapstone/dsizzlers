@@ -23,7 +23,10 @@
             <li><a href="{{ route('franchisee.orders.index') }}" class="{{ request()->routeIs('franchisee.orders.*') ? 'active' : '' }}">Order</a></li>
             <li><a href="{{ route('franchisee.item.index') }}" class="{{ request()->routeIs('franchisee.item.*') ? 'active' : '' }}">Item</a></li>
             <li><a href="{{ route('franchisee.reports.index') }}" class="{{ request()->routeIs('franchisee.reports.*') ? 'active' : '' }}">Report</a></li>
-            <li><a href="{{ route('franchisee.password') }}" class="{{ request()->routeIs('franchisee.password*') ? 'active' : '' }}">Account</a></li>
+            <li><a href="{{ route('franchisee.staff.index') }}" class="{{ request()->routeIs('franchisee.staff.index') ? 'active' : '' }}">Add Staff</a></li>
+            <li><a href="{{ route('franchisee.account.index') }}" class="{{ request()->routeIs('franchisee.account.index') ? 'active' : '' }}">Contract</a></li>
+            <li><a href="{{ route('communication.index') }}" class="{{ request()->routeIs('communication.index') ? 'active' : '' }}">Communication</a></li>
+
             <li>
                 <form method="POST" action="{{ route('logout') }}" style="display: inline;">
                     @csrf
